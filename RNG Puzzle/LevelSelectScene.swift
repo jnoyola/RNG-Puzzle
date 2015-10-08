@@ -20,13 +20,13 @@ class LevelSelectScene: SKScene, UITextFieldDelegate {
         let width = size.width
         
         // Title
-        addLabel(nil, text: "Select Level", size: height * 0.08, color: SKColor.blueColor(), x: 0.5, y: 0.85)
+        addLabel("Select Level", size: height * 0.08, color: SKColor.blueColor(), x: 0.5, y: 0.85)
         
         // Back
-        addLabel("btn_back", text: "Back", size: height * 0.064, color: SKColor.whiteColor(), x: 0.15, y: 0.663)
+        addLabel("Back", size: height * 0.064, color: SKColor.whiteColor(), x: 0.15, y: 0.663)
         
         // Play
-        addLabel("btn_play", text: "Play", size: height * 0.064, color: SKColor.whiteColor(), x: 0.85, y: 0.663)
+        addLabel("Play", size: height * 0.064, color: SKColor.whiteColor(), x: 0.85, y: 0.663)
         
         // Text Input
         let input_width: CGFloat = 200.0/480.0 * size.width
@@ -46,28 +46,24 @@ class LevelSelectScene: SKScene, UITextFieldDelegate {
         view.addSubview(_textInput);
     }
     
-    func addLabel(name: String?, text: String, size: CGFloat, color: SKColor, x: CGFloat, y: CGFloat) {
+    func addLabel(text: String, size: CGFloat, color: SKColor, x: CGFloat, y: CGFloat) {
         let label = SKLabelNode(fontNamed: "Optima-ExtraBlack")
         label.text = text
         label.fontSize = size
         label.fontColor = color
         label.position = CGPointMake(self.size.width*x, self.size.height*y)
-        if (name != nil) {
-            label.name = name!
-        }
         self.addChild(label)
     }
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
         let touch = touches.first!
-        let touchLocation = touch.locationInNode(self)
-        //let touchedNode = self.nodeAtPoint(touchLocation)
-        if (touchLocation.x < size.width * 0.25) {// touchedNode.name == "btn_back") {
+        let p = touch.locationInNode(self)
+        if (p.x < size.width * 0.25) {
             removeTextInput()
             let introScene = IntroScene(size: size)
             introScene.scaleMode = scaleMode
             view?.presentScene(introScene)
-        } else if (touchLocation.x > size.width * 0.75) {//touchedNode.name == "btn_play") {
+        } else if (p.x > size.width * 0.75) {
             let level = parseInputLevel()
             removeTextInput()
             let levelGenerationScene = LevelGenerationScene(size: size, level: level)

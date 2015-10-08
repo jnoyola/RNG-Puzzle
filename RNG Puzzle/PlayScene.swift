@@ -63,13 +63,9 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         view.addGestureRecognizer(_swipeRightRecognizer)
         view.addGestureRecognizer(_pinchRecognizer)
         view.addGestureRecognizer(_panRecognizer)
-        
-        view.paused = false
     }
     
     override func willMoveFromView(view: SKView) {
-        view.paused = true
-        
         view.removeGestureRecognizer(_tapRecognizer)
         view.removeGestureRecognizer(_swipeUpRecognizer)
         view.removeGestureRecognizer(_swipeDownRecognizer)
@@ -84,7 +80,9 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     func handleTap(recognizer: UITapGestureRecognizer?) {
-        print("tap")
+        let pauseScene = PauseScene(size: size, level: _level._level, seed: _level._seed, playScene: self)
+        pauseScene.scaleMode = scaleMode
+        view?.presentScene(pauseScene)
     }
     
     func handleSwipeUp(recognizer: UITapGestureRecognizer?) {
