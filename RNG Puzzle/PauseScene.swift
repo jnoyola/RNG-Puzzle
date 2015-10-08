@@ -12,11 +12,11 @@ import SpriteKit
 class PauseScene: SKScene {
     
     var _level = 0
-    var _seed = 0
+    var _seed: UInt32 = 0
     var _playScene: PlayScene! = nil
     var _copyLabel: SKLabelNode! = nil
 
-    init(size: CGSize, level: Int, seed: Int, playScene: PlayScene) {
+    init(size: CGSize, level: Int, seed: UInt32, playScene: PlayScene) {
         super.init(size: size)
         _level = level
         _seed = seed

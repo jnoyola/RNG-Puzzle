@@ -99,7 +99,7 @@ class LevelSelectScene: SKScene, UITextFieldDelegate {
             // Parse seed
             let seed = (tokens![1] as NSString).integerValue
             if seed >= 0 {
-                level._seed = seed
+                level._seed = UInt32(seed)
             }
         }
         

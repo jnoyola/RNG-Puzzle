@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AB7E01251BC471FE002C6DA4 /* Level.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E01241BC471FE002C6DA4 /* Level.swift */; settings = {ASSET_TAGS = (); }; };
+		AB7E01271BC64D58002C6DA4 /* Piece.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E01261BC64D58002C6DA4 /* Piece.swift */; settings = {ASSET_TAGS = (); }; };
 		ABE224401BB497040071CA9A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE2243F1BB497040071CA9A /* AppDelegate.swift */; };
 		ABE224441BB497040071CA9A /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224431BB497040071CA9A /* GameScene.swift */; };
 		ABE224461BB497040071CA9A /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224451BB497040071CA9A /* GameViewController.swift */; };
@@ -44,6 +45,7 @@
 
 /* Begin PBXFileReference section */
 		AB7E01241BC471FE002C6DA4 /* Level.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Level.swift; sourceTree = "<group>"; };
+		AB7E01261BC64D58002C6DA4 /* Piece.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Piece.swift; sourceTree = "<group>"; };
 		ABE2243C1BB497040071CA9A /* RNG Puzzle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RNG Puzzle.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ABE2243F1BB497040071CA9A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ABE224431BB497040071CA9A /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
@@ -126,6 +128,7 @@
 				ABE224751BB4AB4C0071CA9A /* InstructionsScene.swift */,
 				ABE224731BB4A70E0071CA9A /* LevelSelectScene.swift */,
 				ABE2247B1BB4AC2A0071CA9A /* LevelGenerationScene.swift */,
+				AB7E01261BC64D58002C6DA4 /* Piece.swift */,
 				AB7E01241BC471FE002C6DA4 /* Level.swift */,
 				ABE224771BB4ABF60071CA9A /* PlayScene.swift */,
 				ABE224791BB4AC0A0071CA9A /* PauseScene.swift */,
@@ -290,6 +293,7 @@
 				ABE2247C1BB4AC2A0071CA9A /* LevelGenerationScene.swift in Sources */,
 				ABE224761BB4AB4C0071CA9A /* InstructionsScene.swift in Sources */,
 				ABE2247E1BB4AC510071CA9A /* LevelCompleteScene.swift in Sources */,
+				AB7E01271BC64D58002C6DA4 /* Piece.swift in Sources */,
 				ABE224401BB497040071CA9A /* AppDelegate.swift in Sources */,
 				ABE224741BB4A70E0071CA9A /* LevelSelectScene.swift in Sources */,
 				ABE2247A1BB4AC0A0071CA9A /* PauseScene.swift in Sources */,
