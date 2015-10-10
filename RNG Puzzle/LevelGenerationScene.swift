@@ -40,7 +40,7 @@ class LevelGenerationScene: SKScene {
     }
     
     func generate() {
-        _level.generate()
+        _level.generateTestLevel()
 
         let playScene = PlayScene(size: size, level: _level)
         playScene.scaleMode = scaleMode
