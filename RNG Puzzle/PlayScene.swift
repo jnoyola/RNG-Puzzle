@@ -95,26 +95,26 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         return true
     }
     
-    func handleTap(recognizer: UITapGestureRecognizer?) {
+    func handleTap(sender: UITapGestureRecognizer) {
         let pauseScene = PauseScene(size: size, level: _level._level, seed: _level._seed, playScene: self)
         pauseScene.scaleMode = scaleMode
         view?.presentScene(pauseScene)
     }
     
-    func handleSwipeUp(sender: UITapGestureRecognizer?) {
-        print("swipe up")
+    func handleSwipeUp(sender: UITapGestureRecognizer) {
+        _gameView.attemptMove(.Up, swipe: sender.locationInView(sender.view))
     }
     
-    func handleSwipeDown(sender: UITapGestureRecognizer?) {
-        print("swipe down")
+    func handleSwipeDown(sender: UITapGestureRecognizer) {
+        _gameView.attemptMove(.Down, swipe: sender.locationInView(sender.view))
     }
     
-    func handleSwipeLeft(sender: UITapGestureRecognizer?) {
-        print("swipe left")
+    func handleSwipeLeft(sender: UITapGestureRecognizer) {
+        _gameView.attemptMove(.Left, swipe: sender.locationInView(sender.view))
     }
     
-    func handleSwipeRight(sender: UITapGestureRecognizer?) {
-        print("swipe right")
+    func handleSwipeRight(sender: UITapGestureRecognizer) {
+        _gameView.attemptMove(.Right, swipe: sender.locationInView(sender.view))
     }
     
     func handlePinch(sender: UIPinchGestureRecognizer) {

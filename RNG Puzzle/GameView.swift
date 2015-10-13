@@ -13,6 +13,7 @@ class GameView: SKNode {
     
     var _origX: CGFloat = 0.0
     var _origY: CGFloat = 0.0
+    var _parentHeight: CGFloat = 0.0
     var _baseScale: CGFloat = 1.0
     var _scale: CGFloat = 1.0
 
@@ -21,6 +22,11 @@ class GameView: SKNode {
     var _ballX = 0
     var _ballY = 0
     var _dir = Direction.Still
+    var _spin: CGFloat = 0.0
+    var _nextPiece: PieceType! = nil
+    
+    let _ballSpeed = 0.1
+    let _ballSpinSpeed: CGFloat = 2.0
 
     init(level: Level, x: CGFloat, y: CGFloat, scale: CGFloat) {
         super.init()
@@ -28,6 +34,7 @@ class GameView: SKNode {
         setBaseScale(scale)
         _origX = x - getWidth() / 2
         _origY = y - getHeight() / 2
+        _parentHeight = y * 2
         position = CGPoint(x: _origX, y: _origY)
         
         _ball = SKSpriteNode(texture: Sprites().ball())
@@ -128,11 +135,181 @@ class GameView: SKNode {
         
         let startScale = _scale
         let duration: Double = 0.2
-        print(_origX, _origY)
         runAction(SKAction.moveTo(CGPoint(x: _origX, y: _origY), duration: duration))
-        runAction(SKAction.customActionWithDuration(duration, actionBlock: { (node: SKNode, elapsedTime: CGFloat) -> Void in
-            let scale = elapsedTime / CGFloat(duration) * (1 - startScale) + startScale
-            self.setScale(scale)
-        }))
+        runAction(SKAction.customActionWithDuration(duration, actionBlock:
+            { (node: SKNode, elapsedTime: CGFloat) -> Void in
+                let scale = elapsedTime / CGFloat(duration) * (1 - startScale) + startScale
+                self.setScale(scale)
+            }
+        ))
+    }
+    
+    func attemptMove(dir: Direction, swipe: CGPoint) {
+        // Can't redirect ball while moving
+        if _dir != .Still {
+            return
+        }
+        
+        // Can't move through walls
+        if cannotMove(dir) {
+            // stop()
+            return
+        }
+        
+        // Now that we know this is a valid move...
+        _spin = -1
+        let ballX = position.x + _ball.position.x * _scale * _baseScale
+        let ballY = _parentHeight - (position.y + _ball.position.y * _scale * _baseScale)
+        switch dir {
+        case .Right:
+            if swipe.y > ballY {
+                _spin = 1
+            }
+        case .Up:
+            if swipe.x > ballX {
+                _spin = 1
+            }
+        case .Left:
+            if swipe.y < ballY {
+                _spin = 1
+            }
+        case .Down:
+            if swipe.x < ballX {
+                _spin = 1
+            }
+        default: break
+        }
+        move(dir)
+    }
+    
+    func move(dir: Direction) {
+        _dir = dir
+        var x = 0
+        var y = 0
+        switch dir {
+        case .Right: x = 1
+        case .Up:    y = 1
+        case .Left:  x = -1
+        case .Down:  y = -1
+        default: break
+        }
+        _ballX += x
+        _ballY += y
+        _ball.runAction(SKAction.rotateByAngle(_spin * _ballSpinSpeed, duration: _ballSpeed))
+        _ball.runAction(SKAction.moveByX(CGFloat(x), y: CGFloat(y), duration: _ballSpeed), completion: doneMoving)
+    }
+    
+    func doneMoving() {
+        if _nextPiece.contains(.Target) {
+            win()
+            return
+        } else if _nextPiece.contains(.Void) {
+            stop()
+            resetBall()
+            return
+        } else if _nextPiece.contains(.Teleporter) {
+            teleport()
+            if cannotMove(_dir) {
+                stop()
+            } else {
+                move(_dir)
+                updateNextPiece(x: _ballX, y: _ballY)
+            }
+            return
+        } else if _nextPiece.contains(.Corner1) {
+            if _dir == .Left {
+                _spin = 1
+                move(.Up)
+            } else if _dir == .Down {
+                _spin = -1
+                move(.Right)
+            }
+            updateNextPiece(x: _ballX, y: _ballY)
+            return
+        } else if _nextPiece.contains(.Corner2) {
+            if _dir == .Down {
+                _spin = 1
+                move(.Left)
+            } else if _dir == .Right {
+                _spin = -1
+                move(.Up)
+            }
+            updateNextPiece(x: _ballX, y: _ballY)
+            return
+        } else if _nextPiece.contains(.Corner3) {
+            if _dir == .Right {
+                _spin = 1
+                move(.Down)
+            } else if _dir == .Up {
+                _spin = -1
+                move(.Left)
+            }
+            updateNextPiece(x: _ballX, y: _ballY)
+            return
+        } else if _nextPiece.contains(.Corner4) {
+            if _dir == .Up {
+                _spin = 1
+                move(.Right)
+            } else if _dir == .Left {
+                _spin = -1
+                move(.Down)
+            }
+            updateNextPiece(x: _ballX, y: _ballY)
+            return
+        }
+        
+        if cannotMove(_dir) {
+            stop()
+            return
+        }
+        
+        move(_dir)
+    }
+    
+    func cannotMove(dir: Direction) -> Bool {
+        let piece = updateNextPiece(dir)
+        if (piece == .Block) ||
+           (piece == .Corner1 && (dir == .Right || dir == .Up))   ||
+           (piece == .Corner2 && (dir == .Up    || dir == .Left)) ||
+           (piece == .Corner3 && (dir == .Left  || dir == .Down)) ||
+           (piece == .Corner4 && (dir == .Down  || dir == .Right)) {
+            return true
+        }
+        return false
+    }
+    
+    func updateNextPiece(x x: Int, y: Int) -> PieceType {
+        if x >= 0 && y >= 0 && x < _level._width && y < _level._height {
+            _nextPiece = _level.getPiece(x: x, y: y)
+        } else {
+            _nextPiece = .Void
+        }
+        return _nextPiece
+    }
+    
+    func updateNextPiece(dir: Direction) -> PieceType {
+        var x = _ballX
+        var y = _ballY
+        switch dir {
+        case .Right: ++x
+        case .Up:    ++y
+        case .Left:  --x
+        case .Down:  --y
+        default: break
+        }
+        return updateNextPiece(x: x, y: y)
+    }
+    
+    func teleport() {
+    
+    }
+    
+    func stop() {
+        _ball.removeAllActions()
+        _dir = .Still
+    }
+    
+    func win() {
+    
     }
 }
