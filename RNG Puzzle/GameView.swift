@@ -46,9 +46,11 @@ class GameView: SKNode {
                     node = SKSpriteNode(texture: sprites.corner4())
                 } else if piece.contains(.Teleporter) {
                     node = SKSpriteNode(texture: sprites.teleport())
+                    node.runAction(SKAction.repeatActionForever(SKAction.rotateByAngle(CGFloat(M_PI), duration: 0.5)))
                     z = 1
                 } else if piece.contains(.Target) {
                     node = SKSpriteNode(texture: sprites.target())
+                    node.runAction(SKAction.repeatActionForever(SKAction.rotateByAngle(CGFloat(M_PI), duration: 0.5)))
                     z = 1
                 } else {
                     continue
@@ -59,6 +61,12 @@ class GameView: SKNode {
                 self.addChild(node)
             }
         }
+        
+        // Draw background
+        let bg = SKSpriteNode(color: UIColor.blackColor(), size: CGSize(width: level._width, height: level._height))
+        bg.position = CGPoint(x: CGFloat(level._width) / 2, y: CGFloat(level._height) / 2)
+        bg.zPosition = -1
+        self.addChild(bg)
     }
     
     func setBaseScale(scale: CGFloat) {
