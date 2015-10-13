@@ -29,11 +29,11 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         super.init(size: size)
         _level = level
         
-        _gameView = GameView(level: level)
-        
+        let x = size.width / 2
+        let y = size.height / 2
         // Scale 1.0 means the level fits in the screen
-        _gameView.setBaseScale(min(size.width / CGFloat(level._width), size.height / CGFloat(level._height)))
-        _gameView.position = CGPoint(x: (size.width - _gameView.getWidth()) / 2, y: (size.height - _gameView.getHeight()) / 2)
+        let scale = min(size.width / CGFloat(level._width), size.height / CGFloat(level._height))
+        _gameView = GameView(level: level, x: x, y: y, scale: scale)
         
         addChild(_gameView)
     }
