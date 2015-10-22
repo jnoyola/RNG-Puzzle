@@ -21,12 +21,32 @@ class Level: NSObject {
     var _history: [(x: Int, y: Int)]! = []
     var _teleporters: [(x: Int, y: Int)] = []
     
+    
+    @inline(__always) func getCode() -> String {
+        return "\(_level).\(_seed)"
+    }
+    
     @inline(__always) func getPiece(x x: Int, y: Int) -> PieceType {
         return _grid[y * _width + x]
     }
     
     @inline(__always) func setPiece(x x: Int, y: Int, type: PieceType) {
         _grid[y * _width + x] = type
+    }
+    
+    func getTeleporterPair(x x: Int, y: Int) -> (x: Int, y: Int) {
+        for i in 0...(_teleporters.count - 1) {
+            let p0 = _teleporters[i]
+            if x == p0.x && y == p0.y {
+                if (i % 2) == 0 {
+                    return _teleporters[i + 1]
+                } else {
+                    return _teleporters[i - 1]
+                }
+            }
+        }
+        NSLog("ERROR: teleporter match not found")
+        return (-1, -1)
     }
     
 // -----------------------------------------------------------------------

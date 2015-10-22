@@ -28,13 +28,8 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     init(size: CGSize, level: Level) {
         super.init(size: size)
         _level = level
-        
-        let x = size.width / 2
-        let y = size.height / 2
-        // Scale 1.0 means the level fits in the screen
-        let scale = min(size.width / CGFloat(level._width), size.height / CGFloat(level._height))
-        _gameView = GameView(level: level, x: x, y: y, scale: scale)
-        
+
+        _gameView = GameView(level: level, playScene: self)
         addChild(_gameView)
     }
     
@@ -96,7 +91,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     func handleTap(sender: UITapGestureRecognizer) {
-        let pauseScene = PauseScene(size: size, level: _level._level, seed: _level._seed, playScene: self)
+        let pauseScene = PauseScene(size: size, level: _level, playScene: self)
         pauseScene.scaleMode = scaleMode
         view?.presentScene(pauseScene)
     }
@@ -180,7 +175,15 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         }
         
         if dX != 0 || dY != 0 {
-            _gameView.runAction(SKAction.moveByX(dX, y: dY, duration: 0.25), completion: { () -> Void in self._bringingBack = false })
+            _gameView.runAction(SKAction.moveByX(dX, y: dY, duration: 0.25), completion: { () -> Void in
+                self._bringingBack = false
+            })
         }
+    }
+    
+    func complete() {
+        let levelCompleteScene = LevelCompleteScene(size: size, level: _level)
+        levelCompleteScene.scaleMode = scaleMode
+        view?.presentScene(levelCompleteScene)
     }
 }

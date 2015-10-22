@@ -11,15 +11,13 @@ import SpriteKit
 
 class PauseScene: SKScene {
     
-    var _level = 0
-    var _seed: UInt32 = 0
+    var _level: Level! = nil
     var _playScene: PlayScene! = nil
     var _copyLabel: SKLabelNode! = nil
 
-    init(size: CGSize, level: Int, seed: UInt32, playScene: PlayScene) {
+    init(size: CGSize, level: Level, playScene: PlayScene) {
         super.init(size: size)
         _level = level
-        _seed = seed
         _playScene = playScene
     }
     
@@ -36,7 +34,7 @@ class PauseScene: SKScene {
         addLabel("Paused", size: height * 0.08, color: SKColor.blueColor(), x: 0.5, y: 0.85)
         
         // Level
-        addLabel("Level \(_level)", size: height * 0.08, color: SKColor.whiteColor(), x: 0.5, y: 0.5)
+        addLabel("Level \(_level._level)", size: height * 0.08, color: SKColor.whiteColor(), x: 0.5, y: 0.5)
         
         // Quit
         addLabel("Quit", size: height * 0.064, color: SKColor.whiteColor(), x: 0.15, y: 0.5)
@@ -78,7 +76,7 @@ class PauseScene: SKScene {
                 view?.presentScene(_playScene)
             } else {
                 // Copy Level ID
-                UIPasteboard.generalPasteboard().string = "\(_level).\(_seed)"
+                UIPasteboard.generalPasteboard().string = _level.getCode()
                 _copyLabel.text = "Level ID Copied"
             }
         }

@@ -11,9 +11,9 @@ import SpriteKit
 
 class GameView: SKNode {
     
+    var _playScene: PlayScene! = nil
     var _origX: CGFloat = 0.0
     var _origY: CGFloat = 0.0
-    var _parentHeight: CGFloat = 0.0
     var _baseScale: CGFloat = 1.0
     var _scale: CGFloat = 1.0
 
@@ -27,14 +27,19 @@ class GameView: SKNode {
     
     let _ballSpeed = 0.1
     let _ballSpinSpeed: CGFloat = 2.0
+    
+    let _winDuration = 0.5
 
-    init(level: Level, x: CGFloat, y: CGFloat, scale: CGFloat) {
+    init(level: Level, playScene: PlayScene) {
         super.init()
         _level = level
+        _playScene = playScene
+        
+        // Scale 1.0 means the level fits in the scene
+        let scale = min(_playScene.size.width / CGFloat(level._width), _playScene.size.height / CGFloat(level._height))
         setBaseScale(scale)
-        _origX = x - getWidth() / 2
-        _origY = y - getHeight() / 2
-        _parentHeight = y * 2
+        _origX = (_playScene.size.width - getWidth()) / 2
+        _origY = (_playScene.size.height - getHeight()) / 2
         position = CGPoint(x: _origX, y: _origY)
         
         _ball = SKSpriteNode(texture: Sprites().ball())
@@ -159,7 +164,7 @@ class GameView: SKNode {
         // Now that we know this is a valid move...
         _spin = -1
         let ballX = position.x + _ball.position.x * _scale * _baseScale
-        let ballY = _parentHeight - (position.y + _ball.position.y * _scale * _baseScale)
+        let ballY = _playScene.size.height - (position.y + _ball.position.y * _scale * _baseScale)
         switch dir {
         case .Right:
             if swipe.y > ballY {
@@ -301,7 +306,10 @@ class GameView: SKNode {
     }
     
     func teleport() {
-    
+        let dst = _level.getTeleporterPair(x: _ballX, y: _ballY)
+        _ballX = dst.x
+        _ballY = dst.y
+        _ball.position = CGPoint(x: CGFloat(_ballX) + 0.5, y: CGFloat(_ballY) + 0.5)
     }
     
     func stop() {
@@ -310,6 +318,9 @@ class GameView: SKNode {
     }
     
     func win() {
-    
+        _ball.runAction(SKAction.rotateByAngle(_spin * _ballSpinSpeed, duration: _winDuration))
+        _ball.runAction(SKAction.scaleTo(0.01, duration: _winDuration), completion: { () -> Void in
+            self._playScene.complete()
+        })
     }
 }

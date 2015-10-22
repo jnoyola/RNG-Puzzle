@@ -1,5 +1,5 @@
 //
-//  GameViewController.swift
+//  MainViewController.swift
 //  RNG Puzzle
 //
 //  Created by Jonathan Noyola on 9/24/15.
@@ -9,7 +9,11 @@
 import UIKit
 import SpriteKit
 
-class GameViewController: UIViewController {
+class MainViewController: UIViewController {
+
+    override func loadView() {
+        view = SKView(frame: UIScreen.mainScreen().bounds)
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
