@@ -50,6 +50,10 @@ class Level: NSObject {
     }
     
 // -----------------------------------------------------------------------
+
+    override init() {
+        super.init()
+    }
     
     func generate() {
         srandom(_seed)
@@ -74,6 +78,71 @@ class Level: NSObject {
     }
     
 // -----------------------------------------------------------------------
+
+    init(instruction: Int) {
+        super.init()
+    
+        _width = 8
+        _height = 3
+        _grid = [PieceType](count: _width * _height, repeatedValue: .None)
+        
+        switch (instruction) {
+        case 1:
+            _startX = 1
+            _startY = 1
+            setPiece(x: 6, y: 1, type: .Target)
+        case 2:
+            _startX = 1
+            _startY = 1
+        case 3:
+            _startX = 1
+            _startY = 1
+        case 4:
+            _startX = 4
+            _startY = 2
+            setPiece(x: 7, y: 2, type: .Block)
+            setPiece(x: 6, y: 0, type: .Corner2)
+            setPiece(x: 2, y: 0, type: .Corner3)
+        case 5:
+            _startX = 1
+            _startY = 2
+            setPiece(x: 5, y: 2, type: .Teleporter)
+            _teleporters.append((5,2))
+            setPiece(x: 2, y: 1, type: .Teleporter)
+            _teleporters.append((2,1))
+            break;
+        case 6:
+            _startX = 1
+            _startY = 2
+            setPiece(x: 6, y: 1, type: .Block)
+        case 7:
+            _startX = 1
+            _startY = 1
+            setPiece(x: 6, y: 1, type: .Block)
+        case 8:
+            _startX = 1
+            _startY = 1
+            setPiece(x: 3, y: 1, type: .Corner1)
+            setPiece(x: 2, y: 0, type: .Corner2)
+            setPiece(x: 0, y: 0, type: .Corner1)
+            setPiece(x: 0, y: 2, type: .Corner4)
+            setPiece(x: 4, y: 2, type: .Block)
+            setPiece(x: 4, y: 1, type: .Corner3)
+            setPiece(x: 4, y: 0, type: .Teleporter)
+            _teleporters.append((4,0))
+            setPiece(x: 7, y: 2, type: .Teleporter)
+            _teleporters.append((7,2))
+            setPiece(x: 7, y: 0, type: .Target)
+        case 9:
+            _startX = 100
+            _startY = 100
+        case 10:
+            _startX = 100
+            _startY = 100
+        default:
+            break
+        }
+    }
     
     func generateTestLevel() {
         _width = 8

@@ -6,8 +6,6 @@
 //  Copyright © 2015 iNoyola. All rights reserved.
 //
 
-import UIKit
-
 enum Direction {
     case Still
     case Right

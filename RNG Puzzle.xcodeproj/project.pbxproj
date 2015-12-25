@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AB59C4811BD987B500BD7C47 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB59C4801BD987B500BD7C47 /* MainViewController.swift */; settings = {ASSET_TAGS = (); }; };
+		AB59C4831BD98DFE00BD7C47 /* Finger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB59C4821BD98DFE00BD7C47 /* Finger.swift */; settings = {ASSET_TAGS = (); }; };
 		AB7E01251BC471FE002C6DA4 /* Level.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E01241BC471FE002C6DA4 /* Level.swift */; settings = {ASSET_TAGS = (); }; };
 		AB7E01271BC64D58002C6DA4 /* Piece.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E01261BC64D58002C6DA4 /* Piece.swift */; settings = {ASSET_TAGS = (); }; };
 		AB7E012A1BC71498002C6DA4 /* Sprites.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E01291BC71498002C6DA4 /* Sprites.swift */; settings = {ASSET_TAGS = (); }; };
@@ -45,6 +46,7 @@
 
 /* Begin PBXFileReference section */
 		AB59C4801BD987B500BD7C47 /* MainViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
+		AB59C4821BD98DFE00BD7C47 /* Finger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Finger.swift; sourceTree = "<group>"; };
 		AB7E01241BC471FE002C6DA4 /* Level.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Level.swift; sourceTree = "<group>"; };
 		AB7E01261BC64D58002C6DA4 /* Piece.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Piece.swift; sourceTree = "<group>"; };
 		AB7E01291BC71498002C6DA4 /* Sprites.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sprites.swift; sourceTree = "<group>"; };
@@ -121,6 +123,7 @@
 				ABE2244A1BB497040071CA9A /* Assets.xcassets */,
 				AB7E012B1BC71F66002C6DA4 /* Sprites.atlasc */,
 				AB7E01291BC71498002C6DA4 /* Sprites.swift */,
+				AB59C4821BD98DFE00BD7C47 /* Finger.swift */,
 				ABE2243F1BB497040071CA9A /* AppDelegate.swift */,
 				AB59C4801BD987B500BD7C47 /* MainViewController.swift */,
 				ABE224711BB49D970071CA9A /* IntroScene.swift */,
@@ -296,6 +299,7 @@
 				AB7E01271BC64D58002C6DA4 /* Piece.swift in Sources */,
 				ABE224401BB497040071CA9A /* AppDelegate.swift in Sources */,
 				ABE224741BB4A70E0071CA9A /* LevelSelectScene.swift in Sources */,
+				AB59C4831BD98DFE00BD7C47 /* Finger.swift in Sources */,
 				ABE2247A1BB4AC0A0071CA9A /* PauseScene.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

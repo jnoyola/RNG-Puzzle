@@ -11,7 +11,8 @@ import SpriteKit
 
 class GameView: SKNode {
     
-    var _playScene: PlayScene! = nil
+    var _playScene: SKScene! = nil
+    var _winCallback: (() -> Void)? = nil
     var _origX: CGFloat = 0.0
     var _origY: CGFloat = 0.0
     var _baseScale: CGFloat = 1.0
@@ -30,17 +31,15 @@ class GameView: SKNode {
     
     let _winDuration = 0.5
 
-    init(level: Level, playScene: PlayScene) {
+    init(level: Level, playScene: SKScene, winCallback: (() -> Void)?) {
         super.init()
         _level = level
         _playScene = playScene
+        _winCallback = winCallback
         
         // Scale 1.0 means the level fits in the scene
         let scale = min(_playScene.size.width / CGFloat(level._width), _playScene.size.height / CGFloat(level._height))
         setBaseScale(scale)
-        _origX = (_playScene.size.width - getWidth()) / 2
-        _origY = (_playScene.size.height - getHeight()) / 2
-        position = CGPoint(x: _origX, y: _origY)
         
         _ball = SKSpriteNode(texture: Sprites().ball())
         _ball.size = CGSize(width: 1, height: 1)
@@ -49,7 +48,11 @@ class GameView: SKNode {
         
         drawLevel(level)
         
-        resetBall()
+        resetBall(true)
+        
+        _origX = (_playScene.size.width - getWidth()) / 2
+        _origY = (_playScene.size.height - getHeight()) / 2
+        position = CGPoint(x: _origX, y: _origY)
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -112,12 +115,14 @@ class GameView: SKNode {
     override func setScale(scale: CGFloat) {
         _scale = scale
         
-        // Min scale means the level fills 75% of the screen
-        // Max scale means 5 spaces fit in the screen
-        if _scale < 0.75 {
-            _scale = 0.75
-        } else if _scale > CGFloat(_level._height) / 5 {
-            _scale = CGFloat(_level._height) / 5
+        if !(_playScene is InstructionsScene) {
+            // Min scale means the level fills 75% of the screen
+            // Max scale means 5 spaces fit in the screen
+            if _scale < 0.75 {
+                _scale = 0.75
+            } else if _scale > CGFloat(_level._height) / 5 {
+                _scale = CGFloat(_level._height) / 5
+            }
         }
         
         super.setScale(_scale * _baseScale)
@@ -133,20 +138,25 @@ class GameView: SKNode {
     
     // -----------------------------------------------------------------------
     
-    func resetBall() {
+    func resetBall(instantly: Bool = false) {
         _ballX = _level._startX
         _ballY = _level._startY
         _ball.position = CGPoint(x: CGFloat(_ballX) + 0.5, y: CGFloat(_ballY) + 0.5)
         
-        let startScale = _scale
-        let duration: Double = 0.2
-        runAction(SKAction.moveTo(CGPoint(x: _origX, y: _origY), duration: duration))
-        runAction(SKAction.customActionWithDuration(duration, actionBlock:
-            { (node: SKNode, elapsedTime: CGFloat) -> Void in
-                let scale = elapsedTime / CGFloat(duration) * (1 - startScale) + startScale
-                self.setScale(scale)
-            }
-        ))
+        if (instantly || _playScene is InstructionsScene) {
+            setScale(1.0)
+        } else {
+            let startScale = _scale
+            let duration: Double = 0.2
+            
+            runAction(SKAction.moveTo(CGPoint(x: _origX, y: _origY), duration: duration))
+            runAction(SKAction.customActionWithDuration(duration, actionBlock:
+                { (node: SKNode, elapsedTime: CGFloat) -> Void in
+                    let scale = elapsedTime / CGFloat(duration) * (1 - startScale) + startScale
+                    self.setScale(scale)
+                }
+            ))
+        }
     }
     
     func attemptMove(dir: Direction, swipe: CGPoint) {
@@ -320,7 +330,9 @@ class GameView: SKNode {
     func win() {
         _ball.runAction(SKAction.rotateByAngle(_spin * _ballSpinSpeed, duration: _winDuration))
         _ball.runAction(SKAction.scaleTo(0.01, duration: _winDuration), completion: { () -> Void in
-            self._playScene.complete()
+            if (self._winCallback != nil) {
+                (self._winCallback!)()
+            }
         })
     }
 }

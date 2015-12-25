@@ -29,7 +29,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         super.init(size: size)
         _level = level
 
-        _gameView = GameView(level: level, playScene: self)
+        _gameView = GameView(level: level, playScene: self, winCallback: complete)
         addChild(_gameView)
     }
     
@@ -38,7 +38,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
 
     override func didMoveToView(view: SKView) {
-        backgroundColor = SKColor(red: 0.15, green: 0, blue: 0.15, alpha: 1)
+        backgroundColor = SKColor(red: 0.4, green: 0, blue: 0.4, alpha: 1)
     
         // Tap for pausing
         _tapRecognizer = UITapGestureRecognizer(target: self, action: "handleTap:")
