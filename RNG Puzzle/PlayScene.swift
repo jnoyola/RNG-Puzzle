@@ -182,6 +182,8 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     func complete() {
+        NSUserDefaults.standardUserDefaults().setInteger(_level._level + 1, forKey: "level")
+    
         let levelCompleteScene = LevelCompleteScene(size: size, level: _level)
         levelCompleteScene.scaleMode = scaleMode
         view?.presentScene(levelCompleteScene)

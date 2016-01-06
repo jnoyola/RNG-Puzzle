@@ -39,8 +39,8 @@ class LevelSelectScene: SKScene, UITextFieldDelegate {
         _textInput.font = UIFont(name: "Optima-ExtraBlack", size: height * 0.06)
         _textInput.keyboardType = .DecimalPad
         _textInput.autocorrectionType = .No
-        /*_textInput.placeholder = @"Level";
-        _textInput.text = [NSString stringWithFormat:@"%i", [self loadLevel]];*/
+        _textInput.placeholder = "Level"
+        _textInput.text = String(loadLevel())
         _textInput.delegate = self;
         _textInput.becomeFirstResponder()
         view.addSubview(_textInput);
@@ -51,7 +51,7 @@ class LevelSelectScene: SKScene, UITextFieldDelegate {
         label.text = text
         label.fontSize = size
         label.fontColor = color
-        label.position = CGPointMake(self.size.width*x, self.size.height*y)
+        label.position = CGPointMake(self.size.width * x, self.size.height * y)
         self.addChild(label)
     }
     
@@ -82,6 +82,15 @@ class LevelSelectScene: SKScene, UITextFieldDelegate {
                 return false
             }
         }
+        
+        let newString = (textField.text! as NSString).stringByReplacingCharactersInRange(range, withString: string)
+        let tokens = newString.componentsSeparatedByString(".")
+        let levelNum = (tokens[0] as NSString).integerValue
+        let levelMax = loadLevel()
+        if levelNum > levelMax {
+            textField.text = String(levelMax)
+            return false
+        }
         return true
     }
     
@@ -104,5 +113,10 @@ class LevelSelectScene: SKScene, UITextFieldDelegate {
         }
         
         return level;
+    }
+    
+    func loadLevel() -> Int {
+        let level = NSUserDefaults.standardUserDefaults().integerForKey("level")
+        return level == 0 ? 1 : level
     }
 }

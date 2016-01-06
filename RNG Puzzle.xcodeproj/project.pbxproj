@@ -7,24 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AB59C4811BD987B500BD7C47 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB59C4801BD987B500BD7C47 /* MainViewController.swift */; settings = {ASSET_TAGS = (); }; };
-		AB59C4831BD98DFE00BD7C47 /* Finger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB59C4821BD98DFE00BD7C47 /* Finger.swift */; settings = {ASSET_TAGS = (); }; };
-		AB7E01251BC471FE002C6DA4 /* Level.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E01241BC471FE002C6DA4 /* Level.swift */; settings = {ASSET_TAGS = (); }; };
-		AB7E01271BC64D58002C6DA4 /* Piece.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E01261BC64D58002C6DA4 /* Piece.swift */; settings = {ASSET_TAGS = (); }; };
-		AB7E012A1BC71498002C6DA4 /* Sprites.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E01291BC71498002C6DA4 /* Sprites.swift */; settings = {ASSET_TAGS = (); }; };
-		AB7E012C1BC71F66002C6DA4 /* Sprites.atlasc in Resources */ = {isa = PBXBuildFile; fileRef = AB7E012B1BC71F66002C6DA4 /* Sprites.atlasc */; settings = {ASSET_TAGS = (); }; };
-		AB7E01301BC721EA002C6DA4 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E012F1BC721EA002C6DA4 /* GameView.swift */; settings = {ASSET_TAGS = (); }; };
+		AB59C4811BD987B500BD7C47 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB59C4801BD987B500BD7C47 /* MainViewController.swift */; };
+		AB59C4831BD98DFE00BD7C47 /* Finger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB59C4821BD98DFE00BD7C47 /* Finger.swift */; };
+		AB7E01251BC471FE002C6DA4 /* Level.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E01241BC471FE002C6DA4 /* Level.swift */; };
+		AB7E01271BC64D58002C6DA4 /* Piece.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E01261BC64D58002C6DA4 /* Piece.swift */; };
+		AB7E012A1BC71498002C6DA4 /* Sprites.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E01291BC71498002C6DA4 /* Sprites.swift */; };
+		AB7E012C1BC71F66002C6DA4 /* Sprites.atlasc in Resources */ = {isa = PBXBuildFile; fileRef = AB7E012B1BC71F66002C6DA4 /* Sprites.atlasc */; };
+		AB7E01301BC721EA002C6DA4 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7E012F1BC721EA002C6DA4 /* GameView.swift */; };
+		ABBA695E1C3C96A20092559C /* WeightedRandomArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABBA695D1C3C96A20092559C /* WeightedRandomArray.swift */; };
 		ABE224401BB497040071CA9A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE2243F1BB497040071CA9A /* AppDelegate.swift */; };
 		ABE2244B1BB497040071CA9A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ABE2244A1BB497040071CA9A /* Assets.xcassets */; };
 		ABE224591BB497040071CA9A /* RNG_PuzzleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224581BB497040071CA9A /* RNG_PuzzleTests.swift */; };
 		ABE224641BB497040071CA9A /* RNG_PuzzleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224631BB497040071CA9A /* RNG_PuzzleUITests.swift */; };
-		ABE224721BB49D970071CA9A /* IntroScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224711BB49D970071CA9A /* IntroScene.swift */; settings = {ASSET_TAGS = (); }; };
-		ABE224741BB4A70E0071CA9A /* LevelSelectScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224731BB4A70E0071CA9A /* LevelSelectScene.swift */; settings = {ASSET_TAGS = (); }; };
-		ABE224761BB4AB4C0071CA9A /* InstructionsScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224751BB4AB4C0071CA9A /* InstructionsScene.swift */; settings = {ASSET_TAGS = (); }; };
-		ABE224781BB4ABF60071CA9A /* PlayScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224771BB4ABF60071CA9A /* PlayScene.swift */; settings = {ASSET_TAGS = (); }; };
-		ABE2247A1BB4AC0A0071CA9A /* PauseScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224791BB4AC0A0071CA9A /* PauseScene.swift */; settings = {ASSET_TAGS = (); }; };
-		ABE2247C1BB4AC2A0071CA9A /* LevelGenerationScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE2247B1BB4AC2A0071CA9A /* LevelGenerationScene.swift */; settings = {ASSET_TAGS = (); }; };
-		ABE2247E1BB4AC510071CA9A /* LevelCompleteScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE2247D1BB4AC510071CA9A /* LevelCompleteScene.swift */; settings = {ASSET_TAGS = (); }; };
+		ABE224721BB49D970071CA9A /* IntroScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224711BB49D970071CA9A /* IntroScene.swift */; };
+		ABE224741BB4A70E0071CA9A /* LevelSelectScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224731BB4A70E0071CA9A /* LevelSelectScene.swift */; };
+		ABE224761BB4AB4C0071CA9A /* InstructionsScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224751BB4AB4C0071CA9A /* InstructionsScene.swift */; };
+		ABE224781BB4ABF60071CA9A /* PlayScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224771BB4ABF60071CA9A /* PlayScene.swift */; };
+		ABE2247A1BB4AC0A0071CA9A /* PauseScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE224791BB4AC0A0071CA9A /* PauseScene.swift */; };
+		ABE2247C1BB4AC2A0071CA9A /* LevelGenerationScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE2247B1BB4AC2A0071CA9A /* LevelGenerationScene.swift */; };
+		ABE2247E1BB4AC510071CA9A /* LevelCompleteScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE2247D1BB4AC510071CA9A /* LevelCompleteScene.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +53,7 @@
 		AB7E01291BC71498002C6DA4 /* Sprites.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sprites.swift; sourceTree = "<group>"; };
 		AB7E012B1BC71F66002C6DA4 /* Sprites.atlasc */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Sprites.atlasc; sourceTree = "<group>"; };
 		AB7E012F1BC721EA002C6DA4 /* GameView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
+		ABBA695D1C3C96A20092559C /* WeightedRandomArray.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeightedRandomArray.swift; sourceTree = "<group>"; };
 		ABE2243C1BB497040071CA9A /* RNG Puzzle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RNG Puzzle.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ABE2243F1BB497040071CA9A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ABE2244A1BB497040071CA9A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 				AB7E012F1BC721EA002C6DA4 /* GameView.swift */,
 				ABE224791BB4AC0A0071CA9A /* PauseScene.swift */,
 				ABE2247D1BB4AC510071CA9A /* LevelCompleteScene.swift */,
+				ABBA695D1C3C96A20092559C /* WeightedRandomArray.swift */,
 			);
 			path = "RNG Puzzle";
 			sourceTree = "<group>";
@@ -299,6 +302,7 @@
 				AB7E01271BC64D58002C6DA4 /* Piece.swift in Sources */,
 				ABE224401BB497040071CA9A /* AppDelegate.swift in Sources */,
 				ABE224741BB4A70E0071CA9A /* LevelSelectScene.swift in Sources */,
+				ABBA695E1C3C96A20092559C /* WeightedRandomArray.swift in Sources */,
 				AB59C4831BD98DFE00BD7C47 /* Finger.swift in Sources */,
 				ABE2247A1BB4AC0A0071CA9A /* PauseScene.swift in Sources */,
 			);
