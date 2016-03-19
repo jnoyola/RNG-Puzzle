@@ -60,8 +60,23 @@ class GameView: SKNode {
     }
     
     func drawLevel(level: Level) {
-        let sprites = Sprites()
     
+        // Draw Pieces
+        drawPieces(level)
+        
+        // Draw Path
+        drawPath(level)
+        
+        // Draw background
+        let bg = SKSpriteNode(color: UIColor.blackColor(), size: CGSize(width: level._width, height: level._height))
+        bg.position = CGPoint(x: CGFloat(level._width) / 2, y: CGFloat(level._height) / 2)
+        bg.zPosition = -1
+        self.addChild(bg)
+    }
+    
+    func drawPieces(level: Level) {
+        let sprites = Sprites()
+        
         for i in 0...(level._width-1) {
             for j in 0...(level._height-1) {
                 let piece = level.getPiece(x: i, y: j)
@@ -94,12 +109,53 @@ class GameView: SKNode {
                 self.addChild(node)
             }
         }
+    }
+    
+    func drawPath(level: Level) {
+        _ballX = level._startX
+        _ballY = level._startY
+        let path = CGPathCreateMutable()
+        CGPathMoveToPoint(path, nil, CGFloat(_ballX) + 0.5, CGFloat(_ballY) + 0.5)
         
-        // Draw background
-        let bg = SKSpriteNode(color: UIColor.blackColor(), size: CGSize(width: level._width, height: level._height))
-        bg.position = CGPoint(x: CGFloat(level._width) / 2, y: CGFloat(level._height) / 2)
-        bg.zPosition = -1
-        self.addChild(bg)
+        var i = 0
+        var dir = level._correct[0]
+        updateNextPiece(x: _ballX, y: _ballY)
+        while !_nextPiece.contains(.Target) {
+        
+            // Draw path
+            CGPathAddLineToPoint(path, nil, CGFloat(_ballX) + 0.5, CGFloat(_ballY) + 0.5)
+            
+            // If we're on a piece or can't move, change direction
+            if _nextPiece.contains(.Corner1) ||
+               _nextPiece.contains(.Corner2) ||
+               _nextPiece.contains(.Corner3) ||
+               _nextPiece.contains(.Corner4) ||
+               _nextPiece.contains(.Teleporter) ||
+               cannotMove(level._correct[i]) {
+                if _nextPiece.contains(.Teleporter) {
+                    teleport()
+                    CGPathMoveToPoint(path, nil, CGFloat(_ballX) + 0.5, CGFloat(_ballY) + 0.5)
+                }
+                dir = level._correct[++i]
+            }
+            
+            updateNextPiece(dir)
+            
+            switch dir {
+            case .Right: ++_ballX
+            case .Up:    ++_ballY
+            case .Left:  --_ballX
+            case .Down:  --_ballY
+            default: break
+            }
+        }
+        CGPathAddLineToPoint(path, nil, CGFloat(_ballX) + 0.5, CGFloat(_ballY) + 0.5)
+        let line = SKShapeNode(path: path)
+        line.strokeColor = UIColor.yellowColor()
+        line.lineWidth = 0.25
+        line.antialiased = false
+        line.zPosition = 0
+        self.addChild(line)
     }
     
     func setBaseScale(scale: CGFloat) {
@@ -294,11 +350,7 @@ class GameView: SKNode {
     }
     
     func updateNextPiece(x x: Int, y: Int) -> PieceType {
-        if x >= 0 && y >= 0 && x < _level._width && y < _level._height {
-            _nextPiece = _level.getPiece(x: x, y: y)
-        } else {
-            _nextPiece = .Void
-        }
+        _nextPiece = _level.getPieceSafely((x: x, y: y))
         return _nextPiece
     }
     

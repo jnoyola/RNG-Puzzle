@@ -22,6 +22,8 @@ class Level: NSObject {
     var _grid: [PieceType]! = nil
     var _teleporters: [(x: Int, y: Int)] = []
     
+    var _correct: [Direction]! = nil
+    
     
     @inline(__always) func getCode() -> String {
         return "\(_level).\(_seed)"
@@ -70,7 +72,10 @@ class Level: NSObject {
         _height = _level / 2 + 3
         _grid = [PieceType](count: _width * _height, repeatedValue: .None)
     
-        startWithNumPathPieces(getNumPathPieces())
+        let numPathPieces = getNumPathPieces()
+        _correct = [Direction](count: numPathPieces + 1, repeatedValue: .Still)
+    
+        startWithNumPathPieces(numPathPieces)
     }
     
     func getNumPathPieces() -> Int {
@@ -94,6 +99,7 @@ class Level: NSObject {
             // Pick random direction from those remaining
             let iDir = random() % dirs.count
             let dir = dirs[iDir]
+            _correct[_correct.count - num - 1] = dir
             
             // Get offsets
             let offsets = getOffsetsFrom(x: x, y: y, dir: dir)
