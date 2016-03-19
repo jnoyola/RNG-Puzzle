@@ -31,10 +31,9 @@ class LevelGenerationScene: SKScene {
         addLabel("Generating Level...", size: height * 0.08, color: SKColor.blueColor(), y: 0.85)
         
         // Level
-        addLabel("Level \(_level._level)", size: height * 0.08, color: SKColor.whiteColor(), y: 0.55)
-        
-        // Seed
-        addLabel("Seed \(_level._seed)", size: height * 0.06, color: SKColor.whiteColor(), y: 0.4)
+        let levelLabel = LevelLabel(level: _level._level, seed:_level._seed, size: height * 0.08, color: SKColor.whiteColor())
+        levelLabel.position = CGPointMake(self.size.width*0.5, self.size.height*0.5)
+        self.addChild(levelLabel)
         
         NSTimer.scheduledTimerWithTimeInterval(0, target: self, selector: Selector("generate"), userInfo: nil, repeats: false)
     }

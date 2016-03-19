@@ -13,7 +13,7 @@ class Level: NSObject {
     typealias Point = (x: Int, y: Int)
 
     var _level = 1
-    var _seed = UInt32(time(nil))
+    var _seed = UInt32(time(nil)) % 10000
     
     var _width = 0
     var _height = 0
@@ -412,6 +412,7 @@ class Level: NSObject {
         
         while true {
             let type = getPieceSafely(point)
+            // TODO fix teleporter infinite loop
             if type.contains(.Teleporter) {
                 if lastPoint != nil {
                     lastPoint = (x: point.x, y: point.y)

@@ -182,7 +182,9 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     func complete() {
-        NSUserDefaults.standardUserDefaults().setInteger(_level._level + 1, forKey: "level")
+        var maxLevel = NSUserDefaults.standardUserDefaults().integerForKey("level")
+        maxLevel = max(maxLevel, _level._level + 1)
+        NSUserDefaults.standardUserDefaults().setInteger(maxLevel, forKey: "level")
     
         let levelCompleteScene = LevelCompleteScene(size: size, level: _level)
         levelCompleteScene.scaleMode = scaleMode

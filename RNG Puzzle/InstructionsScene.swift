@@ -18,7 +18,7 @@ class InstructionsScene: SKScene {
     var _finger1: Finger! = nil
     var _finger2: Finger! = nil
     var _pauseLabel: SKLabelNode! = nil
-    var _codeLabel: SKLabelNode! = nil
+    var _codeLabel: LevelLabel! = nil
     var _copyLabel1: SKLabelNode! = nil
     var _copyLabel2: SKLabelNode! = nil
     var _curStep = 0
@@ -46,7 +46,12 @@ class InstructionsScene: SKScene {
         _pauseLabel = addLabel("Paused", size: height * 0.064, color: SKColor.whiteColor(), x: 0.5, y: 0.465, z: 20, hidden: true)
         
         // Code
-        _codeLabel = addLabel("Level 21", size: height * 0.08, color: SKColor.whiteColor(), x: 0.5, y: 0.5, z: 20, hidden: true)
+        _codeLabel = LevelLabel(level: 21, seed: 3194, size: height * 0.08, color: SKColor.whiteColor())
+        _codeLabel.position = CGPointMake(self.size.width*0.5, self.size.height*0.5)
+        _codeLabel.zPosition = 20
+        _codeLabel.hidden = true
+        self.addChild(_codeLabel)
+        
         _copyLabel1 = addLabel("Copy Level ID", size: height * 0.04, color: SKColor.grayColor(), x: 0.5, y: 0.45, z: 20, hidden: true)
         _copyLabel2 = addLabel("Level ID Copied", size: height * 0.04, color: SKColor.grayColor(), x: 0.5, y: 0.45, z: 20, hidden: true)
         
@@ -149,8 +154,8 @@ class InstructionsScene: SKScene {
             break;
         case 9:
             title = "Level ID"
-            desc1 = "An ID for each level is displayed at"
-            desc2 = "the Pause and Level Complete screens."
+            desc1 = "An ID for each level shows"
+            desc2 = "the level number and seed."
             _codeLabel.hidden = false
             _copyLabel1.hidden = false
         case 10:

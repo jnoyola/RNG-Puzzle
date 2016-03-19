@@ -34,7 +34,9 @@ class PauseScene: SKScene {
         addLabel("Paused", size: height * 0.08, color: SKColor.blueColor(), x: 0.5, y: 0.85)
         
         // Level
-        addLabel("Level \(_level._level)", size: height * 0.08, color: SKColor.whiteColor(), x: 0.5, y: 0.5)
+        let levelLabel = LevelLabel(level: _level._level, seed:_level._seed, size: height * 0.08, color: SKColor.whiteColor())
+        levelLabel.position = CGPointMake(self.size.width*0.5, self.size.height*0.5)
+        self.addChild(levelLabel)
         
         // Quit
         addLabel("Quit", size: height * 0.064, color: SKColor.whiteColor(), x: 0.15, y: 0.5)
