@@ -20,7 +20,7 @@ class Level: NSObject {
     var _startX = 0
     var _startY = 0
     var _grid: [PieceType]! = nil
-    var _teleporters: [(x: Int, y: Int)] = []
+    var _teleporters: [Point] = []
     
     var _correct: [Direction]! = nil
     
@@ -35,6 +35,12 @@ class Level: NSObject {
     
     @inline(__always) func setPiece(x x: Int, y: Int, type: PieceType) {
         _grid[y * _width + x] = type
+    }
+    
+    @inline(__always) func addPiece(x x: Int, y: Int, type: PieceType) {
+        var piece = getPiece(x: x, y: y)
+        piece.insert(type)
+        setPiece(x: x, y: y, type: piece)
     }
     
     func getPieceSafely(point: Point) -> PieceType {
@@ -55,7 +61,7 @@ class Level: NSObject {
                 }
             }
         }
-        NSLog("ERROR: teleporter match not found")
+        NSLog("ERROR: (\(_level).\(_seed)) teleporter match not found")
         return (-1, -1)
     }
     
@@ -65,17 +71,21 @@ class Level: NSObject {
         super.init()
     }
     
-    func generate() {
+    func generate(debug: Bool) -> Bool {
         srandom(_seed)
 
         _width = _level / 2 + 3
         _height = _level / 2 + 3
-        _grid = [PieceType](count: _width * _height, repeatedValue: .None)
     
         let numPathPieces = getNumPathPieces()
         _correct = [Direction](count: numPathPieces + 1, repeatedValue: .Still)
     
         startWithNumPathPieces(numPathPieces)
+        
+        if debug {
+            return debugCheck()
+        }
+        return true
     }
     
     func getNumPathPieces() -> Int {
@@ -86,12 +96,17 @@ class Level: NSObject {
     }
     
     func startWithNumPathPieces(num: Int) {
-        _startX = random() % _width
-        _startY = random() % _height
-        setPiece(x: _startX, y: _startY, type: .Stop)
-        
-        let dirs = getNextDirections(.Still)
-        nextWithNumPathPieces(num, x: _startX, y: _startY, dirs: dirs)
+        while true {
+            _grid = [PieceType](count: _width * _height, repeatedValue: .None)
+            _startX = random() % _width
+            _startY = random() % _height
+            setPiece(x: _startX, y: _startY, type: .Stop)
+            
+            let dirs = getNextDirections(.Still)
+            if nextWithNumPathPieces(num, x: _startX, y: _startY, dirs: dirs) {
+                break
+            }
+        }
     }
     
     func nextWithNumPathPieces(num: Int, x: Int, y: Int, var dirs: [Direction]) -> Bool {
@@ -120,7 +135,7 @@ class Level: NSObject {
                     // depend on the placement of the current path and piece
                     for var i = 0; i < iOffset; ++i {
                         let pathOffset = offsets[i]
-                        setPiece(x: pathOffset.x, y: pathOffset.y, type: .Used)
+                        addPiece(x: pathOffset.x, y: pathOffset.y, type: .Used)
                     }
                 
                     // There are 4 options here:
@@ -135,7 +150,7 @@ class Level: NSObject {
                     //      We must bounce
                     
                     if num == 0 {
-                        if stopShortcutsForPiece(.Target, x: offset.x, y: offset.y, dir: dir) {
+                        if stopOutsideWallShortcuts(.Target, x: offset.x, y: offset.y, dir: dir) {
                             setPiece(x: offset.x, y: offset.y, type: .Target)
                             return true
                         }
@@ -148,6 +163,7 @@ class Level: NSObject {
                             var nextPiecePos = (x: 0, y: 0)
                             var teleporterExit = (x: 0, y: 0)
                             var nextDirs = [Direction]()
+                            var alreadyFailed = false
                             
                             if piece.contains(.Block) {
                                 // nextDirs is also used for checking for planned .Stop shortcuts
@@ -155,9 +171,15 @@ class Level: NSObject {
                                 
                                 // To eliminate planned .Stop shortcuts, don't place this planned .Stop
                                 // if this position was already reachable by another .Stop (planned or
-                                // unplanned)
-                                if arePlannedStopShortcutsAt(x: offset.x, y: offset.y, dirs: nextDirs) {
+                                // unplanned), or if its placement would create unplanned .Stops that
+                                // create a shortcut
+                                let unplannedStops = getUnplannedStopsForPlannedStopAt(x: offset.x, y: offset.y, dirs: nextDirs, visited: Set<PointRecord>())
+                                if unplannedStops == nil {
                                     continue
+                                } else {
+                                    for point in unplannedStops! {
+                                        addPiece(x: point.x, y: point.y, type: .Stop)
+                                    }
                                 }
                                 
                                 // If we're placing a .Block, we have to check if the next space
@@ -169,7 +191,12 @@ class Level: NSObject {
                                     setPiece(x: offset.x, y: offset.y, type: .Stop)
                                     setPiece(x: nextPiecePos.x, y: nextPiecePos.y, type: .Block)
                                     placedNextPiece = true
-                                    stopShortcutsForPiece(piece, x: nextPiecePos.x, y: nextPiecePos.y, dir: dir)
+                                
+                                    // Check if this placement created shortcuts connected by new
+                                    // unplanned stops
+                                    if !stopOutsideWallShortcuts(piece, x: nextPiecePos.x, y: nextPiecePos.y, dir: dir) {
+                                        alreadyFailed = true
+                                    }
                                 } else if iOffset == offsets.count - 1 && isWallFromDir(dir, pieceType: nextPiece) {
                                     // The next piece is a wall. We can use it to stop.
                                     setPiece(x: offset.x, y: offset.y, type: .Stop)
@@ -188,14 +215,23 @@ class Level: NSObject {
                                     if x == offset.x && y == offset.y {
                                         continue
                                     }
+                                    
                                     if isValidTeleporterExitAt(x: x, y: y) {
                                         teleporterExit = (x: x, y: y)
                                         setPiece(x: offset.x, y: offset.y, type: .Teleporter)
                                         _teleporters.append(offset)
                                         setPiece(x: x, y: y, type: .Teleporter)
+                                        addPiece(x: x, y: y, type: .Stop)
                                         _teleporters.append(teleporterExit)
                                         placedNextPiece = true
                                         nextDirs.append(dir)
+                                    
+                                        // Make sure we're not in the special case where the player can go through
+                                        // the teleporter a different direction and stop on the exit, creating a
+                                        // shortcut
+                                        if allowsTeleporterShortcuts(offset, exitX: x, exitY: y, dir: dir) {
+                                            alreadyFailed = true
+                                        }
                                         break
                                     }
                                 }
@@ -205,16 +241,22 @@ class Level: NSObject {
                                     continue
                                 }
                             } else {
-                                // If we're placing a corner, we have nothing to worry about
+                                
+                                // Check if this placement would create shortcuts connected by new
+                                // unplanned stops
+                                if !stopOutsideWallShortcuts(piece, x: offset.x, y: offset.y, dir: dir) {
+                                    continue
+                                }
+                                
+                                // If we're placing a corner, we have nothing else to worry about
                                 setPiece(x: offset.x, y: offset.y, type: piece)
-                                stopShortcutsForPiece(piece, x: offset.x, y: offset.y, dir: dir)
                                 nextDirs = getNextDirectionsForCorner(piece, dir: dir)
                             }
                             
                             // Move on to the next iteration
-                            if !piece.contains(.Teleporter) && nextWithNumPathPieces(num - 1, x: offset.x, y: offset.y, dirs: nextDirs) {
+                            if !piece.contains(.Teleporter) && !alreadyFailed && nextWithNumPathPieces(num - 1, x: offset.x, y: offset.y, dirs: nextDirs) {
                                 return true
-                            } else if piece.contains(.Teleporter) && nextWithNumPathPieces(num - 1, x: teleporterExit.x, y: teleporterExit.y, dirs: nextDirs) {
+                            } else if piece.contains(.Teleporter) && !alreadyFailed && nextWithNumPathPieces(num - 1, x: teleporterExit.x, y: teleporterExit.y, dirs: nextDirs) {
                                 return true
                             } else {
                                 // This is the undo section for removing this piece and placing a different one
@@ -311,6 +353,10 @@ class Level: NSObject {
             let type = getPieceSafely((x: x, y: y))
             if type == .None {
                 offsets.append((x, y))
+            } else if type.contains(.Teleporter) {
+                let point = getTeleporterPair(x: x, y: y)
+                x = point.x
+                y = point.y
             } else if type != .Used {
                 break
             }
@@ -350,9 +396,11 @@ class Level: NSObject {
         return (x: x, y: y)
     }
     
-    func stopShortcutsForPiece(piece: PieceType, x: Int, y: Int, dir: Direction) -> Bool {
+    func stopOutsideWallShortcuts(piece: PieceType, x: Int, y: Int, dir: Direction) -> Bool {
+        var unplannedStops = [Point]()
+        var dirs: [Direction]
         if piece.contains(.Block) || piece.contains(.Target) {
-            var dirs = [Direction](count: 3, repeatedValue: .Still)
+            dirs = [Direction](count: 3, repeatedValue: .Still)
             // Check the 3 directions not including the one we came from
             switch dir {
                 case .Right:
@@ -373,19 +421,8 @@ class Level: NSObject {
                     dirs[2] = .Down
                 default: break
             }
-            for i in 0...2 {
-                let point = getAdjPosFrom(x: x, y: y, dir: dirs[i])
-                var lastPoint: Point? = nil
-                if getStopInLineWithPoint(point, dir: dirs[i], lastPoint: &lastPoint).contains(.Stop) {
-                    if piece.contains(.Target) {
-                        return false
-                    } else {
-                        setStopAt(x: point.x, y: point.y)
-                    }
-                }
-            }
         } else {
-            var dirs = [Direction](count: 2, repeatedValue: .Still)
+            dirs = [Direction](count: 2, repeatedValue: .Still)
             // Check the 2 directions extending from walls
             if piece.contains(.Corner1) {
                 dirs[0] = .Left
@@ -400,14 +437,35 @@ class Level: NSObject {
                 dirs[0] = .Up
                 dirs[1] = .Left
             }
-            for i in 0...1 {
-                let point = getAdjPosFrom(x: x, y: y, dir: dirs[i])
-                var lastPoint: Point? = nil
-                if getStopInLineWithPoint(point, dir: dirs[i], lastPoint: &lastPoint).contains(.Stop) {
-                    setStopAt(x: point.x, y: point.y)
+        }
+
+        for wallDir in dirs {
+            let point = getAdjPosFrom(x: x, y: y, dir: wallDir)
+            var lastPoint: Point? = nil
+            if getStopInLineWithPoint(point, dir: wallDir, lastPoint: &lastPoint).contains(.Stop) {
+                if piece.contains(.Target) || getPieceSafely(point).contains(.Teleporter) {
+                    return false
+                } else {
+                    // Now that we would be creating an unplanned stop here,
+                    // we must first check if it would create a shortcut
+                    let shortcutDirs = getNextDirections(wallDir)
+                    let additionalUnplannedStops = getUnplannedStopsForPlannedStopAt(x: point.x, y: point.y, dirs: shortcutDirs, visited: Set<PointRecord>())
+                    if additionalUnplannedStops == nil {
+                        return false
+                    }
+                    unplannedStops.appendContentsOf(additionalUnplannedStops!)
+                    
+                    unplannedStops.append(point)
                 }
             }
         }
+        
+        // Since we haven't found any shortcuts that would disallow this placement,
+        // we can now place all unplanned stops
+        for point in unplannedStops {
+            addPiece(x: point.x, y: point.y, type: .Stop)
+        }
+        
         return true
     }
     
@@ -416,16 +474,39 @@ class Level: NSObject {
             lastPoint = (x: -1, y: -1)
         }
         
+        var usedTeleporters = Set<PointRecord>()
         while true {
             let type = getPieceSafely(point)
-            // TODO fix teleporter infinite loop
+            
             if type.contains(.Teleporter) {
+            
+                // Return early if it's a Teleporter that can be stopped on
+                if type.contains(.Stop) {
+                    return type
+                }
+            
+                let dst = getTeleporterPair(x: point.x, y: point.y)
+                
+                // If we've gone in a loop, return .Void
+                // This may allow players to enter a Teleporter loop from an unplanned Stop
+                let pointRecord = PointRecord(x: point.x, y: point.y)
+                if !usedTeleporters.contains(pointRecord) {
+                    usedTeleporters.insert(pointRecord)
+                } else {
+                    if lastPoint != nil {
+                        lastPoint = (x: -1, y: -1)
+                    }
+                    return .Void
+                }
+                
+                if lastPoint != nil {
+                    lastPoint = (x: dst.x, y: dst.y)
+                }
+                point = getAdjPosFrom(x: dst.x, y: dst.y, dir: dir)
+            } else if type.contains(.Used) || type == .None {
                 if lastPoint != nil {
                     lastPoint = (x: point.x, y: point.y)
                 }
-                point = getTeleporterPair(x: point.x, y: point.y)
-                point = getAdjPosFrom(x: point.x, y: point.y, dir: dir)
-            } else if type.contains(.Used) || type == .None {
                 point = getAdjPosFrom(x: point.x, y: point.y, dir: dir)
             } else {
                 // This is triggered for all pieces, .Stop, and .Void
@@ -445,33 +526,43 @@ class Level: NSObject {
         return false
     }
     
-    func setStopAt(x x: Int, y: Int) {
-        var piece = getPiece(x: x, y: y)
-        piece.insert(.Stop)
-        setPiece(x: x, y: y, type: piece)
-    }
+    func getUnplannedStopsForPlannedStopAt(x x: Int, y: Int, dirs: [Direction], var visited: Set<PointRecord>) -> [Point]? {
     
-    func arePlannedStopShortcutsAt(x x: Int, y: Int, dirs: [Direction]) -> Bool {
+        // Recursively get unplanned stops for the intended planned stop placement
+        // If this would create a shortcut, return nil
+        
+        let pointRecord = PointRecord(x: x, y: y)
+        if visited.contains(pointRecord) {
+            return nil
+        }
+        visited.insert(pointRecord)
+        
         var coordsForRetroStops = [Point]()
-        for i in 0...(dirs.count - 1) {
-            let dir = dirs[i]
+    
+        for dir in dirs {
             let point = getAdjPosFrom(x: x, y: y, dir: dir)
             var lastPoint: Point? = (x: -1, y: -1)
             let extendedSpaceType = getStopInLineWithPoint(point, dir: dir, lastPoint: &lastPoint)
-            if extendedSpaceType.contains(.Stop) {
-                return true
+            let lastPiece = getPieceSafely(lastPoint!)
+            if extendedSpaceType.contains(.Stop) || lastPiece.contains(.Used) || lastPiece.contains(.Teleporter) {
+                return nil
             } else if !extendedSpaceType.contains(.Void) {
-                if lastPoint!.x != -1 {
-                    coordsForRetroStops.append((x: lastPoint!.x, y: lastPoint!.y))
+                if lastPoint!.x == -1 {
+                    return nil
+                } else {
+                    let nextDirs = getNextDirections(dir)
+                    let additionalCoords = getUnplannedStopsForPlannedStopAt(x: lastPoint!.x, y: lastPoint!.y, dirs: nextDirs, visited: visited)
+                    if additionalCoords == nil {
+                        return nil
+                    } else {
+                        coordsForRetroStops.appendContentsOf(additionalCoords!)
+                    }
+                    coordsForRetroStops.append(lastPoint!)
                 }
             }
         }
         
-        // This is where we retroactively add unplanned .Stops if any eligible coords were found
-        for coord in coordsForRetroStops {
-            setStopAt(x: coord.x, y: coord.y)
-        }
-        return false
+        return coordsForRetroStops
     }
 
     func isValidTeleporterExitAt(x x: Int, y: Int) -> Bool {
@@ -500,6 +591,78 @@ class Level: NSObject {
         }
         
         return false
+    }
+    
+    func allowsTeleporterShortcuts(teleporter: Point, exitX: Int, exitY: Int, dir: Direction) -> Bool {
+        let unplannedStops1 = getTeleporterUnplannedStops(teleporter.x, inY: teleporter.y, outX: exitX, outY: exitY, dir: dir)
+        if unplannedStops1 == nil {
+            return true
+        }
+
+        let unplannedStops2 = getTeleporterUnplannedStops(exitX, inY: exitY, outX: teleporter.x, outY: teleporter.y, dir: getOppDir(dir))
+        if unplannedStops2 == nil {
+            return true
+        }
+        
+        for point in unplannedStops1! {
+            addPiece(x: point.x, y: point.y, type: .Stop)
+        }
+        for point in unplannedStops2! {
+            addPiece(x: point.x, y: point.y, type: .Stop)
+        }
+        return false
+    }
+    
+    func getTeleporterUnplannedStops(inX: Int, inY: Int, outX: Int, outY: Int, dir: Direction) -> [Point]? {
+        var dirs = [Direction](count: 3, repeatedValue: .Still)
+        // Check the 3 directions not including the one we came from
+        switch dir {
+            case .Right:
+                dirs[0] = .Right
+                dirs[1] = .Up
+                dirs[2] = .Down
+            case .Up:
+                dirs[0] = .Right
+                dirs[1] = .Up
+                dirs[2] = .Left
+            case .Left:
+                dirs[0] = .Up
+                dirs[1] = .Left
+                dirs[2] = .Down
+            case .Down:
+                dirs[0] = .Right
+                dirs[1] = .Left
+                dirs[2] = .Down
+            default: break
+        }
+        
+        var unplannedStops = [Point]()
+        
+        for inDir in dirs {
+            let inPos = getAdjPosFrom(x: inX, y: inY, dir: inDir)
+            var lastPoint: Point? = nil
+            if getStopInLineWithPoint(inPos, dir: inDir, lastPoint: &lastPoint).contains(.Stop) {
+                let outDir = getOppDir(inDir)
+                let outDirs = [Direction](count: 1, repeatedValue: outDir)
+                let additionalUnplannedStops = getUnplannedStopsForPlannedStopAt(x: outX, y: outY, dirs: outDirs, visited: Set<PointRecord>())
+                if additionalUnplannedStops == nil {
+                    return nil
+                } else {
+                    unplannedStops.appendContentsOf(additionalUnplannedStops!)
+                }
+            }
+        }
+        return unplannedStops
+    }
+    
+    func getOppDir(dir: Direction) -> Direction {
+        switch dir {
+        case .Up: return .Down
+        case .Down: return .Up
+        case .Left: return .Right
+        case .Right: return .Left
+        default: return .Still
+        }
     }
     
 // -----------------------------------------------------------------------
@@ -568,6 +731,8 @@ class Level: NSObject {
         }
     }
     
+// -----------------------------------------------------------------------
+
     func generateTestLevel() {
         _width = 8
         _height = 8
@@ -592,5 +757,91 @@ class Level: NSObject {
         _teleporters.append((0,4))
         setPiece(x: 6, y: 4, type: .Block)
         setPiece(x: 5, y: 6, type: .Target)
+    }
+    
+    func debugCheck() -> Bool {
+        let numSolutions = getNumSolutions(x: _startX, y: _startY, dir: .Still, visited: Set<PointRecord>())
+        if numSolutions != 1 {
+            NSLog("ERROR: (\(_level).\(_seed)) \(numSolutions) solutions found")
+            return false
+        }
+        
+        return true
+    }
+    
+    func getNumSolutions(var x x: Int, var y: Int, var dir: Direction, var visited: Set<PointRecord>) -> Int {
+        while true {
+            let piece = getPieceSafely((x: x, y: y))
+            if piece.contains(.Target) {
+                return 1
+            }
+            if piece.contains(.Void) || isWallFromDir(dir, pieceType: piece) {
+                return 0
+            }
+            
+            var dirs = [Direction](count: 1, repeatedValue: dir)
+            if (dir == .Still) {
+                dirs = getNextDirections(.Still)
+            }
+            if piece.contains(.Corner1) ||
+               piece.contains(.Corner2) ||
+               piece.contains(.Corner3) ||
+               piece.contains(.Corner4) {
+                dirs = getNextDirectionsForCorner(piece, dir: dir)
+            } else {
+                if piece.contains(.Teleporter) {
+                    let point = getTeleporterPair(x: x, y: y)
+                    if (point.x == -1) {
+                        return 1000
+                    }
+                    
+                    let curPoint = PointRecord(x: x, y: y, dir: dir)
+                    if visited.contains(curPoint) {
+                        return 0
+                    } else {
+                        visited.insert(curPoint)
+                    }
+                    
+                    x = point.x
+                    y = point.y
+                }
+                
+                let nextPoint = getAdjPosFrom(x: x, y: y, dir: dir)
+                let nextPiece = getPieceSafely(nextPoint)
+                if isWallFromDir(dir, pieceType: nextPiece) {
+                    dirs = getNextDirections(dir)
+                }
+            }
+            
+            if dirs.count == 1 {
+                dir = dirs[0]
+                let point = getAdjPosFrom(x: x, y: y, dir: dir)
+                x = point.x
+                y = point.y
+            } else {
+                let curPoint = PointRecord(x: x, y: y)
+                if visited.contains(curPoint) {
+                    return 0
+                } else {
+                    visited.insert(curPoint)
+                }
+                
+                var numSolutions = 0
+                for nextDir in dirs {
+                    let point = getAdjPosFrom(x: x, y: y, dir: nextDir)
+                    let newVisited = duplicateSet(visited)
+                    numSolutions += getNumSolutions(x: point.x, y: point.y, dir: nextDir, visited: newVisited)
+                }
+                return numSolutions
+            }
+        }
+    }
+    
+    func duplicateSet(set: Set<PointRecord>) -> Set<PointRecord> {
+        var newSet = Set<PointRecord>()
+        for point in set {
+            newSet.insert(point)
+        }
+        return newSet
     }
 }

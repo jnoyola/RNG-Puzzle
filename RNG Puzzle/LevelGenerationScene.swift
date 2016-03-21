@@ -39,7 +39,20 @@ class LevelGenerationScene: SKScene {
     }
     
     func generate() {
-        _level.generate()
+        NSLog("Generating: \(_level._level).\(_level._seed)")
+        _level.generate(false)
+        
+        // DEBUG CODE
+//        for i in 0...9999 {
+//            let level = Level()
+//            level._level = _level._level
+//            level._seed = UInt32(i)
+//            NSLog("Generating: \(level._level).\(level._seed)")
+//            if !level.generate(true) {
+//                _level = level
+//                break
+//            }
+//        }
 
         let playScene = PlayScene(size: size, level: _level)
         playScene.scaleMode = scaleMode

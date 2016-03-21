@@ -27,6 +27,7 @@
 		ABE2247C1BB4AC2A0071CA9A /* LevelGenerationScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE2247B1BB4AC2A0071CA9A /* LevelGenerationScene.swift */; };
 		ABE2247E1BB4AC510071CA9A /* LevelCompleteScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE2247D1BB4AC510071CA9A /* LevelCompleteScene.swift */; };
 		ABF490C21C9D432700B221A7 /* LevelLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABF490C11C9D432700B221A7 /* LevelLabel.swift */; };
+		ABF490C41C9E721000B221A7 /* PointRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABF490C31C9E721000B221A7 /* PointRecord.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +74,7 @@
 		ABE2247B1BB4AC2A0071CA9A /* LevelGenerationScene.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LevelGenerationScene.swift; sourceTree = "<group>"; };
 		ABE2247D1BB4AC510071CA9A /* LevelCompleteScene.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LevelCompleteScene.swift; sourceTree = "<group>"; };
 		ABF490C11C9D432700B221A7 /* LevelLabel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LevelLabel.swift; sourceTree = "<group>"; };
+		ABF490C31C9E721000B221A7 /* PointRecord.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PointRecord.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -142,6 +144,7 @@
 				ABE2247D1BB4AC510071CA9A /* LevelCompleteScene.swift */,
 				ABBA695D1C3C96A20092559C /* WeightedRandomArray.swift */,
 				ABF490C11C9D432700B221A7 /* LevelLabel.swift */,
+				ABF490C31C9E721000B221A7 /* PointRecord.swift */,
 			);
 			path = "RNG Puzzle";
 			sourceTree = "<group>";
@@ -300,6 +303,7 @@
 				ABE224721BB49D970071CA9A /* IntroScene.swift in Sources */,
 				AB7E012A1BC71498002C6DA4 /* Sprites.swift in Sources */,
 				AB7E01301BC721EA002C6DA4 /* GameView.swift in Sources */,
+				ABF490C41C9E721000B221A7 /* PointRecord.swift in Sources */,
 				ABE2247C1BB4AC2A0071CA9A /* LevelGenerationScene.swift in Sources */,
 				ABE224761BB4AB4C0071CA9A /* InstructionsScene.swift in Sources */,
 				ABE2247E1BB4AC510071CA9A /* LevelCompleteScene.swift in Sources */,

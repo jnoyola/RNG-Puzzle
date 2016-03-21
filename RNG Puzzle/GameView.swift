@@ -112,44 +112,59 @@ class GameView: SKNode {
     }
     
     func drawPath(level: Level) {
-        _ballX = level._startX
-        _ballY = level._startY
+        var x = level._startX
+        var y = level._startY
         let path = CGPathCreateMutable()
-        CGPathMoveToPoint(path, nil, CGFloat(_ballX) + 0.5, CGFloat(_ballY) + 0.5)
+        var usedTeleporters = Set<PointRecord>()
+        CGPathMoveToPoint(path, nil, CGFloat(x) + 0.5, CGFloat(y) + 0.5)
         
         var i = 0
         var dir = level._correct[0]
-        updateNextPiece(x: _ballX, y: _ballY)
-        while !_nextPiece.contains(.Target) {
+        var piece = level.getPieceSafely((x: x, y: y))
+        while !piece.contains(.Target) {
         
             // Draw path
-            CGPathAddLineToPoint(path, nil, CGFloat(_ballX) + 0.5, CGFloat(_ballY) + 0.5)
+            CGPathAddLineToPoint(path, nil, CGFloat(x) + 0.5, CGFloat(y) + 0.5)
             
             // If we're on a piece or can't move, change direction
-            if _nextPiece.contains(.Corner1) ||
-               _nextPiece.contains(.Corner2) ||
-               _nextPiece.contains(.Corner3) ||
-               _nextPiece.contains(.Corner4) ||
-               _nextPiece.contains(.Teleporter) ||
-               cannotMove(level._correct[i]) {
-                if _nextPiece.contains(.Teleporter) {
-                    teleport()
-                    CGPathMoveToPoint(path, nil, CGFloat(_ballX) + 0.5, CGFloat(_ballY) + 0.5)
-                }
+            if piece.contains(.Corner1) ||
+               piece.contains(.Corner2) ||
+               piece.contains(.Corner3) ||
+               piece.contains(.Corner4) {
                 dir = level._correct[++i]
+                piece = getNextPiece(x: x, y: y, dir: dir)
+            } else if piece.contains(.Teleporter) {
+                let dst = _level.getTeleporterPair(x: x, y: y)
+                
+                // _correct only contains one direction for each explicity added piece
+                // For a teleporter we're reusing, don't get the next direction
+                let dstPointRecord = PointRecord(x: dst.x, y: dst.y)
+                if !usedTeleporters.contains(PointRecord(x: x, y: y)) &&
+                   !usedTeleporters.contains(dstPointRecord) {
+                    usedTeleporters.insert(dstPointRecord)
+                    dir = level._correct[++i]
+                }
+                x = dst.x
+                y = dst.y
+                CGPathMoveToPoint(path, nil, CGFloat(x) + 0.5, CGFloat(y) + 0.5)
+                piece = getNextPiece(x: x, y: y, dir: dir)
+            } else {
+                piece = getNextPiece(x: x, y: y, dir: dir)
+                if cannotMove(piece, dir: level._correct[i]) {
+                    dir = level._correct[++i]
+                    piece = getNextPiece(x: x, y: y, dir: dir)
+                }
             }
             
-            updateNextPiece(dir)
-            
             switch dir {
-            case .Right: ++_ballX
-            case .Up:    ++_ballY
-            case .Left:  --_ballX
-            case .Down:  --_ballY
+            case .Right: ++x
+            case .Up:    ++y
+            case .Left:  --x
+            case .Down:  --y
             default: break
             }
         }
-        CGPathAddLineToPoint(path, nil, CGFloat(_ballX) + 0.5, CGFloat(_ballY) + 0.5)
+        CGPathAddLineToPoint(path, nil, CGFloat(x) + 0.5, CGFloat(y) + 0.5)
         let line = SKShapeNode(path: path)
         line.strokeColor = UIColor.yellowColor()
         line.lineWidth = 0.25
@@ -222,7 +237,7 @@ class GameView: SKNode {
         }
         
         // Can't move through walls
-        if cannotMove(dir) {
+        if cannotMove(updateNextPiece(dir), dir: dir) {
             // stop()
             return
         }
@@ -280,7 +295,7 @@ class GameView: SKNode {
             return
         } else if _nextPiece.contains(.Teleporter) {
             teleport()
-            if cannotMove(_dir) {
+            if cannotMove(updateNextPiece(_dir), dir: _dir) {
                 stop()
             } else {
                 move(_dir)
@@ -329,7 +344,7 @@ class GameView: SKNode {
             return
         }
         
-        if cannotMove(_dir) {
+        if cannotMove(updateNextPiece(_dir), dir: _dir) {
             stop()
             return
         }
@@ -337,8 +352,7 @@ class GameView: SKNode {
         move(_dir)
     }
     
-    func cannotMove(dir: Direction) -> Bool {
-        let piece = updateNextPiece(dir)
+    func cannotMove(piece: PieceType, dir: Direction) -> Bool {
         if (piece == .Block) ||
            (piece == .Corner1 && (dir == .Right || dir == .Up))   ||
            (piece == .Corner2 && (dir == .Up    || dir == .Left)) ||
@@ -349,14 +363,11 @@ class GameView: SKNode {
         return false
     }
     
-    func updateNextPiece(x x: Int, y: Int) -> PieceType {
-        _nextPiece = _level.getPieceSafely((x: x, y: y))
-        return _nextPiece
+    func getNextPiece(x x: Int, y: Int) -> PieceType {
+        return _level.getPieceSafely((x: x, y: y))
     }
     
-    func updateNextPiece(dir: Direction) -> PieceType {
-        var x = _ballX
-        var y = _ballY
+    func getNextPiece(var x x: Int, var y: Int, dir: Direction) -> PieceType {
         switch dir {
         case .Right: ++x
         case .Up:    ++y
@@ -364,7 +375,17 @@ class GameView: SKNode {
         case .Down:  --y
         default: break
         }
-        return updateNextPiece(x: x, y: y)
+        return getNextPiece(x: x, y: y)
+    }
+    
+    func updateNextPiece(x x: Int, y: Int) -> PieceType {
+        _nextPiece = getNextPiece(x: x, y: y)
+        return _nextPiece
+    }
+    
+    func updateNextPiece(dir: Direction) -> PieceType {
+        _nextPiece = getNextPiece(x: _ballX, y: _ballY, dir: dir)
+        return _nextPiece
     }
     
     func teleport() {
