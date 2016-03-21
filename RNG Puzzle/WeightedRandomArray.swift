@@ -50,6 +50,8 @@ class WeightedRandomArray: NSObject {
                   piece.contains(.Corner4) {
             return 5
         } else if piece.contains(.Teleporter) {
+            return 2
+        } else if piece.contains(.Target) {
             return 1
         }
         return 0

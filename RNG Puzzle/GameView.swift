@@ -65,7 +65,7 @@ class GameView: SKNode {
         drawPieces(level)
         
         // Draw Path
-        drawPath(level)
+        //drawPath(level)
         
         // Draw background
         let bg = SKSpriteNode(color: UIColor.blackColor(), size: CGSize(width: level._width, height: level._height))

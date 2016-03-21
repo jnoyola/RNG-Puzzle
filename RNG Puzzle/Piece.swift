@@ -28,6 +28,7 @@ struct PieceType: OptionSetType {
     static let Teleporter = PieceType(rawValue: 1 << 7) // 128
     static let Target =     PieceType(rawValue: 1 << 8) // 256
     static let Stop =       PieceType(rawValue: 1 << 9) // 512
+    static let Used2 =      PieceType(rawValue: 1 << 10)// 1024
 }
 
 struct Piece {

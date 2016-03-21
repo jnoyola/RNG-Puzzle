@@ -43,6 +43,24 @@ class Level: NSObject {
         setPiece(x: x, y: y, type: piece)
     }
     
+    func setUsed(point: Point) {
+        let type = getPiece(x: point.x, y: point.y)
+        if type.contains(.Used) {
+            setPiece(x: point.x, y: point.y, type: type.union(.Used2))
+        } else {
+            setPiece(x: point.x, y: point.y, type: .Used)
+        }
+    }
+    
+    func setUnused(point: Point) {
+        let type = getPiece(x: point.x, y: point.y)
+        if type.contains(.Used2) {
+            setPiece(x: point.x, y: point.y, type: .Used)
+        } else {
+            setPiece(x: point.x, y: point.y, type: .None)
+        }
+    }
+    
     func getPieceSafely(point: Point) -> PieceType {
         if point.x >= 0 && point.y >= 0 && point.x < _width && point.y < _height {
             return getPiece(x: point.x, y: point.y)
@@ -74,8 +92,8 @@ class Level: NSObject {
     func generate(debug: Bool) -> Bool {
         srandom(_seed)
 
-        _width = _level / 2 + 3
-        _height = _level / 2 + 3
+        _width = _level + 3
+        _height = _level + 3
     
         let numPathPieces = getNumPathPieces()
         _correct = [Direction](count: numPathPieces + 1, repeatedValue: .Still)
@@ -135,7 +153,7 @@ class Level: NSObject {
                     // depend on the placement of the current path and piece
                     for var i = 0; i < iOffset; ++i {
                         let pathOffset = offsets[i]
-                        addPiece(x: pathOffset.x, y: pathOffset.y, type: .Used)
+                        setUsed(pathOffset)
                     }
                 
                     // There are 4 options here:
@@ -159,6 +177,12 @@ class Level: NSObject {
                         while weightedArray.count() > 0 {
                             // Pick random piece from those remaining
                             let piece = weightedArray.popRandom()
+                            
+                            // Don't pick too many teleporters
+                            if piece == .Teleporter && _teleporters.count > _level / 4 {
+                                continue
+                            }
+                            
                             var placedNextPiece = false
                             var nextPiecePos = (x: 0, y: 0)
                             var teleporterExit = (x: 0, y: 0)
@@ -166,20 +190,17 @@ class Level: NSObject {
                             var alreadyFailed = false
                             
                             if piece.contains(.Block) {
+                            
                                 // nextDirs is also used for checking for planned .Stop shortcuts
                                 nextDirs = getNextDirections(dir)
                                 
                                 // To eliminate planned .Stop shortcuts, don't place this planned .Stop
                                 // if this position was already reachable by another .Stop (planned or
                                 // unplanned), or if its placement would create unplanned .Stops that
-                                // create a shortcut
+                                // create a shortcut. Unplanned stops are added below, after placement
                                 let unplannedStops = getUnplannedStopsForPlannedStopAt(x: offset.x, y: offset.y, dirs: nextDirs, visited: Set<PointRecord>())
                                 if unplannedStops == nil {
                                     continue
-                                } else {
-                                    for point in unplannedStops! {
-                                        addPiece(x: point.x, y: point.y, type: .Stop)
-                                    }
                                 }
                                 
                                 // If we're placing a .Block, we have to check if the next space
@@ -204,7 +225,15 @@ class Level: NSObject {
                                     // We can't stop here. Mark the .Block as invalid.
                                     continue
                                 }
+                                
+                                // Assuming everything went according to plan, add unplanned stops now
+                                if !alreadyFailed {
+                                    for point in unplannedStops! {
+                                        addPiece(x: point.x, y: point.y, type: .Stop)
+                                    }
+                                }
                             } else if piece.contains(.Teleporter) {
+                            
                                 // Make 10 attempts at finding a valid exit location
                                 // The exit point must be an empty space with at least one open adjacent space
                                 for _ in 0...9 {
@@ -259,6 +288,7 @@ class Level: NSObject {
                             } else if piece.contains(.Teleporter) && !alreadyFailed && nextWithNumPathPieces(num - 1, x: teleporterExit.x, y: teleporterExit.y, dirs: nextDirs) {
                                 return true
                             } else {
+                            
                                 // This is the undo section for removing this piece and placing a different one
                                 // at the same offset. We only need to undo if we placed a block in the next space
                                 // though. The current space will be overwritten by the next piece, and if we move
@@ -282,8 +312,7 @@ class Level: NSObject {
                     // This offset wasn't valid.
                     // Undo the path and piece placement, and remove the offset index.
                     for i in 0...iOffset {
-                        let pathOffset = offsets[i]
-                        setPiece(x: pathOffset.x, y: pathOffset.y, type: .None)
+                        setUnused(offsets[i])
                     }
                     offsetIndices.removeAtIndex(iOffsetIndex)
                 }
@@ -357,7 +386,7 @@ class Level: NSObject {
                 let point = getTeleporterPair(x: x, y: y)
                 x = point.x
                 y = point.y
-            } else if type != .Used {
+            } else if !type.contains(.Used) {
                 break
             }
         }
@@ -366,6 +395,12 @@ class Level: NSObject {
     
     func getPiecesFromDir(dir: Direction) -> [PieceType] {
         var pieces = [PieceType](count: 4, repeatedValue: .Block)
+        
+        // Half the time, only allow Blocks
+        if random() % 2 == 0 {
+            return pieces
+        }
+        
         pieces[1] = .Teleporter
         switch dir {
             case .Left:
