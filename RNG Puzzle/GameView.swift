@@ -353,11 +353,11 @@ class GameView: SKNode {
     }
     
     func cannotMove(piece: PieceType, dir: Direction) -> Bool {
-        if (piece == .Block) ||
-           (piece == .Corner1 && (dir == .Right || dir == .Up))   ||
-           (piece == .Corner2 && (dir == .Up    || dir == .Left)) ||
-           (piece == .Corner3 && (dir == .Left  || dir == .Down)) ||
-           (piece == .Corner4 && (dir == .Down  || dir == .Right)) {
+        if (piece.contains(.Block)) ||
+           (piece.contains(.Corner1) && (dir == .Right || dir == .Up))   ||
+           (piece.contains(.Corner2) && (dir == .Up    || dir == .Left)) ||
+           (piece.contains(.Corner3) && (dir == .Left  || dir == .Down)) ||
+           (piece.contains(.Corner4) && (dir == .Down  || dir == .Right)) {
             return true
         }
         return false

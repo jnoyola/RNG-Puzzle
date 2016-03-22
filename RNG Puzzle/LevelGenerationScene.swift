@@ -43,14 +43,16 @@ class LevelGenerationScene: SKScene {
         _level.generate(false)
         
         // DEBUG CODE
-//        for i in 0...9999 {
-//            let level = Level()
-//            level._level = _level._level
-//            level._seed = UInt32(i)
-//            NSLog("Generating: \(level._level).\(level._seed)")
-//            if !level.generate(true) {
-//                _level = level
-//                break
+//        for l in 1...20 {
+//            for i in 0...9999 {
+//                let level = Level()
+//                level._level = l
+//                level._seed = UInt32(i)
+//                NSLog("Generating: \(level._level).\(level._seed)")
+//                if !level.generate(true) {
+//                    _level = level
+//                    break
+//                }
 //            }
 //        }
 
