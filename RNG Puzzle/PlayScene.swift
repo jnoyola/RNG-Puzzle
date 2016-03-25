@@ -13,6 +13,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
 
     var _level: Level! = nil
     var _gameView: GameView! = nil
+    var _coinLabel: CoinLabel! = nil
     
     var _tapRecognizer: UITapGestureRecognizer! = nil
     var _swipeUpRecognizer: UISwipeGestureRecognizer! = nil
@@ -24,12 +25,17 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     
     var _lastScale: CGFloat = 1
     var _bringingBack = false
+    
+    var _oldSize: CGSize! = nil
 
     init(size: CGSize, level: Level) {
         super.init(size: size)
         _level = level
 
         _gameView = GameView(level: level, playScene: self, winCallback: complete)
+        
+        refreshCoins()
+        
         addChild(_gameView)
     }
     
@@ -149,7 +155,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     func bringBackToScreen() {
-        if _bringingBack {
+        if _bringingBack || view == nil {
             return
         }
         _bringingBack = true
@@ -182,12 +188,40 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     func complete() {
-        var maxLevel = NSUserDefaults.standardUserDefaults().integerForKey("level")
-        maxLevel = max(maxLevel, _level._level + 1)
-        NSUserDefaults.standardUserDefaults().setInteger(maxLevel, forKey: "level")
+        if _level._level == Storage.loadLevel() {
+            Storage.incLevel()
+        }
     
         let levelCompleteScene = LevelCompleteScene(size: size, level: _level)
         levelCompleteScene.scaleMode = scaleMode
         view?.presentScene(levelCompleteScene)
+    }
+    
+    func refreshCoins() {
+        let w = size.width
+        let h = size.height
+        let s = min(w, h)
+        
+        if _coinLabel != nil {
+            _coinLabel.removeFromParent()
+        }
+        _coinLabel = CoinLabel(text: "\(Storage.loadCoins())", size: s * 0.064, color: SKColor.whiteColor(), coinScale: 1.3, anchor: .Left)
+        _coinLabel.position = CGPoint(x: s * 0.1, y: h - s * 0.1)
+        _coinLabel.zPosition = 50
+        addChild(_coinLabel)
+    }
+    
+    override func didChangeSize(oldSize: CGSize) {
+        if _gameView != nil && oldSize != _oldSize {
+        
+            refreshCoins()
+        
+            let x = _gameView!.position.x + (size.width - oldSize.width) / 2
+            let y = _gameView!.position.y + (size.height - oldSize.height) / 2
+            _gameView!.position = CGPoint(x: x, y: y)
+            
+            bringBackToScreen()
+        }
+        _oldSize = size
     }
 }

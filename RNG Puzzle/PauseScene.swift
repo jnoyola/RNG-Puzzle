@@ -8,12 +8,25 @@
 
 import UIKit
 import SpriteKit
+import StoreKit
 
 class PauseScene: SKScene {
     
     var _level: Level! = nil
     var _playScene: PlayScene! = nil
+    
+    var _titleLabel: SKLabelNode! = nil
     var _copyLabel: SKLabelNode! = nil
+    var _quitLabel: SKLabelNode! = nil
+    var _resumeLabel: SKLabelNode! = nil
+    var _levelLabel: LevelLabel! = nil
+    var _hintLabel: CoinLabel! = nil
+    var _coinLabel: CoinLabel! = nil
+    var _messagesButton: SKSpriteNode! = nil
+    var _facebookButton: SKSpriteNode! = nil
+    var _twitterButton: SKSpriteNode! = nil
+    
+    var _purchasePopup: PurchasePopup? = nil
 
     init(size: CGSize, level: Level, playScene: PlayScene) {
         super.init(size: size)
@@ -28,24 +41,27 @@ class PauseScene: SKScene {
     override func didMoveToView(view: SKView) {
         backgroundColor = SKColor.blackColor()
         
-        let height = size.height
-        
         // Title
-        addLabel("Paused", size: height * 0.08, color: SKColor.blueColor(), x: 0.5, y: 0.85)
-        
-        // Level
-        let levelLabel = LevelLabel(level: _level._level, seed:_level._seed, size: height * 0.08, color: SKColor.whiteColor())
-        levelLabel.position = CGPointMake(self.size.width*0.5, self.size.height*0.5)
-        self.addChild(levelLabel)
-        
-        // Quit
-        addLabel("Quit", size: height * 0.064, color: SKColor.whiteColor(), x: 0.15, y: 0.5)
-        
-        // Resume
-        addLabel("Resume", size: height * 0.064, color: SKColor.whiteColor(), x: 0.85, y: 0.5)
+        _titleLabel = addLabel("Paused", color: SKColor.blueColor())
         
         // Copy Level ID
-        _copyLabel = addLabel("Copy Level ID", size: height * 0.04, color: SKColor.grayColor(), x: 0.5, y: 0.45)
+        _copyLabel = addLabel("Copy Level ID", color: SKColor.grayColor())
+        
+        // Quit
+        _quitLabel = addLabel("Quit", color: SKColor.whiteColor())
+        
+        // Resume
+        _resumeLabel = addLabel("Resume", color: SKColor.whiteColor())
+        
+        // Social
+        _messagesButton = SKSpriteNode(imageNamed: "icon_messages")
+        _facebookButton = SKSpriteNode(imageNamed: "icon_facebook")
+        _twitterButton = SKSpriteNode(imageNamed: "icon_twitter")
+        addChild(_messagesButton)
+        addChild(_facebookButton)
+        addChild(_twitterButton)
+        
+        refreshLayout()
         
         _playScene.view?.paused = true
     }
@@ -54,12 +70,10 @@ class PauseScene: SKScene {
         _playScene.view?.paused = false
     }
     
-    func addLabel(text: String, size: CGFloat, color: SKColor, x: CGFloat, y: CGFloat) -> SKLabelNode {
+    func addLabel(text: String, color: SKColor) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: "Optima-ExtraBlack")
         label.text = text
-        label.fontSize = size
         label.fontColor = color
-        label.position = CGPointMake(self.size.width*x, self.size.height*y)
         self.addChild(label)
         return label
     }
@@ -67,20 +81,157 @@ class PauseScene: SKScene {
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
         let touch = touches.first!
         let p = touch.locationInNode(self)
-        if (p.y > size.height * 0.35 && p.y < size.height * 0.65) {
-            if (p.x < size.width * 0.25) {
-                // Quit
-                let introScene = IntroScene(size: size)
-                introScene.scaleMode = scaleMode
-                view?.presentScene(introScene)
-            } else if (p.x > size.width * 0.75) {
-                // Resume
-                view?.presentScene(_playScene)
-            } else {
-                // Copy Level ID
-                UIPasteboard.generalPasteboard().string = _level.getCode()
-                _copyLabel.text = "Level ID Copied"
-            }
+        
+        if _purchasePopup != nil {
+            _purchasePopup!.touch(p)
+            return
         }
+        
+        let w = size.width
+        let h = size.height
+        
+        if p.x > w * 0.25 && p.x < w * 0.75 && p.y > h * 0.55 && p.y < h * 0.79 {
+            // Copy Level ID
+            UIPasteboard.generalPasteboard().string = _level.getCode()
+            _copyLabel.text = "Level ID Copied"
+        } else if p.x > _hintLabel.position.x + _hintLabel._minX
+               && p.x < _hintLabel.position.x + _hintLabel._maxX
+               && p.y > _hintLabel.position.y + _hintLabel._minY
+               && p.y < _hintLabel.position.y + _hintLabel._maxY {
+            // Hint
+            attemptHint()
+        } else if isPointInBounds(p, node: _quitLabel) {
+            // Quit
+            let introScene = IntroScene(size: size)
+            introScene.scaleMode = scaleMode
+            view?.presentScene(introScene)
+        } else if isPointInBounds(p, node: _resumeLabel) {
+            // Resume
+            view?.presentScene(_playScene)
+        } else if isPointInBounds(p, node: _facebookButton) {
+            notify("shareFacebook")
+        } else if isPointInBounds(p, node: _messagesButton) {
+            notify("shareMessages")
+        } else if isPointInBounds(p, node: _twitterButton) {
+            notify("shareTwitter")
+        }
+    }
+    
+    func isPointInBounds(p: CGPoint, node: SKNode) -> Bool {
+        let x1 = node.frame.minX - 30
+        let x2 = node.frame.maxX + 30
+        let y1 = node.frame.minY - 30
+        let y2 = node.frame.maxY + 30
+        if p.x > x1 && p.x < x2 && p.y > y1 && p.y < y2 {
+            return true
+        }
+        return false
+    }
+    
+    func attemptHint() {
+        if Storage.loadCoins() > 0 {
+            if _playScene._gameView.hint() {
+                Storage.addCoins(-1)
+                refreshCoins()
+                _hintLabel.animate()
+                _coinLabel.animate()
+            }
+        } else {
+            _purchasePopup = PurchasePopup(parent: self)
+            refreshPurchasePopup()
+            _purchasePopup!.zPosition = 1000
+            _purchasePopup!.position = CGPoint(x: 0, y: -_purchasePopup!.frame.height)
+            addChild(_purchasePopup!)
+            _purchasePopup!.runAction(SKAction.moveToY(0, duration: 0.2), completion: {
+                self._purchasePopup?.activate()
+            })
+        }
+    }
+    
+    func closePurchasePopup() {
+        _purchasePopup!.runAction(SKAction.moveToY(-_purchasePopup!.frame.height, duration: 0.2), completion: {
+            self._purchasePopup!.removeFromParent()
+            self._purchasePopup = nil
+        })
+    }
+    
+    func notify(name: String) {
+        // TODO add level code to notification
+        NSNotificationCenter.defaultCenter().postNotificationName(name, object: self)
+    }
+    
+    func refreshLayout() {
+        if _level == nil {
+            return
+        }
+    
+        let w = size.width
+        let h = size.height
+        let s = min(w, h)
+        
+        _titleLabel.fontSize = s * 0.08
+        _titleLabel.position = CGPoint(x: w * 0.5, y: h * 0.85)
+        
+        _copyLabel.fontSize = s * 0.04
+        _copyLabel.position = CGPoint(x: w * 0.5, y: h * 0.67 - s * 0.05)
+        
+        _quitLabel.fontSize = s * 0.064
+        _quitLabel.position = CGPoint(x: w * 0.15, y: h * 0.47)
+        
+        _resumeLabel.fontSize = s * 0.064
+        _resumeLabel.position = CGPoint(x: w * 0.85, y: h * 0.47)
+        
+        _messagesButton.size = CGSize(width: s * 0.15, height: s * 0.15)
+        _messagesButton.position = CGPoint(x: w * 0.5 - s * 0.25, y: h * 0.28)
+        
+        _facebookButton.size = CGSize(width: s * 0.15, height: s * 0.15)
+        _facebookButton.position = CGPoint(x: w * 0.5, y: h * 0.28)
+        
+        _twitterButton.size = CGSize(width: s * 0.15, height: s * 0.15)
+        _twitterButton.position = CGPoint(x: w * 0.5 + s * 0.25, y: h * 0.28)
+        
+        if _levelLabel != nil {
+            _levelLabel.removeFromParent()
+        }
+        _levelLabel = LevelLabel(level: _level._level, seed:_level._seed, size: s * 0.08, color: SKColor.whiteColor())
+        _levelLabel.position = CGPoint(x: w * 0.5, y: h * 0.67)
+        self.addChild(_levelLabel)
+        
+        if _hintLabel != nil {
+            _hintLabel.removeFromParent()
+        }
+        _hintLabel = CoinLabel(text: "Hint", size: s * 0.064, color: SKColor.whiteColor())
+        _hintLabel.position = CGPoint(x: w * 0.5, y: h * 0.47)
+        addChild(_hintLabel)
+        
+        refreshCoins()
+        
+        refreshPurchasePopup()
+    }
+    
+    func refreshCoins() {
+        let w = size.width
+        let h = size.height
+        let s = min(w, h)
+        
+        if _coinLabel != nil {
+            _coinLabel.removeFromParent()
+        }
+        _coinLabel = CoinLabel(text: "\(Storage.loadCoins())", size: s * 0.064, color: SKColor.whiteColor(), coinScale: 1.3, anchor: .Left)
+        _coinLabel.position = CGPoint(x: s * 0.1, y: h - s * 0.1)
+        addChild(_coinLabel)
+        
+        _playScene.refreshCoins()
+    }
+    
+    func refreshPurchasePopup() {
+        let w = size.width
+        let h = size.height
+        
+        _purchasePopup?.refreshLayout(CGSize(width: w, height: h))
+    }
+    
+    override func didChangeSize(oldSize: CGSize) {
+        refreshLayout()
     }
 }

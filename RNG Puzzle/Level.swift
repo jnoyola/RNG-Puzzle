@@ -23,7 +23,7 @@ class Level: NSObject {
     var _teleporters: [Point] = []
     var _stops = Set<PointRecord>()
     
-    var _correct: [Direction]! = nil
+    var _correct: [PointRecord!]! = nil
     
     
     @inline(__always) func getCode() -> String {
@@ -108,13 +108,13 @@ class Level: NSObject {
     }
     
     func generate(debug: Bool) -> Bool {
-        srandom(_seed)
+        srandom(getTrueSeed())
 
-        _width = _level + 3
-        _height = _level + 3
+        _width = getWidth()
+        _height = _width
     
         let numPathPieces = getNumPathPieces()
-        _correct = [Direction](count: numPathPieces + 1, repeatedValue: .Still)
+        _correct = [PointRecord!](count: numPathPieces + 1, repeatedValue: nil)
     
         startWithNumPathPieces(numPathPieces)
         
@@ -129,11 +129,27 @@ class Level: NSObject {
         return true
     }
     
-    func getNumPathPieces() -> Int {
-        if _level < 4 {
-            return _level
+    func getTrueSeed() -> UInt32 {
+        // Every third level actually has equal difficulty as the last,
+        // just with a different seed
+        var trueSeed = _seed % 10000
+        if (_level + 1) % 3 == 0 {
+            trueSeed = UINT32_MAX - _seed
         }
-        return _level + random() % (_level / 2)
+        
+        // Random bug causing infinite loop when creating dead ends
+        if _level == 36 && trueSeed == 6190 {
+            trueSeed = 10000
+        }
+        return trueSeed
+    }
+    
+    func getWidth() -> Int {
+        return 4 + _level / 3
+    }
+    
+    func getNumPathPieces() -> Int {
+        return 1 + (_level - 1) / 3
     }
     
     func startWithNumPathPieces(num: Int) {
@@ -194,10 +210,6 @@ class Level: NSObject {
             let iDir = random() % dirs.count
             let dir = dirs[iDir]
             
-            if isTruePath {
-                _correct[_correct.count - num - 1] = dir
-            }
-            
             // Get offsets
             let offsets = getOffsetsFrom(x: x, y: y, dir: dir)
             if offsets.count > 0 {
@@ -211,6 +223,11 @@ class Level: NSObject {
                     let iOffsetIndex = random() % offsetIndices.count
                     let iOffset = offsetIndices[iOffsetIndex]
                     let offset = offsets[iOffset]
+            
+                    // Add the correct direction to get to each path waypoint
+                    if isTruePath {
+                        _correct[_correct.count - num - 1] = PointRecord(x: offset.x, y: offset.y, dir: dir)
+                    }
                     
                     // Set path here
                     // We can't use head recursion because the following pieces might
@@ -242,7 +259,7 @@ class Level: NSObject {
                             let piece = weightedArray.popRandom()
                             
                             // Don't pick too many teleporters
-                            if piece == .Teleporter && _teleporters.count > _level / 4 {
+                            if piece == .Teleporter && _teleporters.count >= _width / 4 {
                                 continue
                             }
                             
@@ -363,7 +380,7 @@ class Level: NSObject {
                                 
                                 // Allow dead ends to continue from a Teleporter's dead end
                                 if !isTruePath {
-                                    addDirectedStop(x: offset.x, y: offset.y, dir: nextDirs[0])
+                                    addDirectedStop(x: teleporterExit.x, y: teleporterExit.y, dir: nextDirs[0])
                                 }
                                 
                                 return true
@@ -785,9 +802,6 @@ class Level: NSObject {
         var numDeadEnds = 0
         while !_stops.isEmpty {
             let stop = _stops.popFirst()
-            if stop == nil {
-                break
-            }
             
             var dirs: [Direction]!
             if stop!.dir == .Still {
@@ -898,9 +912,13 @@ class Level: NSObject {
             _teleporters.append((7,2))
             setPiece(x: 7, y: 0, type: .Target)
         case 9:
+            _startX = 1
+            _startY = 1
+            setPiece(x: 7, y: 0, type: .Target)
+        case 10:
             _startX = 100
             _startY = 100
-        case 10:
+        case 11:
             _startX = 100
             _startY = 100
         default: break

@@ -11,53 +11,132 @@ import SpriteKit
 
 class IntroScene: SKScene {
 
+    var _titleLabel: SKLabelNode! = nil
+    var _playLabel: SKLabelNode! = nil
+    var _myLevelsLabel: SKLabelNode! = nil
+    var _instructionsLabel: SKLabelNode! = nil
+    var _leaderboardLabel: SKLabelNode! = nil
+    var _messagesButton: SKSpriteNode! = nil
+    var _facebookButton: SKSpriteNode! = nil
+    var _twitterButton: SKSpriteNode! = nil
+
     override func didMoveToView(view: SKView) {
         backgroundColor = SKColor.blackColor()
         
-        let height = size.height
-        
         // Title
-        addLabel("RNG Puzzle", size: height * 0.12, color: SKColor.blueColor(), y: 0.75)
+        _titleLabel = addLabel("AI Puzzle", color: SKColor.blueColor())
         
         // Play
-        addLabel("Play", size: height * 0.064, color: SKColor.whiteColor(), y: 0.55)
+        _playLabel = addLabel("Play", color: SKColor.whiteColor())
+        
+        // My Puzzles
+        _myLevelsLabel = addLabel("My Puzzles", color: SKColor.whiteColor())
         
         // Instructions
-        addLabel("Instructions", size: height * 0.064, color: SKColor.whiteColor(), y: 0.38)
+        _instructionsLabel = addLabel("Instructions", color: SKColor.whiteColor())
         
         // Leaderboard
-        addLabel("Leaderboard", size: height * 0.064, color: SKColor.whiteColor(), y: 0.21)
-        
-        // iNoyola
-        addLabel("iNoyola", size: height * 0.04, color: SKColor.grayColor(), y: 0.05)
+        _leaderboardLabel = addLabel("Leaderboard", color: SKColor.whiteColor())
+
+        // Social
+        _messagesButton = SKSpriteNode(imageNamed: "icon_messages")
+        _facebookButton = SKSpriteNode(imageNamed: "icon_facebook")
+        _twitterButton = SKSpriteNode(imageNamed: "icon_twitter")
+        addChild(_messagesButton)
+        addChild(_facebookButton)
+        addChild(_twitterButton)
+
+        refreshLayout()
     }
     
-    func addLabel(text: String, size: CGFloat, color: SKColor, y: CGFloat) {
+    func addLabel(text: String, color: SKColor) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: "Optima-ExtraBlack")
         label.text = text
-        label.fontSize = size
         label.fontColor = color
-        label.position = CGPointMake(self.size.width*0.5, self.size.height*y)
         self.addChild(label)
+        return label
     }
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
         let touch = touches.first!
         let p = touch.locationInNode(self)
-        if (p.x > size.width * 0.3 && p.x < size.width * 0.7 && p.y < size.height * 0.65) {
-            if (p.y > size.height * 0.48) {
-                let levelSelectScene = LevelSelectScene(size: size)
-                levelSelectScene.scaleMode = scaleMode
-                view?.presentScene(levelSelectScene)
-            } else if (p.y > size.height * 0.31) {
-                let instructionsScene = InstructionsScene(size: size)
-                instructionsScene.scaleMode = scaleMode
-                view?.presentScene(instructionsScene)
-            } else if (p.y > size.height * 0.14) {
-                //////////
-                // TODO //
-                //////////
-            }
+        
+        if isPointInBounds(p, node: _playLabel) {
+            presentScene(LevelSelectScene(size: size))
+        } else if isPointInBounds(p, node: _myLevelsLabel) {
+            /////////////////////
+            // TODO: My Levels //
+            /////////////////////
+        } else if isPointInBounds(p, node: _instructionsLabel) {
+            presentScene(InstructionsScene(size: size))
+        } else if isPointInBounds(p, node: _leaderboardLabel) {
+            ///////////////////////
+            // TODO: Leaderboard //
+            ///////////////////////
+        } else if isPointInBounds(p, node: _facebookButton) {
+            notify("shareFacebook")
+        } else if isPointInBounds(p, node: _messagesButton) {
+            notify("shareMessages")
+        } else if isPointInBounds(p, node: _twitterButton) {
+            notify("shareTwitter")
         }
+    }
+    
+    func isPointInBounds(p: CGPoint, node: SKNode) -> Bool {
+        let x1 = node.frame.minX - 30
+        let x2 = node.frame.maxX + 30
+        let y1 = node.frame.minY - 30
+        let y2 = node.frame.maxY + 30
+        if p.x > x1 && p.x < x2 && p.y > y1 && p.y < y2 {
+            return true
+        }
+        return false
+    }
+    
+    func presentScene(scene: SKScene) {
+        scene.scaleMode = scaleMode
+        view?.presentScene(scene)
+    }
+    
+    func notify(name: String) {
+        NSNotificationCenter.defaultCenter().postNotificationName(name, object: self)
+    }
+    
+    func refreshLayout() {
+        if _titleLabel == nil {
+            return
+        }
+    
+        let w = size.width
+        let h = size.height
+        let s = min(w, h)
+        
+        _titleLabel.fontSize = s * 0.12
+        _titleLabel.position = CGPoint(x: w * 0.5, y: h * 0.85)
+        
+        _playLabel.fontSize = s * 0.064
+        _playLabel.position = CGPoint(x: w * 0.5, y: h * 0.7)
+        
+        _myLevelsLabel.fontSize = s * 0.064
+        _myLevelsLabel.position = CGPoint(x: w * 0.5, y: h * 0.55)
+        
+        _instructionsLabel.fontSize = s * 0.064
+        _instructionsLabel.position = CGPoint(x: w * 0.5, y: h * 0.4)
+        
+        _leaderboardLabel.fontSize = s * 0.064
+        _leaderboardLabel.position = CGPoint(x: w * 0.5, y: h * 0.25)
+        
+        _messagesButton.size = CGSize(width: s * 0.15, height: s * 0.15)
+        _messagesButton.position = CGPoint(x: w * 0.5 - s * 0.25, y: h * 0.08)
+        
+        _facebookButton.size = CGSize(width: s * 0.15, height: s * 0.15)
+        _facebookButton.position = CGPoint(x: w * 0.5, y: h * 0.08)
+        
+        _twitterButton.size = CGSize(width: s * 0.15, height: s * 0.15)
+        _twitterButton.position = CGPoint(x: w * 0.5 + s * 0.25, y: h * 0.08)
+    }
+    
+    override func didChangeSize(oldSize: CGSize) {
+        refreshLayout()
     }
 }

@@ -32,5 +32,5 @@ class PointRecord: Hashable {
 }
 
 func ==(lhs: PointRecord, rhs: PointRecord) -> Bool {
-    return lhs.x == rhs.x && lhs.y == rhs.y && (lhs.dir == rhs.dir || lhs.dir == .Still || rhs.dir == .Still)
+    return lhs.x == rhs.x && lhs.y == rhs.y && lhs.dir == rhs.dir
 }

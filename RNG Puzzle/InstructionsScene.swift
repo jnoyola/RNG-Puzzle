@@ -11,92 +11,58 @@ import SpriteKit
 
 class InstructionsScene: SKScene {
 
-    var _title: SKLabelNode! = nil
-    var _desc1: SKLabelNode! = nil
-    var _desc2: SKLabelNode! = nil
     var _gameView: GameView? = nil
     var _finger1: Finger! = nil
     var _finger2: Finger! = nil
     var _pauseLabel: SKLabelNode! = nil
-    var _codeLabel: LevelLabel! = nil
-    var _copyLabel1: SKLabelNode! = nil
-    var _copyLabel2: SKLabelNode! = nil
-    var _curStep = 0
-    let _maxStep = 10
+    var _curStep = 1
+    let _maxStep = 11
+    
+    let dx: CGFloat = 50
     
     override func didMoveToView(view: SKView) {
         backgroundColor = SKColor(red: 0.4, green: 0, blue: 0.4, alpha: 1)
         
-        let height = size.height
-        
-        // Title (x of y)
-        _title = addLabel("TITLE", size: height * 0.08, color: SKColor.whiteColor(), x: 0.5, y: 0.82)
-        
-        // < button
-        addLabel("<", size: height * 0.1, color: SKColor.whiteColor(), x: 0.08, y: 0.465)
-        
-        // > button
-        addLabel(">", size: height * 0.1, color: SKColor.whiteColor(), x: 0.918, y: 0.465)
-        
-        // Description
-        _desc1 = addLabel("DESC", size: height * 0.064, color: SKColor.whiteColor(), x: 0.5, y: 0.18)
-        _desc2 = addLabel("DESC", size: height * 0.064, color: SKColor.whiteColor(), x: 0.5, y: 0.07)
-        
-        // Paused
-        _pauseLabel = addLabel("Paused", size: height * 0.064, color: SKColor.whiteColor(), x: 0.5, y: 0.465, z: 20, hidden: true)
-        
-        // Code
-        _codeLabel = LevelLabel(level: 21, seed: 3194, size: height * 0.08, color: SKColor.whiteColor())
-        _codeLabel.position = CGPointMake(self.size.width*0.5, self.size.height*0.5)
-        _codeLabel.zPosition = 20
-        _codeLabel.hidden = true
-        self.addChild(_codeLabel)
-        
-        _copyLabel1 = addLabel("Copy Level ID", size: height * 0.04, color: SKColor.grayColor(), x: 0.5, y: 0.45, z: 20, hidden: true)
-        _copyLabel2 = addLabel("Level ID Copied", size: height * 0.04, color: SKColor.grayColor(), x: 0.5, y: 0.45, z: 20, hidden: true)
-        
         setStep(1)
     }
     
-    func addLabel(text: String, size: CGFloat, color: SKColor, x: CGFloat, y: CGFloat, z: CGFloat = 0, hidden: Bool = false) -> SKLabelNode {
+    func addLabel(text: String, color: SKColor, fontSize: CGFloat, x: CGFloat, y: CGFloat, z: CGFloat = 0, hidden: Bool = false) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: "Optima-ExtraBlack")
         label.text = text
-        label.fontSize = size
         label.fontColor = color
-        label.position = CGPointMake(self.size.width*x, self.size.height*y)
+        label.fontSize = fontSize
+        label.position = CGPoint(x: x, y: y)
         label.zPosition = z
         label.horizontalAlignmentMode = .Center
         label.hidden = hidden
         self.addChild(label)
         return label
     }
+    
+    override func didChangeSize(oldSize: CGSize) {
+        setStep(_curStep)
+    }
 
     func setStep(step: Int) {
-        _pauseLabel.hidden = true
-        _codeLabel.hidden = true
-        _copyLabel1.hidden = true
-        _copyLabel2.hidden = true
-        if (_gameView != nil) {
-            _gameView!.removeFromParent()
-            _gameView = nil
-        }
-        if (_finger1 != nil) {
-            _finger1!.remove()
-            _finger1 = nil
-        }
-        if (_finger2 != nil) {
-            _finger2!.remove()
-            _finger2 = nil
-        }
-        
-        if (step == 0 || step > _maxStep) {
+        if step == 0 || step > _maxStep {
             let introScene = IntroScene(size: size)
             introScene.scaleMode = scaleMode
             view?.presentScene(introScene)
+            return
         }
+        
+        if _finger1 != nil {
+            _finger1.remove()
+        }
+        if _finger2 != nil {
+            _finger2.remove()
+        }
+        
+        self.removeAllChildren()
+        
         _curStep = step
-        setStepText(step)
         setStepGame(step)
+        setStepElements(step)
         performActionsForStep(step)
     }
     
@@ -114,62 +80,97 @@ class InstructionsScene: SKScene {
         }
     }
     
-    func setStepText(step: Int) {
+    func setStepElements(step: Int) {
         var title: String! = nil
-        var desc1 = ""
-        var desc2 = ""
+        var descText: String! = nil
+        var copyText: String? = nil
+        var paused = false
+        var showLevelID = false
         switch (step) {
         case 1:
-            title = "Goal"
-            desc1 = "The goal of RNG Puzzle is to get the"
-            desc2 = "blue and orange ball into the red portal."
+            title = "Target"
+            descText = "Your goal is to guide the blue and orange ball into the red portal"
         case 2:
             title = "Moving";
-            desc1 = "Swipe one finger to move the ball"
-            desc2 = "when it is not in motion."
+            descText = "Swipe to move the ball when it's at rest"
         case 3:
             title = "The Void"
-            desc1 = "If the ball enters the void,"
-            desc2 = "the level will be reset."
+            descText = "Try not to go off the edge into the void"
         case 4:
             title = "Blocks";
-            desc1 = "Blocks and walls stop the ball,"
-            desc2 = "while corners redirect it."
+            descText = "Some blocks stop the ball, while others redirect it"
         case 5:
-            title = "Portals"
-            desc1 = "Purple portals teleport the ball"
-            desc2 = "to a new location."
+            title = "Wormholes"
+            descText = "Purple wormholes teleport the ball to a new location"
         case 6:
             title = "Pausing"
-            desc1 = "Tap to pause the game."
+            descText = "Tap to pause the game"
+            paused = true
             break;
         case 7:
             title = "Zoom & Pan"
-            desc1 = "Use two fingers to zoom and pan."
+            descText = "Use two fingers to zoom and pan"
             break;
         case 8:
-            title = "Levels"
-            desc1 = "Levels are generated randomly"
-            desc2 = "and will be different every time."
+            title = "Puzzles"
+            descText = "Millions of unique puzzles are randomly generated"
             break;
         case 9:
-            title = "Level ID"
-            desc1 = "An ID for each level shows"
-            desc2 = "the level number and seed."
-            _codeLabel.hidden = false
-            _copyLabel1.hidden = false
+            title = "Creation"
+            descText = "You can also create your own puzzles to share with friends"
+            break;
         case 10:
             title = "Level ID"
-            desc1 = "Share this code with friends to"
-            desc2 = "challenge them to the same level!"
-            _codeLabel.hidden = false
-            _copyLabel2.hidden = false
+            descText = "An ID for each level shows the difficulty and seed"
+            copyText = "Copy Level ID"
+            showLevelID = true
+        case 11:
+            title = "Sharing"
+            descText = "Share these codes with friends to challenge them to the same level!"
+            copyText = "Level ID Copied"
+            showLevelID = true
         default:
             break
         }
-        _title.text = "\(title) (\(_curStep) of \(_maxStep))"
-        _desc1.text = desc1
-        _desc2.text = desc2
+//        let titleText = "\(title) (\(_curStep) of \(_maxStep))"
+        let titleText = "\(_curStep) of \(_maxStep)\n\(title)"
+        
+        let w = size.width
+        let h = size.height
+        let s = min(w, h)
+        
+        // Title
+        //addLabel(titleText, color: SKColor.whiteColor(), fontSize: s * 0.08, x: w * 0.5, y: h * 0.82, z: 100)
+        let titleLabel = SKMultilineLabel(text: titleText, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: (3 * h + _gameView!.getHeight()) / 4), fontName: "Optima-ExtraBlack", fontSize: s * 0.08, fontColor: SKColor.whiteColor(), spacing: 1.5, alignment: .Center, shouldShowBorder: false)
+        addChild(titleLabel)
+        
+        // < button
+        addLabel("<", color: SKColor.whiteColor(), fontSize: s * 0.1, x: w * 0.1, y: h * 0.5 - s * 0.04)
+        
+        // > button
+        addLabel(">", color: SKColor.whiteColor(), fontSize: s * 0.1, x: w * 0.898, y: h * 0.5 - s * 0.04)
+        
+        // Paused
+        if paused {
+            _pauseLabel = addLabel("Paused", color: SKColor.whiteColor(), fontSize: s * 0.064, x: w * 0.5, y: h * 0.48, z: 20, hidden: true)
+        }
+
+        // Copy Label
+        if copyText != nil {
+            addLabel(copyText!, color: SKColor.grayColor(), fontSize: s * 0.04, x: w * 0.5, y: h * 0.49 - s * 0.05, z: 20)
+        }
+        
+        // Description
+        let descLabel = SKMultilineLabel(text: descText, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: (h - _gameView!.getHeight()) / 4), fontName: "Optima-ExtraBlack", fontSize: s * 0.064, fontColor: SKColor.whiteColor(), spacing: 1.5, alignment: .Center, shouldShowBorder: false)
+        addChild(descLabel)
+        
+        // Level ID
+        if showLevelID {
+            let codeLabel = LevelLabel(level: 21, seed: 3194, size: s * 0.08, color: SKColor.whiteColor())
+            codeLabel.position = CGPointMake(w * 0.5, h * 0.49)
+            codeLabel.zPosition = 20
+            addChild(codeLabel)
+        }
     }
     
     func setStepGame(step: Int) {
@@ -231,12 +232,12 @@ class InstructionsScene: SKScene {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y, z: 0, duration: 0.5, callback: swipeRight_2)
     }
     func swipeRight_2() {
-        let x = _finger1._x + size.width / 8
+        let x = _finger1._x + dx
         _finger1.animateTo(x: x, y: _finger1._y, z: 0, duration: 0.2, callback: swipeRight_3)
         _gameView!.attemptMove(.Right, swipe: CGPoint(x: _finger1._x, y: _finger1._y))
     }
     func swipeRight_3() {
-        let x = _finger1._x + size.width / 8
+        let x = _finger1._x + dx
         _finger1.animateTo(x: x, y: _finger1._y, z: 30, duration: 0.2, callback: swipeRight_4)
     }
     func swipeRight_4() {
@@ -250,12 +251,12 @@ class InstructionsScene: SKScene {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y, z: 0, duration: 0.5, callback: swipeCombo_2)
     }
     func swipeCombo_2() {
-        let x = _finger1._x + size.width / 8
+        let x = _finger1._x + dx
         _finger1.animateTo(x: x, y: _finger1._y, z: 0, duration: 0.2, callback: swipeCombo_3)
         _gameView!.attemptMove(.Right, swipe: CGPoint(x: _finger1._x, y: _finger1._y))
     }
     func swipeCombo_3() {
-        let x = _finger1._x + size.width / 8
+        let x = _finger1._x + dx
         _finger1.animateTo(x: x, y: _finger1._y, z: 30, duration: 0.2, callback: swipeCombo_4)
     }
     func swipeCombo_4() {
@@ -267,12 +268,12 @@ class InstructionsScene: SKScene {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y, z: 0, duration: 0.5, callback: swipeCombo_6)
     }
     func swipeCombo_6() {
-        let y = _finger1._y - size.height / 8
+        let y = _finger1._y - dx
         _finger1.animateTo(x: _finger1._x, y: y, z: 0, duration: 0.2, callback: swipeCombo_7)
         _gameView!.attemptMove(.Down, swipe: CGPoint(x: _finger1._x, y: _finger1._y))
     }
     func swipeCombo_7() {
-        let y = _finger1._y - size.height / 8
+        let y = _finger1._y - dx
         _finger1.animateTo(x: _finger1._x, y: y, z: 30, duration: 0.2, callback: swipeCombo_8)
     }
     func swipeCombo_8() {
@@ -284,12 +285,12 @@ class InstructionsScene: SKScene {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y, z: 0, duration: 0.5, callback: swipeCombo_10)
     }
     func swipeCombo_10() {
-        let y = _finger1._y + size.height / 8
+        let y = _finger1._y + dx
         _finger1.animateTo(x: _finger1._x, y: y, z: 0, duration: 0.2, callback: swipeCombo_11)
         _gameView!.attemptMove(.Up, swipe: CGPoint(x: _finger1._x, y: _finger1._y))
     }
     func swipeCombo_11() {
-        let y = _finger1._y + size.height / 8
+        let y = _finger1._y + dx
         _finger1.animateTo(x: _finger1._x, y: y, z: 30, duration: 0.2, callback: swipeCombo_12)
     }
     func swipeCombo_12() {
@@ -311,7 +312,7 @@ class InstructionsScene: SKScene {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y, z: 0, duration: 0.5, callback: pinch1_2)
     }
     func pinch1_2() {
-        let x = _finger1._x + size.width * 0.15
+        let x = _finger1._x + size.width / 8
         _finger1.animateTo(x: x, y: _finger1._y, z: 0, duration: 0.5, callback: pan1_1)
         
         let targetScale: CGFloat = 0.5
@@ -328,10 +329,9 @@ class InstructionsScene: SKScene {
         ))
     }
     func pan1_1() {
-        let dy = size.height * 0.2
-        _finger1.animateTo(x: _finger1._x, y: _finger1._y + dy, z: 0, duration: 0.5, callback: pan1_2)
+        _finger1.animateTo(x: _finger1._x, y: _finger1._y + dx, z: 0, duration: 0.5, callback: pan1_2)
         
-        _gameView!.runAction(SKAction.moveByX(0, y: dy, duration: 0.5))
+        _gameView!.runAction(SKAction.moveByX(0, y: dx, duration: 0.5))
     }
     func pan1_2() {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y, z: 15, duration: 0.5, callback: pinch1_3)
@@ -340,7 +340,7 @@ class InstructionsScene: SKScene {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y, z: 0, duration: 0.5, callback: pinch1_4)
     }
     func pinch1_4() {
-        let x = _finger1._x - size.width * 0.15
+        let x = _finger1._x - size.width / 8
         _finger1.animateTo(x: x, y: _finger1._y, z: 0, duration: 0.5, callback: pan1_3)
         
         let targetScale: CGFloat = 1.0
@@ -356,10 +356,9 @@ class InstructionsScene: SKScene {
         ))
     }
     func pan1_3() {
-        let dy = -size.height * 0.2
-        _finger1.animateTo(x: _finger1._x, y: _finger1._y + dy, z: 0, duration: 0.5, callback: pan1_4)
+        _finger1.animateTo(x: _finger1._x, y: _finger1._y - dx, z: 0, duration: 0.5, callback: pan1_4)
         
-        _gameView!.runAction(SKAction.moveByX(0, y: dy, duration: 0.5))
+        _gameView!.runAction(SKAction.moveByX(0, y: -dx, duration: 0.5))
     }
     func pan1_4() {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y, z: 15, duration: 0.5, callback: pinch1_1)
@@ -370,11 +369,11 @@ class InstructionsScene: SKScene {
         _finger2.animateTo(x: _finger2._x, y: _finger2._y, z: 0, duration: 0.5, callback: pinch2_2)
     }
     func pinch2_2() {
-        let x = _finger2._x - size.width * 0.15
+        let x = _finger2._x - size.width / 8
         _finger2.animateTo(x: x, y: _finger2._y, z: 0, duration: 0.5, callback: pan2_1)
     }
     func pan2_1() {
-        let y = _finger2._y + size.height * 0.2
+        let y = _finger2._y + dx
         _finger2.animateTo(x: _finger2._x, y: y, z: 0, duration: 0.5, callback: pan2_2)
     }
     func pan2_2() {
@@ -384,11 +383,11 @@ class InstructionsScene: SKScene {
         _finger2.animateTo(x: _finger2._x, y: _finger2._y, z: 0, duration: 0.5, callback: pinch2_4)
     }
     func pinch2_4() {
-        let x = _finger2._x + size.width * 0.15
+        let x = _finger2._x + size.width / 8
         _finger2.animateTo(x: x, y: _finger2._y, z: 0, duration: 0.5, callback: pan2_3)
     }
     func pan2_3() {
-        let y = _finger2._y - size.height * 0.2
+        let y = _finger2._y - dx
         _finger2.animateTo(x: _finger2._x, y: y, z: 0, duration: 0.5, callback: pan2_4)
     }
     func pan2_4() {
