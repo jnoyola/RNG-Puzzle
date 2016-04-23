@@ -11,7 +11,7 @@ import SpriteKit
 
 class LevelLabel: SKNode {
     
-    init(level: Int, seed: UInt32, size: CGFloat, color: SKColor) {
+    init(level: Int, seed: String, size: CGFloat, color: SKColor) {
         super.init()
         
         let levelLabel = SKLabelNode(fontNamed: "Optima-ExtraBlack")

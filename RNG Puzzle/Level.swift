@@ -6,9 +6,9 @@
 //  Copyright © 2015 iNoyola. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
-class Level: NSObject {
+class Level: NSObject, LevelProtocol {
 
     typealias Point = (x: Int, y: Int)
 
@@ -23,11 +23,15 @@ class Level: NSObject {
     var _teleporters: [Point] = []
     var _stops = Set<PointRecord>()
     
-    var _correct: [PointRecord!]! = nil
+    var _correct: [PointRecord!]? = nil
     
     
     @inline(__always) func getCode() -> String {
         return "\(_level).\(_seed)"
+    }
+    
+    @inline(__always) func getSeedString() -> String {
+        return "\(_seed)"
     }
     
     @inline(__always) func getPiece(x x: Int, y: Int) -> PieceType {
@@ -97,14 +101,17 @@ class Level: NSObject {
                 }
             }
         }
-        NSLog("ERROR: (\(_level).\(_seed)) teleporter match not found")
+        NSLog("ERROR  (\(_level).\(_seed)): teleporter match for (\(x),\(y)) not found")
         return (-1, -1)
     }
     
 // -----------------------------------------------------------------------
 
-    override init() {
-        super.init()
+    init(level: Int, seed: String?) {
+        _level = level
+        if seed != nil {
+            _seed = UInt32((seed! as NSString).integerValue)
+        }
     }
     
     func generate(debug: Bool) -> Bool {
@@ -159,7 +166,7 @@ class Level: NSObject {
             _startY = random() % _height
             addStop(x: _startX, y: _startY)
             
-            let dirs = getNextDirections(.Still)
+            let dirs = PieceType.getNextDirections(.Still)
             if nextWithNumPathPieces(num, x: _startX, y: _startY, dirs: dirs, isTruePath: true) {
                 break
             }
@@ -185,12 +192,12 @@ class Level: NSObject {
                 // Make sure a corner doesn't force the ball through wall
                 let nextPos = getAdjPosFrom(x: x, y: y, dir: dir)
                 let nextPiece = getPieceSafely(nextPos)
-                if isWallFromDir(dir, pieceType: nextPiece) {
+                if nextPiece.isWallFromDir(dir) {
                     return false
                 }
                 
                 // Make sure a wall can't be placed right in front of this corner
-                let lastDir = getNextDirectionsForCorner(getPiece(x: x, y: y), dir: getOppDir(dir))[0]
+                let lastDir = getPiece(x: x, y: y).getNextDirections(getOppDir(dir))[0]
                 let lastPos = getAdjPosFrom(x: x, y: y, dir: lastDir)
                 let lastPiece = getPieceSafely(lastPos)
                 if lastPiece == .None {
@@ -226,7 +233,7 @@ class Level: NSObject {
             
                     // Add the correct direction to get to each path waypoint
                     if isTruePath {
-                        _correct[_correct.count - num - 1] = PointRecord(x: offset.x, y: offset.y, dir: dir)
+                        _correct![_correct!.count - num - 1] = PointRecord(x: offset.x, y: offset.y, dir: dir)
                     }
                     
                     // Set path here
@@ -272,7 +279,7 @@ class Level: NSObject {
                             if piece.contains(.Block) {
                             
                                 // nextDirs is also used for checking for planned .Stop shortcuts
-                                nextDirs = getNextDirections(dir)
+                                nextDirs = PieceType.getNextDirections(dir)
                                 
                                 // If we're placing a .Block, we have to check if the next space
                                 // is empty or if it already contains a wall
@@ -289,7 +296,7 @@ class Level: NSObject {
                                     if !stopOutsideWallShortcuts(piece, x: nextPiecePos.x, y: nextPiecePos.y, dir: dir) {
                                         alreadyFailed = true
                                     }
-                                } else if iOffset == offsets.count - 1 && isWallFromDir(dir, pieceType: nextPiece) {
+                                } else if iOffset == offsets.count - 1 && nextPiece.isWallFromDir(dir) {
                                     // The next piece is a wall. We can use it to stop.
                                     addStop(x: offset.x, y: offset.y)
                                 } else {
@@ -360,7 +367,7 @@ class Level: NSObject {
                                 
                                 // If we're placing a corner, we have nothing else to worry about
                                 setPiece(x: offset.x, y: offset.y, type: piece)
-                                nextDirs = getNextDirectionsForCorner(piece, dir: dir)
+                                nextDirs = piece.getNextDirections(dir)
                             }
                             
                             // Move on to the next iteration
@@ -414,46 +421,6 @@ class Level: NSObject {
     
         // No valid directions. Time to undo?
         return false
-    }
-    
-    func getNextDirections(lastDir: Direction) -> [Direction] {
-        switch (lastDir) {
-        case .Up: fallthrough
-        case .Down: return [Direction.Left, Direction.Right]
-        case .Left: fallthrough
-        case .Right: return [Direction.Up, Direction.Down]
-        default: return [Direction.Right, Direction.Up, Direction.Left, Direction.Down]
-        }
-    }
-    
-    func getNextDirectionsForCorner(piece: PieceType, dir: Direction) -> [Direction] {
-        var dirs = [Direction](count: 1, repeatedValue: .Still)
-        if piece.contains(.Corner1) {
-            if dir == .Left {
-                dirs[0] = .Up
-            } else if dir == .Down {
-                dirs[0] = .Right
-            }
-        } else if piece.contains(.Corner2) {
-            if dir == .Down {
-                dirs[0] = .Left
-            } else if dir == .Right {
-                dirs[0] = .Up
-            }
-        } else if piece.contains(.Corner3) {
-            if dir == .Right {
-                dirs[0] = .Down
-            } else if dir == .Up {
-                dirs[0] = .Left
-            }
-        } else if piece.contains(.Corner4) {
-            if dir == .Up {
-                dirs[0] = .Right
-            } else if dir == .Left {
-                dirs[0] = .Down
-            }
-        }
-        return dirs
     }
     
     func getOffsetsFrom(var x x: Int, var y: Int, dir: Direction) -> [Point] {
@@ -513,17 +480,6 @@ class Level: NSObject {
         return pieces
     }
     
-    func getAdjPosFrom(var x x: Int, var y: Int, dir: Direction) -> Point {
-        switch dir {
-            case .Right: ++x
-            case .Up:    ++y
-            case .Left:  --x
-            case .Down:  --y
-            default: break
-        }
-        return (x: x, y: y)
-    }
-    
     func stopOutsideWallShortcuts(piece: PieceType, x: Int, y: Int, dir: Direction) -> Bool {
         var unplannedStops = [Point]()
         var dirs: [Direction]
@@ -576,7 +532,7 @@ class Level: NSObject {
                 } else {
                     // Now that we would be creating an unplanned stop here,
                     // we must first check if it would create a shortcut
-                    let shortcutDirs = getNextDirections(wallDir)
+                    let shortcutDirs = PieceType.getNextDirections(wallDir)
                     let additionalUnplannedStops = getUnplannedStopsForPlannedStopAt(x: point.x, y: point.y, dirs: shortcutDirs, visited: Set<PointRecord>())
                     if additionalUnplannedStops == nil {
                         return false
@@ -643,17 +599,6 @@ class Level: NSObject {
         }
     }
     
-    func isWallFromDir(dir: Direction, pieceType type: PieceType) -> Bool {
-        if type.contains(.Block) ||
-           (type.contains(.Corner1) && (dir == .Right || dir == .Up))   ||
-           (type.contains(.Corner2) && (dir == .Up    || dir == .Left)) ||
-           (type.contains(.Corner3) && (dir == .Left  || dir == .Down)) ||
-           (type.contains(.Corner4) && (dir == .Down  || dir == .Right)) {
-            return true
-        }
-        return false
-    }
-    
     func getUnplannedStopsForPlannedStopAt(x x: Int, y: Int, dirs: [Direction], var visited: Set<PointRecord>) -> [Point]? {
     
         // Recursively get unplanned stops for the intended planned stop placement
@@ -681,7 +626,7 @@ class Level: NSObject {
                 if lastPoint!.x == -1 {
                     return nil
                 } else {
-                    let nextDirs = getNextDirections(dir)
+                    let nextDirs = PieceType.getNextDirections(dir)
                     let additionalCoords = getUnplannedStopsForPlannedStopAt(x: lastPoint!.x, y: lastPoint!.y, dirs: nextDirs, visited: visited)
                     if additionalCoords == nil {
                         return nil
@@ -805,7 +750,7 @@ class Level: NSObject {
             
             var dirs: [Direction]!
             if stop!.dir == .Still {
-                dirs = getNextDirections(.Still)
+                dirs = PieceType.getNextDirections(.Still)
             } else {
                 dirs = [Direction](count: 1, repeatedValue: stop!.dir)
             }
@@ -839,7 +784,7 @@ class Level: NSObject {
                 }
                 
                 var success = true
-                let dirs = getNextDirections(.Still)
+                let dirs = PieceType.getNextDirections(.Still)
                 var lastPoint: Point? = nil
                 for dir in dirs {
                     if getStopInLineWithPoint((x: x, y: y), dir: dir, lastPoint: &lastPoint).contains(.Stop) {
@@ -914,6 +859,7 @@ class Level: NSObject {
         case 9:
             _startX = 1
             _startY = 1
+            setPiece(x: 7, y: 1, type: .Corner3)
             setPiece(x: 7, y: 0, type: .Target)
         case 10:
             _startX = 100
@@ -954,88 +900,12 @@ class Level: NSObject {
     }
     
     func debugCheck() -> Bool {
-        let numSolutions = getNumSolutions(x: _startX, y: _startY, dir: .Still, visited: Set<PointRecord>())
+        let numSolutions = getNumSolutions()
         if numSolutions != 1 {
             NSLog("ERROR: (\(_level).\(_seed)) \(numSolutions) solutions found")
             return false
         }
         
         return true
-    }
-    
-    func getNumSolutions(var x x: Int, var y: Int, var dir: Direction, var visited: Set<PointRecord>) -> Int {
-        while true {
-            let piece = getPieceSafely((x: x, y: y))
-            if piece.contains(.Target) {
-                return 1
-            }
-            if piece.contains(.Void) || isWallFromDir(dir, pieceType: piece) {
-                return 0
-            }
-            
-            var dirs = [Direction](count: 1, repeatedValue: dir)
-            if (dir == .Still) {
-                dirs = getNextDirections(.Still)
-            }
-            if piece.contains(.Corner1) ||
-               piece.contains(.Corner2) ||
-               piece.contains(.Corner3) ||
-               piece.contains(.Corner4) {
-                dirs = getNextDirectionsForCorner(piece, dir: dir)
-            } else {
-                if piece.contains(.Teleporter) {
-                    let point = getTeleporterPair(x: x, y: y)
-                    if (point.x == -1) {
-                        return 1000
-                    }
-                    
-                    let curPoint = PointRecord(x: x, y: y, dir: dir)
-                    if visited.contains(curPoint) {
-                        return 0
-                    } else {
-                        visited.insert(curPoint)
-                    }
-                    
-                    x = point.x
-                    y = point.y
-                }
-                
-                let nextPoint = getAdjPosFrom(x: x, y: y, dir: dir)
-                let nextPiece = getPieceSafely(nextPoint)
-                if isWallFromDir(dir, pieceType: nextPiece) {
-                    dirs = getNextDirections(dir)
-                }
-            }
-            
-            if dirs.count == 1 {
-                dir = dirs[0]
-                let point = getAdjPosFrom(x: x, y: y, dir: dir)
-                x = point.x
-                y = point.y
-            } else {
-                let curPoint = PointRecord(x: x, y: y)
-                if visited.contains(curPoint) {
-                    return 0
-                } else {
-                    visited.insert(curPoint)
-                }
-                
-                var numSolutions = 0
-                for nextDir in dirs {
-                    let point = getAdjPosFrom(x: x, y: y, dir: nextDir)
-                    let newVisited = duplicateSet(visited)
-                    numSolutions += getNumSolutions(x: point.x, y: point.y, dir: nextDir, visited: newVisited)
-                }
-                return numSolutions
-            }
-        }
-    }
-    
-    func duplicateSet(set: Set<PointRecord>) -> Set<PointRecord> {
-        var newSet = Set<PointRecord>()
-        for point in set {
-            newSet.insert(point)
-        }
-        return newSet
     }
 }

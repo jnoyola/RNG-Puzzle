@@ -6,8 +6,6 @@
 //  Copyright © 2016 iNoyola. All rights reserved.
 //
 
-import UIKit
-
 class PointRecord: Hashable {
     var x: Int
     var y: Int

@@ -11,9 +11,9 @@ import SpriteKit
 
 class LevelGenerationScene: SKScene {
 
-    var _level: Level! = nil
+    var _level: LevelProtocol! = nil
 
-    init(size: CGSize, level: Level) {
+    init(size: CGSize, level: LevelProtocol) {
         super.init(size: size)
         _level = level
     }
@@ -28,7 +28,7 @@ class LevelGenerationScene: SKScene {
         refreshLayout()
         
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
-            NSLog("Generating: \(self._level._level).\(self._level._seed)")
+            NSLog("Generating: \(self._level.getCode())")
             self._level.generate(false)
             usleep(500000)
         
@@ -49,7 +49,7 @@ class LevelGenerationScene: SKScene {
             dispatch_async(dispatch_get_main_queue()) {
                 let playScene = PlayScene(size: self.size, level: self._level)
                 playScene.scaleMode = self.scaleMode
-                self.view?.presentScene(playScene)
+                (UIApplication.sharedApplication().delegate! as! AppDelegate).pushViewController(SKViewController(scene: playScene), animated: true)
             }
         }
     }
@@ -78,7 +78,7 @@ class LevelGenerationScene: SKScene {
         addLabel("Generating Level...", size: s * 0.08, color: SKColor.blueColor(), y: 0.85)
         
         // Level
-        let levelLabel = LevelLabel(level: _level._level, seed:_level._seed, size: s * 0.08, color: SKColor.whiteColor())
+        let levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * 0.08, color: SKColor.whiteColor())
         levelLabel.position = CGPointMake(w * 0.5, h * 0.67)
         addChild(levelLabel)
     }

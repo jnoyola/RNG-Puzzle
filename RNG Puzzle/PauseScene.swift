@@ -12,8 +12,9 @@ import StoreKit
 
 class PauseScene: SKScene {
     
-    var _level: Level! = nil
+    var _level: LevelProtocol! = nil
     var _playScene: PlayScene! = nil
+    var _timerCount = 0
     
     var _titleLabel: SKLabelNode! = nil
     var _copyLabel: SKLabelNode! = nil
@@ -22,16 +23,18 @@ class PauseScene: SKScene {
     var _levelLabel: LevelLabel! = nil
     var _hintLabel: CoinLabel! = nil
     var _coinLabel: CoinLabel! = nil
+    var _timerLabel: SKLabelNode! = nil
     var _messagesButton: SKSpriteNode! = nil
     var _facebookButton: SKSpriteNode! = nil
     var _twitterButton: SKSpriteNode! = nil
     
     var _purchasePopup: PurchasePopup? = nil
 
-    init(size: CGSize, level: Level, playScene: PlayScene) {
+    init(size: CGSize, level: LevelProtocol, playScene: PlayScene, timerCount: Int) {
         super.init(size: size)
         _level = level
         _playScene = playScene
+        _timerCount = timerCount
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -102,18 +105,19 @@ class PauseScene: SKScene {
             attemptHint()
         } else if isPointInBounds(p, node: _quitLabel) {
             // Quit
-            let introScene = IntroScene(size: size)
-            introScene.scaleMode = scaleMode
-            view?.presentScene(introScene)
+            (UIApplication.sharedApplication().delegate!.window!!.rootViewController! as! UINavigationController).popToRootViewControllerAnimated(true)
         } else if isPointInBounds(p, node: _resumeLabel) {
             // Resume
             view?.presentScene(_playScene)
         } else if isPointInBounds(p, node: _facebookButton) {
-            notify("shareFacebook")
+            // TODO add level code to notification
+            AlertManager.defaultManager().shareFacebook()
         } else if isPointInBounds(p, node: _messagesButton) {
-            notify("shareMessages")
+            // TODO add level code to notification
+            AlertManager.defaultManager().shareMessages()
         } else if isPointInBounds(p, node: _twitterButton) {
-            notify("shareTwitter")
+            // TODO add level code to notification
+            AlertManager.defaultManager().shareTwitter()
         }
     }
     
@@ -155,11 +159,6 @@ class PauseScene: SKScene {
         })
     }
     
-    func notify(name: String) {
-        // TODO add level code to notification
-        NSNotificationCenter.defaultCenter().postNotificationName(name, object: self)
-    }
-    
     func refreshLayout() {
         if _level == nil {
             return
@@ -193,7 +192,7 @@ class PauseScene: SKScene {
         if _levelLabel != nil {
             _levelLabel.removeFromParent()
         }
-        _levelLabel = LevelLabel(level: _level._level, seed:_level._seed, size: s * 0.08, color: SKColor.whiteColor())
+        _levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * 0.08, color: SKColor.whiteColor())
         _levelLabel.position = CGPoint(x: w * 0.5, y: h * 0.67)
         self.addChild(_levelLabel)
         
@@ -205,6 +204,7 @@ class PauseScene: SKScene {
         addChild(_hintLabel)
         
         refreshCoins()
+        refreshTimer()
         
         refreshPurchasePopup()
     }
@@ -222,6 +222,34 @@ class PauseScene: SKScene {
         addChild(_coinLabel)
         
         _playScene.refreshCoins()
+    }
+    
+    func refreshTimer() {
+        let w = size.width
+        let h = size.height
+        let s = min(w, h)
+        
+        if _timerLabel != nil {
+            _timerLabel.removeFromParent()
+        }
+        _timerLabel = SKLabelNode(fontNamed: "Optima-ExtraBlack")
+        _timerLabel.horizontalAlignmentMode = .Left
+        _timerLabel.fontColor = UIColor.whiteColor()
+        _timerLabel.fontSize = s * 0.064
+        _timerLabel.position = CGPoint(x: w - s * 0.18, y: h - s * 0.1)
+        updateTimerLabel()
+        addChild(_timerLabel)
+    }
+    
+    func updateTimerLabel() {
+        var str = String(format:"%d:%02d", abs(_timerCount) / 60, abs(_timerCount) % 60)
+        if _timerCount < 0 {
+            str = "-" + str
+        }
+        _timerLabel.text = str
+        if _timerCount <= 0 {
+            _timerLabel.fontColor = UIColor.redColor()
+        }
     }
     
     func refreshPurchasePopup() {

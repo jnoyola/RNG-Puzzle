@@ -11,14 +11,15 @@ import SpriteKit
 
 class GameView: SKNode {
     
-    var _playScene: SKScene! = nil
+    var _parent: SKScene! = nil
     var _winCallback: (() -> Void)? = nil
     var _origX: CGFloat = 0.0
     var _origY: CGFloat = 0.0
     var _baseScale: CGFloat = 1.0
+    var _origScale: CGFloat = 1.0
     var _scale: CGFloat = 1.0
 
-    var _level: Level! = nil
+    var _level: LevelProtocol! = nil
     var _ball: SKSpriteNode! = nil
     var _ballX = 0
     var _ballY = 0
@@ -34,27 +35,28 @@ class GameView: SKNode {
     var _hintPath: SKShapeNode? = nil
     var _correctIdx = 0
 
-    init(level: Level, playScene: SKScene, winCallback: (() -> Void)?) {
+    init(level: LevelProtocol, parent: SKScene, winCallback: (() -> Void)?) {
         super.init()
+
         _level = level
-        _playScene = playScene
+        _parent = parent
         _winCallback = winCallback
         
-        // Scale 1.0 means the level fits in the scene
-        let scale = min(_playScene.size.width / CGFloat(level._width), _playScene.size.height / CGFloat(level._height))
-        setBaseScale(scale)
+        resetBaseScale()
         
         _ball = SKSpriteNode(texture: Sprites().ball())
         _ball.size = CGSize(width: 1, height: 1)
         _ball.zPosition = 5
-        addChild(_ball)
+        if level._startX >= 0 {
+            addChild(_ball)
+        }
         
-        drawLevel(level)
+        drawLevel(_level)
         
         resetBall(true)
         
-        _origX = (_playScene.size.width - getWidth()) / 2
-        _origY = (_playScene.size.height - getHeight()) / 2
+        _origScale = _scale
+        changeSize()
         position = CGPoint(x: _origX, y: _origY)
     }
 
@@ -62,7 +64,7 @@ class GameView: SKNode {
         super.init(coder: aDecoder)
     }
     
-    func drawLevel(level: Level) {
+    func drawLevel(level: LevelProtocol) {
     
         // Draw Pieces
         drawPieces(level)
@@ -77,7 +79,7 @@ class GameView: SKNode {
         self.addChild(bg)
     }
     
-    func drawPieces(level: Level) {
+    func drawPieces(level: LevelProtocol) {
         let sprites = Sprites()
         
         for i in 0...(level._width-1) {
@@ -115,6 +117,10 @@ class GameView: SKNode {
     }
     
     func drawPath(num: Int) {
+        if _level._correct == nil {
+            return
+        }
+    
         if _hintPath != nil {
             _hintPath!.removeFromParent()
         }
@@ -126,7 +132,7 @@ class GameView: SKNode {
         CGPathMoveToPoint(path, nil, CGFloat(x) + 0.5, CGFloat(y) + 0.5)
         
         var i = 0
-        var correct = _level._correct[i]
+        var correct = _level._correct![i]
         var piece = _level.getPieceSafely((x: x, y: y))
         while i < num {
         
@@ -134,10 +140,10 @@ class GameView: SKNode {
             CGPathAddLineToPoint(path, nil, CGFloat(x) + 0.5, CGFloat(y) + 0.5)
             
             if x == correct.x && y == correct.y {
-                if ++i == _level._correct.count {
+                if ++i == _level._correct!.count {
                     break
                 }
-                correct = _level._correct[i]
+                correct = _level._correct![i]
             }
             
             if piece.contains(.Teleporter) {
@@ -164,6 +170,18 @@ class GameView: SKNode {
         self.addChild(_hintPath!)
     }
     
+    func resetBaseScale() {
+        // Scale 1.0 means the level fits in the scene
+        var m0: CGFloat = 0
+        var m1: CGFloat = 0
+        if let playScene = _parent as? PlayScene {
+            m0 = playScene._marginRight
+            m1 = playScene._marginBottom
+        }
+        let scale = min((_parent.size.width - m0) / CGFloat(_level._width), (_parent.size.height - m1) / CGFloat(_level._height))
+        setBaseScale(scale)
+    }
+    
     func setBaseScale(scale: CGFloat) {
         _baseScale = scale
         _scale = 1.0
@@ -177,13 +195,16 @@ class GameView: SKNode {
     override func setScale(scale: CGFloat) {
         _scale = scale
         
-        if !(_playScene is InstructionsScene) {
+        if !(_parent is InstructionsScene) {
             // Min scale means the level fills 75% of the screen
             // Max scale means 5 spaces fit in the screen
-            if _scale < 0.75 {
+            if _scale <= 0.75 {
                 _scale = 0.75
-            } else if _scale > CGFloat(_level._height) / 5 {
-                _scale = CGFloat(_level._height) / 5
+            } else {
+                let upperLimit = max(1.0, CGFloat(max(_level._width, _level._height)) / 5)
+                if _scale > upperLimit {
+                    _scale = upperLimit
+                }
             }
         }
         
@@ -198,16 +219,44 @@ class GameView: SKNode {
         return CGFloat(_level._height) * _baseScale * _scale
     }
     
+    func getOrigWidth() -> CGFloat {
+        return CGFloat(_level._width) * _baseScale * _origScale
+    }
+    
+    func getOrigHeight() -> CGFloat {
+        return CGFloat(_level._height) * _baseScale * _origScale
+    }
+    
     // -----------------------------------------------------------------------
     
     func resetBall(instantly: Bool = false) {
+        stop()
         _ballX = _level._startX
         _ballY = _level._startY
         _ball.position = CGPoint(x: CGFloat(_ballX) + 0.5, y: CGFloat(_ballY) + 0.5)
         
-        if (instantly || _playScene is InstructionsScene) {
+        resetView(instantly)
+    }
+    
+    func resetView(instantly: Bool = false, alwaysCenter: Bool = false) {
+        if (instantly || _parent is InstructionsScene) {
             setScale(1.0)
         } else {
+            var m0: CGFloat = 0
+            var m1: CGFloat = 0
+            if let playScene = _parent as? PlayScene {
+                m0 = playScene._marginRight
+                m1 = playScene._marginBottom
+            }
+            
+            if !alwaysCenter &&
+               position.x >= 0 &&
+               position.x + getWidth() <= _parent.size.width - m0 &&
+               position.y >= m1 &&
+               position.y + getHeight() <= _parent.size.height {
+                return
+            }
+            
             let startScale = _scale
             let duration: Double = 0.2
             
@@ -229,14 +278,13 @@ class GameView: SKNode {
         
         // Can't move through walls
         if cannotMove(updateNextPiece(dir), dir: dir) {
-            // stop()
             return
         }
         
         // Now that we know this is a valid move...
         _spin = -1
         let ballX = position.x + _ball.position.x * _scale * _baseScale
-        let ballY = _playScene.size.height - (position.y + _ball.position.y * _scale * _baseScale)
+        let ballY = _parent.frame.height - (position.y + _ball.position.y * _scale * _baseScale)
         switch dir {
         case .Right:
             if swipe.y > ballY {
@@ -277,8 +325,8 @@ class GameView: SKNode {
     }
     
     func doneMoving() {
-        if _correctIdx < _level._correct.count {
-            let correct = _level._correct[_correctIdx]
+        if _level._correct != nil && _correctIdx < _level._correct!.count {
+            let correct = _level._correct![_correctIdx]
             if _ballX == correct.x && _ballY == correct.y {
                 ++_correctIdx
             }
@@ -293,6 +341,9 @@ class GameView: SKNode {
             return
         } else if _nextPiece.contains(.Teleporter) {
             teleport()
+            if _dir == .Still {
+                return
+            }
             if cannotMove(updateNextPiece(_dir), dir: _dir) {
                 stop()
             } else {
@@ -388,6 +439,10 @@ class GameView: SKNode {
     
     func teleport() {
         let dst = _level.getTeleporterPair(x: _ballX, y: _ballY)
+        if dst.x < 0 {
+            resetBall()
+            return
+        }
         _ballX = dst.x
         _ballY = dst.y
         _ball.position = CGPoint(x: CGFloat(_ballX) + 0.5, y: CGFloat(_ballY) + 0.5)
@@ -408,12 +463,23 @@ class GameView: SKNode {
     }
     
     func hint() -> Bool {
-        if _correctIdx >= _level._correct.count {
+        if _level._correct != nil && _correctIdx >= _level._correct!.count {
             return false
         }
         
         _correctIdx += 3
         drawPath(_correctIdx)
         return true
+    }
+    
+    func changeSize() {
+        var m0: CGFloat = 0
+        var m1: CGFloat = 0
+        if let playScene = _parent as? PlayScene {
+            m0 = playScene._marginRight
+            m1 = playScene._marginBottom
+        }
+        _origX = (_parent.frame.width - m0 - getOrigWidth()) / 2
+        _origY = (_parent.frame.height - m1 - getOrigHeight()) / 2 + m1
     }
 }

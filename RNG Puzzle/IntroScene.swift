@@ -62,23 +62,21 @@ class IntroScene: SKScene {
         let p = touch.locationInNode(self)
         
         if isPointInBounds(p, node: _playLabel) {
-            presentScene(LevelSelectScene(size: size))
+            presentScene(LevelSelectScene())
         } else if isPointInBounds(p, node: _myLevelsLabel) {
-            /////////////////////
-            // TODO: My Levels //
-            /////////////////////
+            (UIApplication.sharedApplication().delegate!.window!!.rootViewController! as! UINavigationController).pushViewController(MyPuzzlesController(), animated: true)
         } else if isPointInBounds(p, node: _instructionsLabel) {
-            presentScene(InstructionsScene(size: size))
+            presentScene(InstructionsScene())
         } else if isPointInBounds(p, node: _leaderboardLabel) {
             ///////////////////////
             // TODO: Leaderboard //
             ///////////////////////
         } else if isPointInBounds(p, node: _facebookButton) {
-            notify("shareFacebook")
+            AlertManager.defaultManager().shareFacebook()
         } else if isPointInBounds(p, node: _messagesButton) {
-            notify("shareMessages")
+            AlertManager.defaultManager().shareMessages()
         } else if isPointInBounds(p, node: _twitterButton) {
-            notify("shareTwitter")
+            AlertManager.defaultManager().shareTwitter()
         }
     }
     
@@ -94,12 +92,7 @@ class IntroScene: SKScene {
     }
     
     func presentScene(scene: SKScene) {
-        scene.scaleMode = scaleMode
-        view?.presentScene(scene)
-    }
-    
-    func notify(name: String) {
-        NSNotificationCenter.defaultCenter().postNotificationName(name, object: self)
+        (UIApplication.sharedApplication().delegate!.window!!.rootViewController! as! UINavigationController).pushViewController(SKViewController(scene: scene), animated: true)
     }
     
     func refreshLayout() {

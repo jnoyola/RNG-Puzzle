@@ -6,7 +6,7 @@
 //  Copyright © 2016 iNoyola. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
 class WeightedRandomArray: NSObject {
     var _array: [PieceType]! = nil

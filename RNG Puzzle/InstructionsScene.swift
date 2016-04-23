@@ -47,7 +47,7 @@ class InstructionsScene: SKScene {
         if step == 0 || step > _maxStep {
             let introScene = IntroScene(size: size)
             introScene.scaleMode = scaleMode
-            view?.presentScene(introScene)
+            (UIApplication.sharedApplication().delegate!.window!!.rootViewController! as! UINavigationController).popViewControllerAnimated(true)
             return
         }
         
@@ -132,7 +132,6 @@ class InstructionsScene: SKScene {
         default:
             break
         }
-//        let titleText = "\(title) (\(_curStep) of \(_maxStep))"
         let titleText = "\(_curStep) of \(_maxStep)\n\(title)"
         
         let w = size.width
@@ -140,7 +139,6 @@ class InstructionsScene: SKScene {
         let s = min(w, h)
         
         // Title
-        //addLabel(titleText, color: SKColor.whiteColor(), fontSize: s * 0.08, x: w * 0.5, y: h * 0.82, z: 100)
         let titleLabel = SKMultilineLabel(text: titleText, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: (3 * h + _gameView!.getHeight()) / 4), fontName: "Optima-ExtraBlack", fontSize: s * 0.08, fontColor: SKColor.whiteColor(), spacing: 1.5, alignment: .Center, shouldShowBorder: false)
         addChild(titleLabel)
         
@@ -166,7 +164,7 @@ class InstructionsScene: SKScene {
         
         // Level ID
         if showLevelID {
-            let codeLabel = LevelLabel(level: 21, seed: 3194, size: s * 0.08, color: SKColor.whiteColor())
+            let codeLabel = LevelLabel(level: 21, seed: "3194", size: s * 0.08, color: SKColor.whiteColor())
             codeLabel.position = CGPointMake(w * 0.5, h * 0.49)
             codeLabel.zPosition = 20
             addChild(codeLabel)
@@ -175,7 +173,13 @@ class InstructionsScene: SKScene {
     
     func setStepGame(step: Int) {
         let level = Level(instruction: step)
-        _gameView = GameView(level: level, playScene: self, winCallback: nil)
+        if step == 9 {
+            _gameView = CreationView(level: level, parent: self, winCallback: nil)
+            (_gameView as! CreationView)._selectedPoint = (x: 7, y: 1)
+            (_gameView as! CreationView).markSelected()
+        } else {
+            _gameView = GameView(level: level, parent: self, winCallback: nil)
+        }
         _gameView!.setBaseScale(_gameView!._baseScale * 0.6)
         _gameView!.position = CGPoint(x: (size.width - _gameView!.getWidth()) / 2, y: (size.height - _gameView!.getHeight()) / 2)
         addChild(_gameView!)

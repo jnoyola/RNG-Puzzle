@@ -6,7 +6,6 @@
 //  Copyright © 2016 iNoyola. All rights reserved.
 //
 
-import UIKit
 import StoreKit
 
 class ProductManager: NSObject, SKProductsRequestDelegate {

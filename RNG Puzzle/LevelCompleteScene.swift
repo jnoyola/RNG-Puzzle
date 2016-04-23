@@ -11,19 +11,26 @@ import SpriteKit
 
 class LevelCompleteScene: SKScene {
 
-    var _level: Level! = nil
+    var _level: LevelProtocol! = nil
+    var _timerCount = 0
+    var _duration = 0
+    
     var _titleLabel: SKLabelNode! = nil
     var _copyLabel: SKLabelNode! = nil
     var _quitLabel: SKLabelNode! = nil
     var _continueLabel: SKLabelNode! = nil
     var _levelLabel: LevelLabel! = nil
+//    var _timerLabel: SKLabelNode! = nil
+    var _durationLabel: SKLabelNode! = nil
     var _messagesButton: SKSpriteNode! = nil
     var _facebookButton: SKSpriteNode! = nil
     var _twitterButton: SKSpriteNode! = nil
 
-    init(size: CGSize, level: Level) {
+    init(size: CGSize, level: LevelProtocol, timerCount: Int, duration: Int) {
         super.init(size: size)
         _level = level
+        _timerCount = timerCount
+        _duration = duration
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -34,7 +41,11 @@ class LevelCompleteScene: SKScene {
         backgroundColor = SKColor.blackColor()
         
         // Title
-        _titleLabel = addLabel("Level Complete!", color: SKColor.blueColor())
+        if _timerCount > 0 {
+            _titleLabel = addLabel("Level Complete!", color: SKColor.blueColor())
+        } else {
+            _titleLabel = addLabel("Too Slow", color: SKColor.redColor())
+        }
         
         // Copy Level ID
         _copyLabel = addLabel("Copy Level ID", color: SKColor.grayColor())
@@ -78,18 +89,25 @@ class LevelCompleteScene: SKScene {
             _copyLabel.text = "Level ID Copied"
         } else if isPointInBounds(p, node: _quitLabel) {
             // Quit
-            presentScene(IntroScene(size: size))
+            (UIApplication.sharedApplication().delegate!.window!!.rootViewController! as! UINavigationController).popToRootViewControllerAnimated(true)
         } else if isPointInBounds(p, node: _continueLabel) {
             // Continue
-            let nextLevel = Level()
-            nextLevel._level = _level._level + 1
+            // Don't advance level past the stored max (in case we completed a CustomLevel)
+            var nextLevelNum = _level._level
+            if _timerCount > 0 && nextLevelNum < Storage.loadLevel() {
+                ++nextLevelNum
+            }
+            let nextLevel = Level(level: nextLevelNum, seed: nil)
             presentScene(LevelGenerationScene(size: size, level: nextLevel))
         } else if isPointInBounds(p, node: _facebookButton) {
-            notify("shareFacebook")
+            // TODO add level code to sharing
+            AlertManager.defaultManager().shareFacebook()
         } else if isPointInBounds(p, node: _messagesButton) {
-            notify("shareMessages")
+            // TODO add level code to sharing
+            AlertManager.defaultManager().shareMessages()
         } else if isPointInBounds(p, node: _twitterButton) {
-            notify("shareTwitter")
+            // TODO add level code to sharing
+            AlertManager.defaultManager().shareTwitter()
         }
     }
     
@@ -105,13 +123,7 @@ class LevelCompleteScene: SKScene {
     }
     
     func presentScene(scene: SKScene) {
-        scene.scaleMode = scaleMode
-        view?.presentScene(scene)
-    }
-    
-    func notify(name: String) {
-        // TODO add level code to notification
-        NSNotificationCenter.defaultCenter().postNotificationName(name, object: self)
+        (UIApplication.sharedApplication().delegate! as! AppDelegate).pushViewController(SKViewController(scene: scene), animated: true)
     }
     
     func refreshLayout() {
@@ -147,10 +159,52 @@ class LevelCompleteScene: SKScene {
         if _levelLabel != nil {
             _levelLabel.removeFromParent()
         }
-        _levelLabel = LevelLabel(level: _level._level, seed:_level._seed, size: s * 0.08, color: SKColor.whiteColor())
+        _levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * 0.08, color: SKColor.whiteColor())
         _levelLabel.position = CGPoint(x: w * 0.5, y: h * 0.67)
         self.addChild(_levelLabel)
         
+        refreshTimer()
+    }
+    
+    func refreshTimer() {
+        let w = size.width
+        let h = size.height
+        let s = min(w, h)
+        
+//        if _timerLabel != nil {
+//            _timerLabel.removeFromParent()
+//        }
+//        _timerLabel = SKLabelNode(fontNamed: "Optima-ExtraBlack")
+//        _timerLabel.horizontalAlignmentMode = .Left
+//        _timerLabel.fontColor = UIColor.whiteColor()
+//        _timerLabel.fontSize = s * 0.064
+//        _timerLabel.position = CGPoint(x: w - s * 0.18, y: h - s * 0.1)
+        
+        if _durationLabel != nil {
+            _durationLabel.removeFromParent()
+        }
+        _durationLabel = SKLabelNode(fontNamed: "Optima-ExtraBlack")
+        _durationLabel.fontColor = UIColor.whiteColor()
+        _durationLabel.fontSize = s * 0.1
+        _durationLabel.position = CGPoint(x: w * 0.5, y: h * 0.47)
+        
+        updateTimerLabels()
+//        addChild(_timerLabel)
+        addChild(_durationLabel)
+    }
+    
+    func updateTimerLabels() {
+//        var timeStr = String(format:"%d:%02d", abs(_timerCount) / 60, abs(_timerCount) % 60)
+        let durationStr = String(format:"%d:%02d", abs(_duration) / 60, abs(_duration) % 60)
+//        if _timerCount < 0 {
+//            timeStr = "-" + timeStr
+//        }
+//        _timerLabel.text = timeStr
+        _durationLabel.text = durationStr
+        if _timerCount <= 0 {
+//            _timerLabel.fontColor = UIColor.redColor()
+            _durationLabel.fontColor = UIColor.redColor()
+        }
     }
     
     override func didChangeSize(oldSize: CGSize) {

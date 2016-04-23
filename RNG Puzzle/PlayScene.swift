@@ -11,9 +11,15 @@ import SpriteKit
 
 class PlayScene: SKScene, UIGestureRecognizerDelegate {
 
-    var _level: Level! = nil
+
+    var _level: LevelProtocol! = nil
     var _gameView: GameView! = nil
     var _coinLabel: CoinLabel! = nil
+    var _timerLabel: SKLabelNode! = nil
+    var _timer: NSTimer? = nil
+    var _timerFlash: NSTimer? = nil
+    var _timerTotal = 0
+    var _timerCount = 0
     
     var _tapRecognizer: UITapGestureRecognizer! = nil
     var _swipeUpRecognizer: UISwipeGestureRecognizer! = nil
@@ -27,20 +33,31 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     var _bringingBack = false
     
     var _oldSize: CGSize! = nil
+    var _oldMarginRight: CGFloat = 0
+    var _oldMarginBottom: CGFloat = 0
+    var _marginRight: CGFloat = 0
+    var _marginBottom: CGFloat = 0
+    let _margin: CGFloat = 50
 
-    init(size: CGSize, level: Level) {
+    init(size: CGSize, level: LevelProtocol) {
         super.init(size: size)
         _level = level
+        _timerTotal = 30 + _level._level / 2
+        _timerCount = _timerTotal
 
-        _gameView = GameView(level: level, playScene: self, winCallback: complete)
+        createGameView()
         
         refreshCoins()
-        
-        addChild(_gameView)
+        refreshTimer()
     }
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
+    }
+    
+    func createGameView() {
+        _gameView = GameView(level: _level, parent: self, winCallback: complete)
+        addChild(_gameView)
     }
 
     override func didMoveToView(view: SKView) {
@@ -80,9 +97,15 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         view.addGestureRecognizer(_swipeRightRecognizer)
         view.addGestureRecognizer(_pinchRecognizer)
         view.addGestureRecognizer(_panRecognizer)
+        
+        startTimer()
     }
     
     override func willMoveFromView(view: SKView) {
+        _timer?.invalidate()
+        _timerFlash?.invalidate()
+        _timerFlash = nil
+    
         view.removeGestureRecognizer(_tapRecognizer)
         view.removeGestureRecognizer(_swipeUpRecognizer)
         view.removeGestureRecognizer(_swipeDownRecognizer)
@@ -97,7 +120,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     func handleTap(sender: UITapGestureRecognizer) {
-        let pauseScene = PauseScene(size: size, level: _level, playScene: self)
+        let pauseScene = PauseScene(size: size, level: _level, playScene: self, timerCount: _timerCount)
         pauseScene.scaleMode = scaleMode
         view?.presentScene(pauseScene)
     }
@@ -169,15 +192,15 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         let width = view!.bounds.width
         let height = view!.bounds.height
         
-        if x + w < width && x < 0 {
-            dX = min(width - x - w, -x)
-        } else if x + w > width && x > 0 {
-            dX = max(width - x - w, -x)
+        if x + w < width - _marginRight - _margin && x < _margin {
+            dX = min(width - _marginRight - _margin - x - w, _margin - x)
+        } else if x + w > width - _marginRight - _margin && x > _margin {
+            dX = max(width - _marginRight - _margin - x - w, _margin - x)
         }
-        if y + h < height && y < 0 {
-            dY = min(height - y - h, -y)
-        } else if y + h > height && y > 0 {
-            dY = max(height - y - h, -y)
+        if y + h < height - _margin && y < _marginBottom + _margin {
+            dY = min(height - _margin - y - h, _marginBottom + _margin - y)
+        } else if y + h > height - _margin && y > _marginBottom + _margin {
+            dY = max(height - _margin - y - h, _marginBottom + _margin - y)
         }
         
         if dX != 0 || dY != 0 {
@@ -187,14 +210,42 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         }
     }
     
+    func startTimer() {
+        _timer = NSTimer.scheduledTimerWithTimeInterval(1, target: self, selector: "tick", userInfo: nil, repeats: true)
+    }
+    
+    func tick() {
+        --_timerCount
+        updateTimerLabel()
+    }
+    
+    func flashTimer() {
+        _timerLabel.hidden = !_timerLabel.hidden
+    }
+    
+    func updateTimerLabel() {
+        var str = String(format:"%d:%02d", abs(_timerCount) / 60, abs(_timerCount) % 60)
+        if _timerCount < 0 {
+            str = "-" + str
+        }
+        _timerLabel.text = str
+        if _timerCount <= 10 && _timerFlash == nil {
+            _timerFlash = NSTimer.scheduledTimerWithTimeInterval(0.5, target: self, selector: "flashTimer", userInfo: nil, repeats: true)
+        }
+        if _timerCount <= 0 {
+            _timerLabel.fontColor = UIColor.redColor()
+        }
+    }
+    
     func complete() {
-        if _level._level == Storage.loadLevel() {
+        // Make sure we're playing a Level, not a CustomLevel
+        if _timerCount > 0 && _level is Level && _level._level == Storage.loadLevel() {
             Storage.incLevel()
         }
     
-        let levelCompleteScene = LevelCompleteScene(size: size, level: _level)
+        let levelCompleteScene = LevelCompleteScene(size: size, level: _level, timerCount: _timerCount, duration: _timerTotal - _timerCount)
         levelCompleteScene.scaleMode = scaleMode
-        view?.presentScene(levelCompleteScene)
+        (UIApplication.sharedApplication().delegate! as! AppDelegate).pushViewController(SKViewController(scene: levelCompleteScene), animated: true)
     }
     
     func refreshCoins() {
@@ -211,14 +262,38 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         addChild(_coinLabel)
     }
     
+    func refreshTimer() {
+        let w = size.width
+        let h = size.height
+        let s = min(w, h)
+        
+        if _timerLabel != nil {
+            _timerLabel.removeFromParent()
+        }
+        _timerLabel = SKLabelNode(fontNamed: "Optima-ExtraBlack")
+        _timerLabel.horizontalAlignmentMode = .Left
+        _timerLabel.fontColor = UIColor.whiteColor()
+        _timerLabel.fontSize = s * 0.064
+        _timerLabel.position = CGPoint(x: w - s * 0.18, y: h - s * 0.1)
+        updateTimerLabel()
+        addChild(_timerLabel)
+    }
+    
+    func changedSize() {
+        refreshCoins()
+        refreshTimer()
+    }
+    
     override func didChangeSize(oldSize: CGSize) {
         if _gameView != nil && oldSize != _oldSize {
-        
-            refreshCoins()
-        
-            let x = _gameView!.position.x + (size.width - oldSize.width) / 2
-            let y = _gameView!.position.y + (size.height - oldSize.height) / 2
+            _oldMarginRight = _marginRight
+            _oldMarginBottom = _marginBottom
+            changedSize()
+            
+            let x = _gameView!.position.x + (size.width - _marginRight - oldSize.width + _oldMarginRight) / 2
+            let y = _gameView!.position.y + (size.height - _marginBottom - oldSize.height + _oldMarginBottom) / 2 + _marginBottom - _oldMarginBottom
             _gameView!.position = CGPoint(x: x, y: y)
+            _gameView!.changeSize()
             
             bringBackToScreen()
         }

@@ -29,6 +29,56 @@ struct PieceType: OptionSetType {
     static let Target =     PieceType(rawValue: 1 << 8) // 256
     static let Stop =       PieceType(rawValue: 1 << 9) // 512
     static let Used2 =      PieceType(rawValue: 1 << 10)// 1024
+    
+    func isWallFromDir(dir: Direction) -> Bool {
+        if contains(.Block) ||
+           (contains(.Corner1) && (dir == .Right || dir == .Up))   ||
+           (contains(.Corner2) && (dir == .Up    || dir == .Left)) ||
+           (contains(.Corner3) && (dir == .Left  || dir == .Down)) ||
+           (contains(.Corner4) && (dir == .Down  || dir == .Right)) {
+            return true
+        }
+        return false
+    }
+    
+    static func getNextDirections(dir: Direction) -> [Direction] {
+        switch (dir) {
+        case .Up: fallthrough
+        case .Down: return [Direction.Left, Direction.Right]
+        case .Left: fallthrough
+        case .Right: return [Direction.Up, Direction.Down]
+        default: return [Direction.Right, Direction.Up, Direction.Left, Direction.Down]
+        }
+    }
+    
+    func getNextDirections(dir: Direction) -> [Direction] {
+        if contains(.Corner1) {
+            if dir == .Left {
+                return [Direction.Up]
+            } else if dir == .Down {
+                return [Direction.Right]
+            }
+        } else if contains(.Corner2) {
+            if dir == .Down {
+                return [Direction.Left]
+            } else if dir == .Right {
+                return [Direction.Up]
+            }
+        } else if contains(.Corner3) {
+            if dir == .Right {
+                return [Direction.Down]
+            } else if dir == .Up {
+                return [Direction.Left]
+            }
+        } else if contains(.Corner4) {
+            if dir == .Up {
+                return [Direction.Right]
+            } else if dir == .Left {
+                return [Direction.Down]
+            }
+        }
+        return [Direction.Still]
+    }
 }
 
 struct Piece {

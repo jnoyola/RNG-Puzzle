@@ -38,9 +38,13 @@ class LevelSelectScene: SKScene, UITextFieldDelegate {
         _textInput.text = String(Storage.loadLevel())
         _textInput.delegate = self;
         _textInput.becomeFirstResponder()
-        view.addSubview(_textInput)
-        
+        view.addSubview(self._textInput)
+    
         refreshLayout()
+    }
+    
+    override func willMoveFromView(view: SKView) {
+        _textInput.removeFromSuperview()
     }
     
     func addLabel(text: String, color: SKColor) -> SKLabelNode {
@@ -58,35 +62,39 @@ class LevelSelectScene: SKScene, UITextFieldDelegate {
         let h = size.height
         if (p.y > h * 0.56 && p.y < h * 0.76) {
             if (p.x < w * 0.25) {
-                presentScene(IntroScene(size: size))
+                back()
             } else if (p.x > w * 0.75) {
-                let level = parseInputLevel()
-                presentScene(LevelGenerationScene(size: size, level: level))
+                play()
             }
+        }
+    }
+    
+    func back() {
+        (UIApplication.sharedApplication().delegate!.window!!.rootViewController! as! UINavigationController).popViewControllerAnimated(true)
+    }
+    
+    func play() {
+        let level = LevelParser.parse(_textInput.text!, allowGenerated: true, allowCustom: true)
+        if (level != nil) {
+            presentScene(LevelGenerationScene(size: size, level: level!))
         }
     }
     
     func presentScene(scene: SKScene) {
-        removeTextInput()
-        scene.scaleMode = scaleMode
-        view?.presentScene(scene)
-    }
-    
-    func removeTextInput() {
-        _textInput.removeFromSuperview()
+        (UIApplication.sharedApplication().delegate! as! AppDelegate).pushViewController(SKViewController(scene: scene), animated: true)
     }
     
     func textField(textField: UITextField, shouldChangeCharactersInRange range: NSRange, replacementString string: String) -> Bool {
-        for c in string.characters {
-            if (c < "0" || c > "9") && c != "." {
-                return false
-            }
-        }
+//        for c in string.characters {
+//            if (c < "0" || c > "9") && c != "." {
+//                return false
+//            }
+//        }
         
         let newString = (textField.text! as NSString).stringByReplacingCharactersInRange(range, withString: string)
         let tokens = newString.componentsSeparatedByString(".")
         let levelNum = (tokens[0] as NSString).integerValue
-        let levelMax = Storage.loadLevel()
+        let levelMax = getMaxAllowedLevel()
         if levelNum > levelMax {
             textField.text = String(levelMax)
             return false
@@ -94,25 +102,8 @@ class LevelSelectScene: SKScene, UITextFieldDelegate {
         return true
     }
     
-    func parseInputLevel() -> Level {
-        let level = Level()
-        let tokens = _textInput.text?.componentsSeparatedByString(".")
-
-        // Parse level
-        let levelNum = (tokens![0] as NSString).integerValue
-        if levelNum > 0 {
-            level._level = levelNum
-        }
-        
-        if tokens!.count > 1 && !tokens![1].isEmpty {
-            // Parse seed
-            let seed = (tokens![1] as NSString).integerValue
-            if seed >= 0 {
-                level._seed = UInt32(seed)
-            }
-        }
-        
-        return level;
+    func getMaxAllowedLevel() -> Int {
+        return Storage.loadLevel()
     }
     
     func refreshLayout() {

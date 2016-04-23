@@ -50,7 +50,7 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
     
     func activate() {
         if !SKPaymentQueue.canMakePayments() {
-            NSNotificationCenter.defaultCenter().postNotificationName("alert", object: nil, userInfo: ["message": "Please enable In-App Purchases in Settings -> General -> Restrictions"])
+            AlertManager.defaultManager().alert("Please enable In-App Purchases in Settings -> General -> Restrictions")
         }
     }
     
