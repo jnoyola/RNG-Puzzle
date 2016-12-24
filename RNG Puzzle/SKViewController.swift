@@ -12,7 +12,7 @@ import GoogleMobileAds
 import SpriteKit
 import UIKit
 
-class SKViewController: UIViewController, ALAdDisplayDelegate {
+class SKViewController: UIViewController, ALAdDisplayDelegate, Refreshable {
 
     var _scene: SKScene! = nil
     var _presentingAd = false
@@ -24,6 +24,10 @@ class SKViewController: UIViewController, ALAdDisplayDelegate {
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
+    }
+    
+    func refresh() {
+        (_scene as? Refreshable)?.refresh()
     }
 
     override func loadView() {

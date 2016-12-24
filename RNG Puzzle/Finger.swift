@@ -21,7 +21,7 @@ class Finger: NSObject {
     init(x: CGFloat, y: CGFloat, z: CGFloat, parent: SKNode) {
         super.init()
     
-        let sprites = Sprites()
+        let sprites = PieceSprites()
         _finger = SKSpriteNode(texture: sprites.finger())
         _shadow = SKSpriteNode(texture: sprites.finger_shadow())
         resetSize(parent)

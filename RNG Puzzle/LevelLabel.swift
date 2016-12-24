@@ -14,13 +14,13 @@ class LevelLabel: SKNode {
     init(level: Int, seed: String, size: CGFloat, color: SKColor) {
         super.init()
         
-        let levelLabel = SKLabelNode(fontNamed: "Optima-ExtraBlack")
+        let levelLabel = SKLabelNode(fontNamed: Constants.FONT)
         levelLabel.text = "Level \(level)"
         levelLabel.fontSize = size
         levelLabel.fontColor = color
         levelLabel.horizontalAlignmentMode = .Center
         
-        let seedLabel = SKLabelNode(fontNamed: "Optima-ExtraBlack")
+        let seedLabel = SKLabelNode(fontNamed: Constants.FONT)
         seedLabel.text = ".\(seed)"
         seedLabel.fontSize = size * 0.7
         seedLabel.fontColor = color

@@ -14,12 +14,21 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
 
     var _level: LevelProtocol! = nil
     var _gameView: GameView! = nil
-    var _coinLabel: CoinLabel! = nil
+    var _starLabel: StarLabel! = nil
     var _timerLabel: SKLabelNode! = nil
-    var _timer: NSTimer? = nil
-    var _timerFlash: NSTimer? = nil
+    var _pauseButton: SKSpriteNode! = nil
+    var _hintLabel: StarLabel! = nil
+    
     var _timerTotal = 0
-    var _timerCount = 0
+    var _timerCount = 0.0
+    var _prevTick = 0
+    var _prevUpdateTime: CFTimeInterval? = nil
+    var _timerActive = false
+    var _numTimerExpirations = 0
+    
+    var _starEmitter: SKEmitterNode! = nil
+    
+    var _foregroundNotification: NSObjectProtocol! = nil
     
     var _tapRecognizer: UITapGestureRecognizer! = nil
     var _swipeUpRecognizer: UISwipeGestureRecognizer! = nil
@@ -43,45 +52,93 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         super.init(size: size)
         _level = level
         _timerTotal = 30 + _level._level / 2
-        _timerCount = _timerTotal
+        _timerCount = Double(_timerTotal)
+        _prevTick = _timerTotal
 
-        createGameView()
+        createHUD()
+        refreshHUD()
         
-        refreshCoins()
-        refreshTimer()
+        createGameView()
+        createStars()
     }
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
     
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(_foregroundNotification)
+    }
+    
     func createGameView() {
         _gameView = GameView(level: _level, parent: self, winCallback: complete)
         addChild(_gameView)
+        
+        if !_gameView.canHint() {
+            _hintLabel.disable()
+        }
+    }
+    
+    func createStars() {
+        let path = NSBundle.mainBundle().pathForResource("StarBackground", ofType: "sks")
+        _starEmitter = NSKeyedUnarchiver.unarchiveObjectWithFile(path!) as! SKEmitterNode
+        _starEmitter.particlePositionRange = CGVector(dx: frame.width, dy: frame.height)
+        _starEmitter.targetNode = self
+        _starEmitter.zPosition = -10
+        
+        refreshStars()
+        self.addChild(_starEmitter)
+        
+        _foregroundNotification = NSNotificationCenter.defaultCenter().addObserverForName(UIApplicationDidEnterBackgroundNotification, object: nil, queue: nil, usingBlock: { Void in self.doPause() })
+    }
+    
+    func createHUD() {
+        // Star Label
+        _starLabel = StarLabel(text: "\(Storage.loadStars())", color: SKColor.whiteColor(), anchor: .Left)
+        _starLabel.zPosition = 50
+        addChild(_starLabel)
+        
+        // Timer
+        _timerLabel = SKLabelNode(fontNamed: Constants.FONT)
+        _timerLabel.horizontalAlignmentMode = .Left
+        _timerLabel.fontColor = UIColor.whiteColor()
+        _timerLabel.zPosition = 50
+        updateTimerLabel()
+        addChild(_timerLabel)
+        
+        // Pause
+        _pauseButton = SKSpriteNode(imageNamed: "icon_pause")
+        _pauseButton.zPosition = 50
+        addChild(_pauseButton)
+        
+        // Hint Label
+        _hintLabel = StarLabel(text: "Hint", color: SKColor.whiteColor(), starText: String(Constants.HINT_COST), anchor: .Left)
+        addChild(_hintLabel)
     }
 
     override func didMoveToView(view: SKView) {
-        backgroundColor = SKColor(red: 0.4, green: 0, blue: 0.4, alpha: 1)
-    
+        backgroundColor = SKColor.blackColor()
+        _starEmitter.resetSimulation()
+        
         // Tap for pausing
-        _tapRecognizer = UITapGestureRecognizer(target: self, action: "handleTap:")
+        _tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTap))
         
         // Swipe for moving
-        _swipeUpRecognizer = UISwipeGestureRecognizer(target: self, action: "handleSwipeUp:")
+        _swipeUpRecognizer = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeUp))
         _swipeUpRecognizer.direction = UISwipeGestureRecognizerDirection.Up
-        _swipeDownRecognizer = UISwipeGestureRecognizer(target: self, action: "handleSwipeDown:")
+        _swipeDownRecognizer = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeDown))
         _swipeDownRecognizer.direction = UISwipeGestureRecognizerDirection.Down
-        _swipeLeftRecognizer = UISwipeGestureRecognizer(target: self, action: "handleSwipeLeft:")
+        _swipeLeftRecognizer = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeLeft))
         _swipeLeftRecognizer.direction = UISwipeGestureRecognizerDirection.Left
-        _swipeRightRecognizer = UISwipeGestureRecognizer(target: self, action: "handleSwipeRight:")
+        _swipeRightRecognizer = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeRight))
         _swipeRightRecognizer.direction = UISwipeGestureRecognizerDirection.Right
         
         // Pinch for zooming
-        _pinchRecognizer = UIPinchGestureRecognizer(target: self, action: "handlePinch:")
+        _pinchRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch))
         _pinchRecognizer.delegate = self
         
         // Pan for panning
-        _panRecognizer = UIPanGestureRecognizer(target: self, action: "handlePan:")
+        _panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePan))
         _panRecognizer.minimumNumberOfTouches = 2
         _panRecognizer.delegate = self
         
@@ -97,15 +154,11 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         view.addGestureRecognizer(_swipeRightRecognizer)
         view.addGestureRecognizer(_pinchRecognizer)
         view.addGestureRecognizer(_panRecognizer)
-        
-        startTimer()
     }
     
     override func willMoveFromView(view: SKView) {
-        _timer?.invalidate()
-        _timerFlash?.invalidate()
-        _timerFlash = nil
-    
+        _prevUpdateTime = nil
+        
         view.removeGestureRecognizer(_tapRecognizer)
         view.removeGestureRecognizer(_swipeUpRecognizer)
         view.removeGestureRecognizer(_swipeDownRecognizer)
@@ -120,9 +173,58 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     func handleTap(sender: UITapGestureRecognizer) {
-        let pauseScene = PauseScene(size: size, level: _level, playScene: self, timerCount: _timerCount)
+        let w = size.width
+        let h = size.height
+        let s = min(w, h)
+        
+        let p = sender.locationInView(sender.view)
+        let yMin = h - s * Constants.TEXT_SCALE * 2.6
+        let xMinPause = w - s * Constants.TEXT_SCALE * 2.6
+        let xMaxHint = _hintLabel.position.x + _hintLabel._maxX
+        
+        if p.y > yMin {
+            if p.x > xMinPause {
+                doPause()
+            } else if p.x < xMaxHint{
+                attemptHint()
+            }
+        }
+    }
+    
+    func doPause() {
+        let pauseScene = PauseScene(size: size, level: _level, playScene: self, timerCount: Int(ceil(_timerCount)))
         pauseScene.scaleMode = scaleMode
         view?.presentScene(pauseScene)
+    }
+    
+    func attemptHint() {
+        if _gameView.canHint() {
+            Storage.addStars(-Constants.HINT_COST)
+            updateStarLabel()
+            _hintLabel.animate()
+            _starLabel.animate()
+            
+            _gameView.hint()
+            if !_gameView.canHint() {
+                _hintLabel.disable()
+            }
+        } else {
+//            _purchasePopup = PurchasePopup(parent: self)
+//            refreshPurchasePopup()
+//            _purchasePopup!.zPosition = 1000
+//            _purchasePopup!.position = CGPoint(x: 0, y: -_purchasePopup!.frame.height)
+//            addChild(_purchasePopup!)
+//            _purchasePopup!.runAction(SKAction.moveToY(0, duration: 0.2), completion: {
+//                self._purchasePopup?.activate()
+//            })
+        }
+    }
+    
+    func closePurchasePopup() {
+//        _purchasePopup!.runAction(SKAction.moveToY(-_purchasePopup!.frame.height, duration: 0.2), completion: {
+//            self._purchasePopup!.removeFromParent()
+//            self._purchasePopup = nil
+//        })
     }
     
     func handleSwipeUp(sender: UITapGestureRecognizer) {
@@ -210,78 +312,98 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         }
     }
     
-    func startTimer() {
-        _timer = NSTimer.scheduledTimerWithTimeInterval(1, target: self, selector: "tick", userInfo: nil, repeats: true)
+    override func update(currentTime: NSTimeInterval) {
+        var delta = currentTime
+        if _prevUpdateTime != nil {
+            delta -= _prevUpdateTime!
+            _timerCount -= delta
+            
+            if _timerCount <= 0 {
+                _gameView.resetBall(shouldKill: true, shouldCharge: true)
+                _numTimerExpirations += 1
+                _timerCount = Double(_timerTotal)
+                _prevTick = _timerTotal + 1
+            }
+        }
+        
+        if Int(ceil(_timerCount)) < _prevTick {
+            updateTimerLabel()
+            _prevTick -= 1
+        }
+            
+        if rand() % 200 == 0 {
+            view?.layer.addSublayer(Trail(size: size))
+        }
+        
+        _prevUpdateTime = currentTime
     }
     
-    func tick() {
-        --_timerCount
-        updateTimerLabel()
-    }
-    
-    func flashTimer() {
-        _timerLabel.hidden = !_timerLabel.hidden
+    func updateStarLabel() {
+        let text = "\(Storage.loadStars())"
+        _starLabel.setText(text)
     }
     
     func updateTimerLabel() {
-        var str = String(format:"%d:%02d", abs(_timerCount) / 60, abs(_timerCount) % 60)
-        if _timerCount < 0 {
-            str = "-" + str
-        }
+        let str = String(format:"%d:%02d", abs(Int(ceil(_timerCount))) / 60, abs(Int(ceil(_timerCount))) % 60)
         _timerLabel.text = str
-        if _timerCount <= 10 && _timerFlash == nil {
-            _timerFlash = NSTimer.scheduledTimerWithTimeInterval(0.5, target: self, selector: "flashTimer", userInfo: nil, repeats: true)
-        }
-        if _timerCount <= 0 {
+        if _timerCount > 10 {
+            _timerLabel.fontColor = UIColor.whiteColor()
+        } else {
             _timerLabel.fontColor = UIColor.redColor()
         }
     }
     
     func complete() {
-        // Make sure we're playing a Level, not a CustomLevel
-        if _timerCount > 0 && _level is Level && _level._level == Storage.loadLevel() {
-            Storage.incLevel()
-        }
+        let duration = (_numTimerExpirations * _timerTotal) + (_timerTotal - Int(ceil(_timerCount)))
+        
+        // Get old score before saving achievements to show which stars have already been earned
+        let oldScore = Storage.loadScore(_level._level)
     
-        let levelCompleteScene = LevelCompleteScene(size: size, level: _level, timerCount: _timerCount, duration: _timerTotal - _timerCount)
+        // Record achievements and advance saved level counter
+        let achievements = AchievementManager.recordLevelCompleted(_level, duration: duration, numTimerExpirations: _numTimerExpirations, didEnterVoid: _gameView._didEnterVoid)
+        
+        // Record stars earned
+        let newScore = Storage.loadScore(_level._level)
+        Storage.addStars(newScore - oldScore)
+    
+        let levelCompleteScene = LevelCompleteScene(size: size, level: _level, timerCount: Int(ceil(_timerCount)), duration: duration, achievements: achievements, oldScore: oldScore, newScore: newScore)
         levelCompleteScene.scaleMode = scaleMode
-        (UIApplication.sharedApplication().delegate! as! AppDelegate).pushViewController(SKViewController(scene: levelCompleteScene), animated: true)
+        AppDelegate.pushViewController(SKViewController(scene: levelCompleteScene), animated: true, offset: 0)
     }
     
-    func refreshCoins() {
+    func refreshHUD() {
         let w = size.width
         let h = size.height
         let s = min(w, h)
         
-        if _coinLabel != nil {
-            _coinLabel.removeFromParent()
-        }
-        _coinLabel = CoinLabel(text: "\(Storage.loadCoins())", size: s * 0.064, color: SKColor.whiteColor(), coinScale: 1.3, anchor: .Left)
-        _coinLabel.position = CGPoint(x: s * 0.1, y: h - s * 0.1)
-        _coinLabel.zPosition = 50
-        addChild(_coinLabel)
+        _starLabel.setSize(s * Constants.TEXT_SCALE)
+        _starLabel.position = CGPoint(x: s * Constants.ICON_SCALE * 1.2, y: h - s * Constants.ICON_SCALE)
+        
+        _timerLabel.fontSize = s * Constants.TEXT_SCALE
+        _timerLabel.position = CGPoint(x: w - s * Constants.TEXT_SCALE * 2, y: h - s * Constants.ICON_SCALE)
+        
+        let pauseSize = s * Constants.ICON_SCALE
+        let pauseOffset = s * Constants.TEXT_SCALE
+        _pauseButton.size = CGSize(width: pauseSize, height: pauseSize)
+        _pauseButton.position = CGPoint(x: w - pauseOffset, y: pauseOffset)
+        
+        _hintLabel.setSize(s * Constants.TEXT_SCALE)
+        _hintLabel.position = CGPoint(x: _starLabel.position.x, y: s * (Constants.ICON_SCALE - Constants.TEXT_SCALE))
     }
     
-    func refreshTimer() {
+    func refreshStars() {
         let w = size.width
         let h = size.height
-        let s = min(w, h)
         
-        if _timerLabel != nil {
-            _timerLabel.removeFromParent()
+        if _starEmitter != nil {
+            _starEmitter.particlePositionRange = CGVector(dx: w, dy: h)
+            _starEmitter.position = CGPoint(x: w / 2, y: h / 2)
         }
-        _timerLabel = SKLabelNode(fontNamed: "Optima-ExtraBlack")
-        _timerLabel.horizontalAlignmentMode = .Left
-        _timerLabel.fontColor = UIColor.whiteColor()
-        _timerLabel.fontSize = s * 0.064
-        _timerLabel.position = CGPoint(x: w - s * 0.18, y: h - s * 0.1)
-        updateTimerLabel()
-        addChild(_timerLabel)
     }
     
     func changedSize() {
-        refreshCoins()
-        refreshTimer()
+        refreshHUD()
+        refreshStars()
     }
     
     override func didChangeSize(oldSize: CGSize) {

@@ -20,20 +20,22 @@ class GameView: SKNode {
     var _scale: CGFloat = 1.0
 
     var _level: LevelProtocol! = nil
-    var _ball: SKSpriteNode! = nil
+    var _ball = Blob()
     var _ballX = 0
     var _ballY = 0
     var _dir = Direction.Still
     var _spin: CGFloat = 0.0
     var _nextPiece: PieceType! = nil
     
-    let _ballSpeed = 0.1
-    let _ballSpinSpeed: CGFloat = 2.0
+    let _ballSpeed = 0.15
+    let _ballSpinSpeed: CGFloat = 3.0
     
     let _winDuration = 0.5
     
     var _hintPath: SKShapeNode? = nil
     var _correctIdx = 0
+    
+    var _didEnterVoid = false
 
     init(level: LevelProtocol, parent: SKScene, winCallback: (() -> Void)?) {
         super.init()
@@ -44,8 +46,6 @@ class GameView: SKNode {
         
         resetBaseScale()
         
-        _ball = SKSpriteNode(texture: Sprites().ball())
-        _ball.size = CGSize(width: 1, height: 1)
         _ball.zPosition = 5
         if level._startX >= 0 {
             addChild(_ball)
@@ -53,7 +53,7 @@ class GameView: SKNode {
         
         drawLevel(_level)
         
-        resetBall(true)
+        resetBall(instantly: true)
         
         _origScale = _scale
         changeSize()
@@ -73,14 +73,15 @@ class GameView: SKNode {
         //drawPath(1000)
         
         // Draw background
-        let bg = SKSpriteNode(color: UIColor.blackColor(), size: CGSize(width: level._width, height: level._height))
+        let color = Constants.colorForLevel(level._level)
+        let bg = SKSpriteNode(color: color, size: CGSize(width: level._width, height: level._height))
         bg.position = CGPoint(x: CGFloat(level._width) / 2, y: CGFloat(level._height) / 2)
         bg.zPosition = -1
         self.addChild(bg)
     }
     
     func drawPieces(level: LevelProtocol) {
-        let sprites = Sprites()
+        let sprites = PieceSprites()
         
         for i in 0...(level._width-1) {
             for j in 0...(level._height-1) {
@@ -98,7 +99,7 @@ class GameView: SKNode {
                 } else if piece.contains(.Corner4) {
                     node = SKSpriteNode(texture: sprites.corner4())
                 } else if piece.contains(.Teleporter) {
-                    node = SKSpriteNode(texture: sprites.teleport())
+                    node = SKSpriteNode(texture: sprites.teleporter())
                     node.runAction(SKAction.repeatActionForever(SKAction.rotateByAngle(CGFloat(M_PI), duration: 0.5)))
                     z = 1
                 } else if piece.contains(.Target) {
@@ -140,7 +141,8 @@ class GameView: SKNode {
             CGPathAddLineToPoint(path, nil, CGFloat(x) + 0.5, CGFloat(y) + 0.5)
             
             if x == correct.x && y == correct.y {
-                if ++i == _level._correct!.count {
+                i += 1
+                if i == _level._correct!.count {
                     break
                 }
                 correct = _level._correct![i]
@@ -155,10 +157,10 @@ class GameView: SKNode {
             piece = getNextPiece(x: x, y: y, dir: correct.dir)
             
             switch correct.dir {
-            case .Right: ++x
-            case .Up:    ++y
-            case .Left:  --x
-            case .Down:  --y
+            case .Right: x += 1
+            case .Up:    y += 1
+            case .Left:  x -= 1
+            case .Down:  y -= 1
             default: break
             }
         }
@@ -195,7 +197,7 @@ class GameView: SKNode {
     override func setScale(scale: CGFloat) {
         _scale = scale
         
-        if !(_parent is InstructionsScene) {
+        if !(_parent is InstructionsScene) && !(_parent is LevelSelectScene) {
             // Min scale means the level fills 75% of the screen
             // Max scale means 5 spaces fit in the screen
             if _scale <= 0.75 {
@@ -229,11 +231,30 @@ class GameView: SKNode {
     
     // -----------------------------------------------------------------------
     
-    func resetBall(instantly: Bool = false) {
+    func resetBall(instantly instantly: Bool = false, shouldKill: Bool = false, shouldCharge: Bool = false) {
+        if shouldKill {
+            let path = NSBundle.mainBundle().pathForResource("Explosion", ofType: "sks")
+            let particle = NSKeyedUnarchiver.unarchiveObjectWithFile(path!) as! SKEmitterNode
+            particle.position = _ball.position
+            particle.zPosition = 15
+            particle.setScale(0.1)
+            self.addChild(particle)
+        }
+        
+        if shouldCharge && !(_parent is InstructionsScene) {
+            Storage.addStars(-1)
+            if let playScene = _parent as? PlayScene {
+                playScene.updateStarLabel()
+            }
+        }
+    
+        _ball.reset(true)
         stop()
         _ballX = _level._startX
         _ballY = _level._startY
+        _ball.setScale(1)
         _ball.position = CGPoint(x: CGFloat(_ballX) + 0.5, y: CGFloat(_ballY) + 0.5)
+        _ball.zRotation = 0
         
         resetView(instantly)
     }
@@ -308,6 +329,8 @@ class GameView: SKNode {
     }
     
     func move(dir: Direction) {
+        _ball.stopIdleTimer()
+    
         _dir = dir
         var x = 0
         var y = 0
@@ -320,6 +343,7 @@ class GameView: SKNode {
         }
         _ballX += x
         _ballY += y
+        _ball.reset()
         _ball.runAction(SKAction.rotateByAngle(_spin * _ballSpinSpeed, duration: _ballSpeed))
         _ball.runAction(SKAction.moveByX(CGFloat(x), y: CGFloat(y), duration: _ballSpeed), completion: doneMoving)
     }
@@ -328,7 +352,7 @@ class GameView: SKNode {
         if _level._correct != nil && _correctIdx < _level._correct!.count {
             let correct = _level._correct![_correctIdx]
             if _ballX == correct.x && _ballY == correct.y {
-                ++_correctIdx
+                _correctIdx += 1
             }
         }
     
@@ -336,8 +360,8 @@ class GameView: SKNode {
             win()
             return
         } else if _nextPiece.contains(.Void) {
-            stop()
-            resetBall()
+            _didEnterVoid = true
+            resetBall(shouldKill: true, shouldCharge: true)
             return
         } else if _nextPiece.contains(.Teleporter) {
             teleport()
@@ -345,7 +369,7 @@ class GameView: SKNode {
                 return
             }
             if cannotMove(updateNextPiece(_dir), dir: _dir) {
-                stop()
+                stop(true)
             } else {
                 move(_dir)
                 updateNextPiece(x: _ballX, y: _ballY)
@@ -394,7 +418,7 @@ class GameView: SKNode {
         }
         
         if cannotMove(updateNextPiece(_dir), dir: _dir) {
-            stop()
+            stop(true)
             return
         }
         
@@ -416,15 +440,14 @@ class GameView: SKNode {
         return _level.getPieceSafely((x: x, y: y))
     }
     
-    func getNextPiece(var x x: Int, var y: Int, dir: Direction) -> PieceType {
+    func getNextPiece(x x: Int, y: Int, dir: Direction) -> PieceType {
         switch dir {
-        case .Right: ++x
-        case .Up:    ++y
-        case .Left:  --x
-        case .Down:  --y
-        default: break
+        case .Right: return getNextPiece(x: x + 1, y: y)
+        case .Up:    return getNextPiece(x: x, y: y + 1)
+        case .Left:  return getNextPiece(x: x - 1, y: y)
+        case .Down:  return getNextPiece(x: x, y: y - 1)
+        default:     return getNextPiece(x: x, y: y)
         }
-        return getNextPiece(x: x, y: y)
     }
     
     func updateNextPiece(x x: Int, y: Int) -> PieceType {
@@ -448,8 +471,12 @@ class GameView: SKNode {
         _ball.position = CGPoint(x: CGFloat(_ballX) + 0.5, y: CGFloat(_ballY) + 0.5)
     }
     
-    func stop() {
-        _ball.removeAllActions()
+    func stop(animated: Bool = false) {
+        if animated {
+            _ball.stop(dir: _dir, dtheta: _spin * _ballSpinSpeed, dt: _ballSpeed)
+        } else {
+            _ball.startIdleTimer()
+        }
         _dir = .Still
     }
     
@@ -462,14 +489,16 @@ class GameView: SKNode {
         })
     }
     
-    func hint() -> Bool {
-        if _level._correct != nil && _correctIdx >= _level._correct!.count {
+    func canHint() -> Bool {
+        if Storage.loadStars() < Constants.HINT_COST || _level is CustomLevel || _level._correct != nil && _correctIdx >= _level._correct!.count {
             return false
         }
-        
+        return true
+    }
+    
+    func hint() {
         _correctIdx += 3
         drawPath(_correctIdx)
-        return true
     }
     
     func changeSize() {

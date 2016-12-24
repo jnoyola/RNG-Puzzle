@@ -24,11 +24,11 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
         return (UIApplication.sharedApplication().delegate!.window!!.rootViewController! as! UINavigationController).visibleViewController!
     }
     
-    func shareMessages() {
+    func shareMessages(type: MuteShareDisplay.ShareType, level: LevelProtocol?, duration: Int) {
         if MFMessageComposeViewController.canSendText()
         {
             let vcMessages = MFMessageComposeViewController()
-            vcMessages.body="Check out AI Puzzle in the App Store!\nhttps://itunes.apple.com/us/app/id1096009046"
+            vcMessages.body="Check out AI Puzzle in the App Store!\nhttps://itunes.apple.com/us/app/id1134843213"
             
 //            controller.addAttachmentData(UIImageJPEGRepresentation(UIImage(named: "images.jpg")!, 1)!, typeIdentifier: "image/jpg", filename: "images.jpg")
 
@@ -46,7 +46,7 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
         getTopViewController().dismissViewControllerAnimated(true, completion: nil)
     }
     
-    func shareFacebook() {
+    func shareFacebook(type: MuteShareDisplay.ShareType, level: LevelProtocol?, duration: Int) {
         if SLComposeViewController.isAvailableForServiceType(SLServiceTypeFacebook) {
             let vcFacebook = SLComposeViewController(forServiceType: SLServiceTypeFacebook)
      
@@ -58,7 +58,7 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
         }
     }
     
-    func shareTwitter() {
+    func shareTwitter(type: MuteShareDisplay.ShareType, level: LevelProtocol?, duration: Int) {
         if SLComposeViewController.isAvailableForServiceType(SLServiceTypeTwitter) {
             // Initialize the default view controller for sharing the post.
             let vcTwitter = SLComposeViewController(forServiceType: SLServiceTypeTwitter)
@@ -98,7 +98,7 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
         getTopViewController().presentViewController(alertController, animated: true, completion: nil)
     }
     
-    func creationFinishWarning(scene: CreationScene, numSolutions: Int) {
+    func creationFinishWarning(scene: CreationScene, numSolutions: Int, name: String) {
         var msg = "Your puzzle contains \(numSolutions) unique solution"
         if numSolutions != 1 {
             msg += "s"
@@ -109,6 +109,7 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
         let alertController = UIAlertController(title: nil, message: msg, preferredStyle: UIAlertControllerStyle.Alert)
         alertController.addTextFieldWithConfigurationHandler({ textField -> Void in
             textField.placeholder = "Name"
+            textField.text = name
             nameField = textField
         })
         alertController.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.Default, handler: nil))

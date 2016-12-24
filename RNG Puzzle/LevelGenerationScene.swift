@@ -49,13 +49,13 @@ class LevelGenerationScene: SKScene {
             dispatch_async(dispatch_get_main_queue()) {
                 let playScene = PlayScene(size: self.size, level: self._level)
                 playScene.scaleMode = self.scaleMode
-                (UIApplication.sharedApplication().delegate! as! AppDelegate).pushViewController(SKViewController(scene: playScene), animated: true)
+                AppDelegate.pushViewController(SKViewController(scene: playScene), animated: true, offset: 0)
             }
         }
     }
     
     func addLabel(text: String, size: CGFloat, color: SKColor, y: CGFloat) {
-        let label = SKLabelNode(fontNamed: "Optima-ExtraBlack")
+        let label = SKLabelNode(fontNamed: Constants.FONT)
         label.text = text
         label.fontSize = size
         label.fontColor = color
@@ -75,10 +75,10 @@ class LevelGenerationScene: SKScene {
         let s = min(w, h)
         
         // Title
-        addLabel("Generating Level...", size: s * 0.08, color: SKColor.blueColor(), y: 0.85)
+        addLabel("Generating...", size: s * Constants.TITLE_SCALE, color: Constants.TITLE_COLOR, y: 0.85)
         
         // Level
-        let levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * 0.08, color: SKColor.whiteColor())
+        let levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * Constants.TEXT_SCALE, color: SKColor.whiteColor())
         levelLabel.position = CGPointMake(w * 0.5, h * 0.67)
         addChild(levelLabel)
     }

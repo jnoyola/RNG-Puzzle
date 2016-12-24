@@ -11,6 +11,7 @@ import SpriteKit
 class PieceBank: SKShapeNode {
 
     var _parent: CreationScene! = nil
+    var _level: LevelProtocol! = nil
     var _cornerRadius: CGFloat = 0
     
     var _cancelLabel: SKLabelNode! = nil
@@ -20,10 +21,11 @@ class PieceBank: SKShapeNode {
     var _pieceNodes = [SKNode]()
     var _pieceTypes = [PieceType]()
 
-    init(parent: CreationScene, cornerRadius: CGFloat = 10) {
+    init(parent: CreationScene, level: LevelProtocol, cornerRadius: CGFloat = 10) {
         super.init()
         
         _parent = parent
+        _level = level
         
         _cornerRadius = cornerRadius
         fillColor = UIColor.whiteColor()
@@ -43,7 +45,7 @@ class PieceBank: SKShapeNode {
     }
     
     func addLabel(text: String, color: SKColor) -> SKLabelNode {
-        let label = SKLabelNode(fontNamed: "Optima-ExtraBlack")
+        let label = SKLabelNode(fontNamed: Constants.FONT)
         label.text = text
         label.fontColor = color
         addChild(label)
@@ -51,7 +53,7 @@ class PieceBank: SKShapeNode {
     }
     
     func createPieces() {
-        let sprites = Sprites()
+        let sprites = PieceSprites()
         
         addPiece(sprites.block(), type: .Block)
         addPiece(sprites.corner1(), type: .Corner1)
@@ -61,16 +63,16 @@ class PieceBank: SKShapeNode {
         
         let nodeNone = SKShapeNode(rectOfSize: CGSize(width: 1, height: 1))
         nodeNone.lineWidth = 0
-        nodeNone.fillColor = SKColor.blackColor()
+        nodeNone.fillColor = Constants.colorForLevel(_level._level)
         nodeNone.antialiased = false
         nodeNone.zPosition = 15
         nodeNone.hidden = true
         _pieceNodes.append(nodeNone)
         _pieceTypes.append(.None)
         
-        addPiece(sprites.ball(), type: .Used)
+        addPiece(Blob(animated: false), type: .Used)
         addPiece(sprites.target(), type: .Target)
-        addPiece(sprites.teleport(), type: .Teleporter)
+        addPiece(sprites.teleporter(), type: .Teleporter)
         
         let nodeMore = SKSpriteNode(imageNamed: "More")
 //        nodeMore.color = UIColor.blackColor()
@@ -85,15 +87,19 @@ class PieceBank: SKShapeNode {
     func addPiece(texture: SKTexture, type: PieceType) {
         let node = SKSpriteNode(texture: texture)
         node.size = CGSize(width: 1, height: 1)
+        addPiece(node, type: type)
+    }
+    
+    func addPiece(node: SKSpriteNode, type: PieceType) {
         node.zPosition = 15
         node.hidden = true
         _pieceNodes.append(node)
         _pieceTypes.append(type)
     }
     
-    func selectAtPoint(var x x: CGFloat, var y: CGFloat) -> PieceType? {
-        x -= position.x
-        y -= position.y
+    func selectAtPoint(x x: CGFloat, y: CGFloat) -> PieceType? {
+        let x = x - position.x
+        let y = y - position.y
         if _isMenu {
             if isPointInBounds(x: x, y: y, node: _cancelLabel) {
                 cancel()
@@ -111,10 +117,11 @@ class PieceBank: SKShapeNode {
     }
     
     func isPointInBounds(x x: CGFloat, y: CGFloat, node: SKNode) -> Bool {
+        let margin: CGFloat = node is SKLabelNode ? 2.0 : 0.25
         let x1 = node.frame.minX - node.frame.width / 4
         let x2 = node.frame.maxX + node.frame.width / 4
-        let y1 = node.frame.minY - node.frame.height / 4
-        let y2 = node.frame.maxY + node.frame.height / 4
+        let y1 = node.frame.minY - node.frame.height * margin
+        let y2 = node.frame.maxY + node.frame.height * margin
         if x > x1 && x < x2 && y > y1 && y < y2 {
             return true
         }
@@ -145,6 +152,10 @@ class PieceBank: SKShapeNode {
                     _pieceNodes[i].hidden = false
                 } else {
                     _pieceNodes[i].hidden = true
+                }
+                
+                if _pieceTypes[i] == .None {
+                    (_pieceNodes[i] as? SKShapeNode)?.fillColor = Constants.colorForLevel(_level._level)
                 }
             }
         }

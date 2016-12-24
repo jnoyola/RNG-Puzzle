@@ -33,7 +33,7 @@ class SKMultilineLabel: SKNode {
     var rect:SKShapeNode?
     var labels:[SKLabelNode] = []
     
-    init(text:String, labelWidth:CGFloat, pos:CGPoint, fontName:String="Optima-ExtraBlack",fontSize:CGFloat=10,fontColor:SKColor=SKColor.blackColor(),spacing:CGFloat=1.5, alignment:SKLabelHorizontalAlignmentMode = .Center, shouldShowBorder:Bool = false)
+    init(text:String, labelWidth:CGFloat, pos:CGPoint, fontName:String=Constants.FONT,fontSize:CGFloat=10,fontColor:SKColor=SKColor.blackColor(),spacing:CGFloat=1.5, alignment:SKLabelHorizontalAlignmentMode = .Center, shouldShowBorder:Bool = false)
     {
         self.text = text
         self.labelWidth = labelWidth
@@ -74,7 +74,7 @@ class SKMultilineLabel: SKNode {
             var finalLine = false
             var wordCount = -1
             while (!finalLine) {
-                lineCount++
+                lineCount += 1
                 var lineLength = CGFloat(0)
                 var lineString = ""
                 var lineStringBeforeAddingWord = ""
@@ -89,7 +89,7 @@ class SKMultilineLabel: SKNode {
                 
                 while lineLength < CGFloat(labelWidth)
                 {
-                    ++wordCount
+                    wordCount += 1
                     if wordCount > words.count-1
                     {
                         //label.text = "\(lineString) \(words[wordCount])"
@@ -105,7 +105,7 @@ class SKMultilineLabel: SKNode {
                     }
                 }
                 if lineLength > 0 {
-                    --wordCount
+                    wordCount -= 1
                     if (!finalLine) {
                         if lineStringBeforeAddingWord == "" {
                             NSLog("Words don't fit! Decrease the font size of increase the labelWidth (\"\(lineString)\")")

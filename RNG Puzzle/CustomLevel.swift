@@ -92,8 +92,8 @@ class CustomLevel: NSObject, LevelProtocol {
     }
     
     func createNew() {
-        _width = _level
-        _height = _level
+        _width = CustomLevel.getWidthForLevel(_level)
+        _height = _width
         _grid = [[PieceType]!](count: _height, repeatedValue: nil)
         for j in 0...(_height - 1) {
             _grid[j] = [PieceType](count: _width, repeatedValue: .None)
@@ -106,14 +106,36 @@ class CustomLevel: NSObject, LevelProtocol {
         if let data = NSData(base64EncodedString: seed, options: NSDataBase64DecodingOptions.IgnoreUnknownCharacters) {
             var bytes = [UInt8](count: data.length, repeatedValue: 0)
             data.getBytes(&bytes, length: bytes.count)
+            
+            if bytes.count < 6 {
+                return false
+            }
         
-            var iByte = -1
-            _width = Int(bytes[++iByte])
-            _height = Int(bytes[++iByte])
-            _startX = Int(bytes[++iByte])
-            _startY = Int(bytes[++iByte])
-            _targetX = Int(bytes[++iByte])
-            _targetY = Int(bytes[++iByte])
+            _width   = Int(bytes[0])
+            _height  = Int(bytes[1])
+            _startX  = Int(bytes[2])
+            _startY  = Int(bytes[3])
+            _targetX = Int(bytes[4])
+            _targetY = Int(bytes[5])
+            let wRange = CustomLevel.getLevelRangeForWidth(_width)
+            let hRange = CustomLevel.getLevelRangeForWidth(_height)
+            let minLevel = (wRange.min + hRange.min) / 2
+            let maxLevel = (wRange.max + hRange.max) / 2
+            if _width < 1 ||
+               _height < 1 ||
+               _startX < 0 ||
+               _startY < 0 ||
+               _targetX < 0 ||
+               _targetY < 0 ||
+               _startX >= _width ||
+               _startY >= _height ||
+               _targetX >= _width ||
+               _targetY >= _height ||
+               _level < minLevel ||
+               _level > maxLevel {
+                return false
+            }
+            
             _grid = [[PieceType]!](count: _height, repeatedValue: nil)
             for j in 0...(_height - 1) {
                 _grid[j] = [PieceType](count: _width, repeatedValue: .None)
@@ -137,7 +159,7 @@ class CustomLevel: NSObject, LevelProtocol {
              *
              */
             
-            ++iByte
+            var iByte = 6 // Following the 6 meta bytes above
             var iBit = 8
             var state = 0
             var teleporterID = 0
@@ -145,10 +167,11 @@ class CustomLevel: NSObject, LevelProtocol {
             var i = 0
             var j = 0
             while iByte < bytes.count {
-                let bit = bytes[iByte] & UInt8(1 << --iBit)
+                iBit -= 1
+                let bit = bytes[iByte] & UInt8(1 << iBit)
                 if iBit == 0 {
                     iBit = 8
-                    ++iByte
+                    iByte += 1
                 }
                 
                 var type: PieceType? = nil
@@ -176,7 +199,8 @@ class CustomLevel: NSObject, LevelProtocol {
                     if bit != 0 {
                         teleporterID |= 1
                     }
-                    if ++numTeleporterIDBits == 5 {
+                    numTeleporterIDBits += 1
+                    if numTeleporterIDBits == 5 {
                         type = PieceType.Teleporter
                     }
                 default: return false
@@ -192,8 +216,10 @@ class CustomLevel: NSObject, LevelProtocol {
                         }
                     }
                     state = 0
-                    if ++i == _width {
-                        if ++j == _height {
+                    i += 1
+                    if i == _width {
+                        j += 1
+                        if j == _height {
                             break
                         }
                         i = 0
@@ -203,21 +229,24 @@ class CustomLevel: NSObject, LevelProtocol {
             
             var numTeleporters = -1
             while numTeleporters < _teleporters.count - 1 {
-                if _teleporters[++numTeleporters] == nil {
+                numTeleporters += 1
+                if _teleporters[numTeleporters] == nil {
+                    _teleporters.removeLast(_teleporters.count - numTeleporters)
                     break
                 }
             }
-            if numTeleporters % 2 == 1 {
+            if _teleporters.count % 2 == 1 {
                 return false
             }
         } else {
             return false
         }
         
-        if _targetX < 0 || _targetY < 0 {
+        setPiece(x: _targetX, y: _targetY, type: .Target)
+        
+        if getPiece(x: _startX, y: _startY) != .None {
             return false
         }
-        setPiece(x: _targetX, y: _targetY, type: .Target)
         
         return true
     }
@@ -244,7 +273,7 @@ class CustomLevel: NSObject, LevelProtocol {
     }
     
     func computeSeed() {
-        _level = (_width + _height) / 2
+        updateLevel()
     
         var bytes = [
             UInt8(_width),
@@ -271,7 +300,7 @@ class CustomLevel: NSObject, LevelProtocol {
                     numTeleporterIDBits = 5
                 }
                 while true {
-                    --iBit
+                    iBit -= 1
                     
                     if type == .Block {
                         // 1 0 0
@@ -287,7 +316,9 @@ class CustomLevel: NSObject, LevelProtocol {
                         case 0: byte |= (1 << iBit)
                         case 1: break
                         case 2: byte |= (1 << iBit)
-                        default: byte |= (((teleporterID >> --numTeleporterIDBits) & 1) << iBit)
+                        default:
+                            numTeleporterIDBits -= 1
+                            byte |= (((teleporterID >> numTeleporterIDBits) & 1) << iBit)
                             if numTeleporterIDBits == 0 {
                                 pieceDone = true
                             }
@@ -344,7 +375,7 @@ class CustomLevel: NSObject, LevelProtocol {
                     if pieceDone {
                         break
                     }
-                    ++iPieceBit
+                    iPieceBit += 1
                 }
             }
         }
@@ -359,19 +390,19 @@ class CustomLevel: NSObject, LevelProtocol {
     }
     
     func canDecWidth() -> Bool {
-        return _width > 2
+        return _width > 4
     }
     
     func canDecHeight() -> Bool {
-        return _height > 2
+        return _height > 4
     }
     
     func canIncWidth() -> Bool {
-        return _width < Storage.loadLevel() && _width < 256
+        return _width < CustomLevel.getWidthForLevel(Storage.loadMaxLevel()) && _width < 750
     }
     
     func canIncHeight() -> Bool {
-        return _height < Storage.loadLevel() && _height < 256
+        return _height < CustomLevel.getWidthForLevel(Storage.loadMaxLevel()) && _height < 750
     }
     
     func incLeft() {
@@ -379,7 +410,8 @@ class CustomLevel: NSObject, LevelProtocol {
             _grid[j].insert(.None, atIndex: 0)
         }
         changeOrigin(dx: 1)
-        ++_width
+        _width += 1
+        updateLevel()
     }
     
     func decLeft() {
@@ -392,14 +424,16 @@ class CustomLevel: NSObject, LevelProtocol {
             _grid[j].removeFirst()
         }
         changeOrigin(dx: -1)
-        --_width
+        _width -= 1
+        updateLevel()
     }
     
     func incRight() {
         for j in 0...(_height - 1) {
             _grid[j].append(.None)
         }
-        ++_width
+        _width += 1
+        updateLevel()
     }
     
     func decRight() {
@@ -410,14 +444,16 @@ class CustomLevel: NSObject, LevelProtocol {
         for j in 0...(_height - 1) {
             _grid[j].removeLast()
         }
-        --_width
+        _width -= 1
+        updateLevel()
     }
     
     func incBottom() {
         let row = [PieceType](count: _width, repeatedValue: .None)
         _grid.insert(row, atIndex: 0)
         changeOrigin(dy: 1)
-        ++_height
+        _height += 1
+        updateLevel()
     }
     
     func decBottom() {
@@ -426,13 +462,15 @@ class CustomLevel: NSObject, LevelProtocol {
         }
         _grid.removeFirst()
         changeOrigin(dy: -1)
-        --_height
+        _height -= 1
+        updateLevel()
     }
     
     func incTop() {
         let row = [PieceType](count: _width, repeatedValue: .None)
         _grid.append(row)
-        ++_height
+        _height += 1
+        updateLevel()
     }
     
     func decTop() {
@@ -440,7 +478,18 @@ class CustomLevel: NSObject, LevelProtocol {
             checkRemovedPiece(x: i, y: _height - 1)
         }
         _grid.removeLast()
-        --_height
+        _height -= 1
+        updateLevel()
+    }
+    
+    func updateLevel() {
+        let wRange = CustomLevel.getLevelRangeForWidth(_width)
+        let hRange = CustomLevel.getLevelRangeForWidth(_height)
+        let minLevel = (wRange.min + hRange.min) / 2
+        let maxLevel = (wRange.max + hRange.max) / 2
+        if _level < minLevel || _level > maxLevel {
+            _level = (minLevel + maxLevel) / 2
+        }
     }
     
     func checkRemovedPiece(x x: Int, y: Int) {
@@ -458,7 +507,7 @@ class CustomLevel: NSObject, LevelProtocol {
     }
     
     func changeOrigin(dx dx: Int = 0, dy: Int = 0) {
-        for var i = 0; i < _teleporters.count; ++i {
+        for i in 0 ..< _teleporters.count {
             let p = _teleporters[i]
             if p == nil {
                 break

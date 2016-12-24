@@ -30,22 +30,36 @@ extension LevelProtocol {
     
     typealias Point = (x: Int, y: Int)
     
-    func getAdjPosFrom(var x x: Int, var y: Int, dir: Direction) -> Point {
+    static func getWidthForLevel(level: Int) -> Int {
+        return 4 + level / 3
+    }
+    
+    static func getLevelRangeForWidth(width: Int) -> (min: Int, max: Int) {
+        let min = (width - 4) * 3
+        let max = min + 2
+        return (min: min, max: max)
+    }
+    
+    func getAdjPosFrom(x x: Int, y: Int, dir: Direction) -> Point {
         switch dir {
-            case .Right: ++x
-            case .Up:    ++y
-            case .Left:  --x
-            case .Down:  --y
-            default: break
+            case .Right: return (x: x + 1, y: y)
+            case .Up:    return (x: x, y: y + 1)
+            case .Left:  return (x: x - 1, y: y)
+            case .Down:  return (x: x, y: y - 1)
+            default:     return (x: x, y: y)
         }
-        return (x: x, y: y)
     }
     
     func getNumSolutions() -> Int {
         return getNumSolutions(x: _startX, y: _startY, dir: .Still, visited: Set<PointRecord>())
     }
     
-    func getNumSolutions(var x x: Int, var y: Int, var dir: Direction, var visited: Set<PointRecord>) -> Int {
+    func getNumSolutions(x x: Int, y: Int, dir: Direction, visited: Set<PointRecord>) -> Int {
+        var x = x
+        var y = y
+        var dir = dir
+        var visited = visited
+    
         while true {
             let piece = getPieceSafely((x: x, y: y))
             if piece.contains(.Target) {

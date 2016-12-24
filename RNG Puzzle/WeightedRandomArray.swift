@@ -29,7 +29,7 @@ class WeightedRandomArray: NSObject {
             if cumWeight > r {
                 break
             }
-            ++iPiece
+            iPiece += 1
         }
         let piece = _array[iPiece]
         _array.removeAtIndex(iPiece)

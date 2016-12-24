@@ -8,7 +8,7 @@
 
 import UIKit
 
-class MyPuzzlesController: UITableViewController {
+class MyPuzzlesController: UITableViewController, Refreshable {
 
     var _levelNames: [NSString]! = nil
 
@@ -17,23 +17,45 @@ class MyPuzzlesController: UITableViewController {
     
         _levelNames = Storage.loadCustomLevelNames()
     }
+    
+    func refresh() {
+        _levelNames = Storage.loadCustomLevelNames()
+        tableView.reloadData()
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
         view.backgroundColor = UIColor.blackColor()
         
+        let w = view.frame.width
+        let h = view.frame.height
+        let s = min(w, h)
+        
+        let font = UIFont(name: Constants.FONT, size: s * Constants.TITLE_SCALE)!
+        
         // Navigation Bar
+        navigationController!.navigationBar.frame.origin.y = 100
+        
         navigationController!.navigationBar.titleTextAttributes = [
-            NSForegroundColorAttributeName:UIColor.whiteColor()
+            NSForegroundColorAttributeName: Constants.TITLE_COLOR,
+            NSFontAttributeName: font
         ]
         navigationController!.navigationBar.barTintColor = UIColor.blackColor()
         navigationController!.navigationBar.tintColor = UIColor.whiteColor()
         
-        let backButton = UIBarButtonItem(title: "Back", style: .Plain, target: self, action: "back:")
+        let backButton = UIBarButtonItem(title: "<", style: .Plain, target: self, action: #selector(back))
+        backButton.setTitleTextAttributes([
+            NSFontAttributeName: font
+        ], forState: .Normal)
         navigationItem.setLeftBarButtonItem(backButton, animated: false)
         
-        let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: "newLevel:")
+        let addFont = UIFont(name: Constants.FONT, size: s * Constants.TEXT_SCALE * 2)!
+        
+        let addButton = UIBarButtonItem(title: "+", style: .Plain, target: self, action: #selector(newLevel))
+        addButton.setTitleTextAttributes([
+            NSFontAttributeName: addFont
+        ], forState: .Normal)
         navigationItem.setRightBarButtonItem(addButton, animated: false)
         
 //        // Toolbar
@@ -44,6 +66,8 @@ class MyPuzzlesController: UITableViewController {
 //        setToolbarItems([
 //            UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.Action, target: self, action: "share:")
 //        ], animated: false)
+
+        tableView.rowHeight = s * Constants.TEXT_SCALE * 1.5
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -53,11 +77,11 @@ class MyPuzzlesController: UITableViewController {
     }
     
     func back(sender: UIBarButtonItem) {
-        navigationController!.popToRootViewControllerAnimated(true)
+        AppDelegate.popViewController(animated: true)
     }
     
     func newLevel(sender: UIBarButtonItem) {
-        navigationController!.pushViewController(SKViewController(scene: CustomLevelSelectScene()), animated: true)
+        AppDelegate.pushViewController(SKViewController(scene: CustomLevelSelectScene()), animated: true, offset: 1)
     }
     
     override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
@@ -69,11 +93,18 @@ class MyPuzzlesController: UITableViewController {
     }
     
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        
+        let w = view.frame.width
+        let h = view.frame.height
+        let s = min(w, h)
+        
         let cell = UITableViewCell()
 
         cell.textLabel?.text = "\(_levelNames[indexPath.row])"
+        cell.textLabel?.font = UIFont(name: Constants.FONT, size: s * Constants.TEXT_SCALE * 0.75)!
         cell.textLabel?.textColor = UIColor.whiteColor()
         cell.backgroundColor = UIColor.blackColor()
+        
         
         let selectionView = UIView()
         selectionView.backgroundColor = UIColor.grayColor()
@@ -89,7 +120,7 @@ class MyPuzzlesController: UITableViewController {
             dispatch_async(dispatch_get_main_queue()) {
                 let playScene = PlayScene(size: self.view.bounds.size, level: level!)
                 playScene.scaleMode = .ResizeFill
-                (UIApplication.sharedApplication().delegate! as! AppDelegate).pushViewController(SKViewController(scene: playScene), animated: true)
+                AppDelegate.pushViewController(SKViewController(scene: playScene), animated: true, offset: 1)
             }
         }
     }
@@ -99,9 +130,23 @@ class MyPuzzlesController: UITableViewController {
     }
     
     override func tableView(tableView: UITableView, editActionsForRowAtIndexPath indexPath: NSIndexPath) -> [UITableViewRowAction]? {
-        // TODO make these buttons do something
-        return [UITableViewRowAction.init(style: .Default, title: "Delete", handler: {_,_ in }),
-                UITableViewRowAction.init(style: .Normal, title: "Edit", handler: {_,_ in })]
+        return [UITableViewRowAction(style: .Default, title: "Delete", handler: {rowAction, indexPath in
+                    Storage.deleteCustomLevel(indexPath.row)
+                    self._levelNames = Storage.loadCustomLevelNames()
+                    self.tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
+                }),
+                UITableViewRowAction(style: .Normal, title: "Edit", handler: {rowAction, indexPath in
+                    let code = Storage.loadCustomLevelCode(indexPath.row)
+                    let level = LevelParser.parse(code as String, allowCustom: true)
+                    if level != nil {
+                        dispatch_async(dispatch_get_main_queue()) {
+                            let creationScene = CreationScene(size: UIScreen.mainScreen().bounds.size, level: level!)
+                            creationScene._editIndex = indexPath.row
+                            creationScene.scaleMode = .ResizeFill
+                            AppDelegate.pushViewController(SKViewController(scene: creationScene), animated: true, offset: 1)
+                        }
+                    }
+                })]
     }
 
     override func shouldAutorotate() -> Bool {

@@ -11,18 +11,21 @@ import SpriteKit
 
 class CreationScene: PlayScene {
 
+    var _editIndex = -1
+
     var _pieceBank: PieceBank! = nil
     
     var _isMenu = true
     var _sizeButtons = [SKSpriteNode!](count: 8, repeatedValue: nil)
 
     override func createGameView() {
-        _pieceBank = PieceBank(parent: self)
-        refreshPieceBank()
-        addChild(_pieceBank)
-        
         _gameView = CreationView(level: _level, parent: self, winCallback: complete)
         addChild(_gameView)
+    }
+    
+    override func createHUD() {
+        _pieceBank = PieceBank(parent: self, level: _level)
+        addChild(_pieceBank)
         
         for i in 0...7 {
             let node = SKSpriteNode(imageNamed: i % 2 == 0 ? "Add" : "Remove")
@@ -30,7 +33,6 @@ class CreationScene: PlayScene {
             _sizeButtons[i] = node
             self.addChild(node)
         }
-        refreshSizeButtons()
         showSizeButtons(true)
     }
 
@@ -79,14 +81,11 @@ class CreationScene: PlayScene {
         _gameView.resetBall()
     }
     
-    override func startTimer() {}
+    override func update(currentTime: NSTimeInterval) {}
     
-    override func refreshCoins() {}
-    
-    override func refreshTimer() {}
-    
-    func refreshPieceBank() {
+    override func refreshHUD() {
         (_marginRight, _marginBottom) = _pieceBank.refreshLayout(size)
+        refreshSizeButtons()
     }
     
     func refreshSizeButtons() {
@@ -150,7 +149,7 @@ class CreationScene: PlayScene {
             _gameView.position = CGPoint(x: _gameView.position.x - _gameView.getWidth() / CGFloat(_level._width), y: _gameView.position.y)
             (_level as! CustomLevel).incLeft()
             if _gameView._ballX >= 0 {
-                ++_gameView._ballX
+                _gameView._ballX += 1
             } else {
                 _gameView.resetBall()
             }
@@ -158,7 +157,7 @@ class CreationScene: PlayScene {
             _gameView.position = CGPoint(x: _gameView.position.x + _gameView.getWidth() / CGFloat(_level._width), y: _gameView.position.y)
             (_level as! CustomLevel).decLeft()
             if _gameView._ballX >= 0 {
-                --_gameView._ballX
+                _gameView._ballX -= 1
             } else {
                 _gameView.resetBall()
             }
@@ -171,7 +170,7 @@ class CreationScene: PlayScene {
             _gameView.position = CGPoint(x: _gameView.position.x, y: _gameView.position.y - _gameView.getHeight() / CGFloat(_level._height))
             (_level as! CustomLevel).incBottom()
             if _gameView._ballY >= 0 {
-                ++_gameView._ballY
+                _gameView._ballY += 1
             } else {
                 _gameView.resetBall()
             }
@@ -179,7 +178,7 @@ class CreationScene: PlayScene {
             _gameView.position = CGPoint(x: _gameView.position.x, y: _gameView.position.y + _gameView.getHeight() / CGFloat(_level._height))
             (_level as! CustomLevel).decBottom()
             if _gameView._ballY >= 0 {
-                --_gameView._ballY
+                _gameView._ballY -= 1
             } else {
                 _gameView.resetBall()
             }
@@ -196,28 +195,34 @@ class CreationScene: PlayScene {
     
     override func changedSize() {
         super.changedSize()
-        
-        refreshPieceBank()
+    
         refreshSizeButtons()
     }
     
     func finishPress() {
         let numSolutions = _level.getNumSolutions()
-        if numSolutions < 1 {
+        let name = _editIndex < 0 ? "" : Storage.loadCustomLevelNames()[_editIndex] as String
+        if (_level as! CustomLevel)._teleporters.count % 2 == 1 {
+            AlertManager.defaultManager().alert("You must place or remove a wormhole.")
+        } else if numSolutions < 1 {
             AlertManager.defaultManager().alert("Your puzzle does not have a solution.")
         } else {
-            AlertManager.defaultManager().creationFinishWarning(self, numSolutions: numSolutions)
+            AlertManager.defaultManager().creationFinishWarning(self, numSolutions: numSolutions, name: name)
         }
     }
     
     func finishDone(name: String) {
         (_level as! CustomLevel).computeSeed()
-        Storage.saveCustomLevel(_level, name: name)
+        if _editIndex < 0 {
+            Storage.saveCustomLevel(_level, name: name)
+        } else {
+            Storage.editCustomLevel(_level, name: name, index: _editIndex)
+        }
         
-        (UIApplication.sharedApplication().delegate!.window!!.rootViewController! as! UINavigationController).popViewControllerAnimated(true)
+        AppDelegate.popViewController(animated: true)
     }
     
     func cancelDone() {
-        (UIApplication.sharedApplication().delegate!.window!!.rootViewController! as! UINavigationController).popViewControllerAnimated(true)
+        AppDelegate.popViewController(animated: true)
     }
 }

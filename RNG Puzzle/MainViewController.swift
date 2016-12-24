@@ -11,7 +11,9 @@ import Social
 import SpriteKit
 import UIKit
 
-class MainViewController: UIViewController {
+class MainViewController: UIViewController, Refreshable {
+
+    var _scene: SKScene! = nil
 
     override func loadView() {
         view = SKView(frame: UIScreen.mainScreen().bounds)
@@ -21,10 +23,14 @@ class MainViewController: UIViewController {
         super.viewDidLoad()
     
         let skView = view as! SKView
-        let scene = IntroScene(size: view.bounds.size)
+        _scene = IntroScene(size: view.bounds.size)
         skView.ignoresSiblingOrder = true
-        scene.scaleMode = .ResizeFill
-        skView.presentScene(scene)
+        _scene.scaleMode = .ResizeFill
+        skView.presentScene(_scene)
+    }
+    
+    func refresh() {
+        (_scene as? Refreshable)?.refresh()
     }
     
     override func viewWillAppear(animated: Bool) {

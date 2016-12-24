@@ -19,9 +19,9 @@ class CreationView: GameView {
         super.drawPieces(level)
         
         if level._startX >= 0 {
-            let start = SKSpriteNode(texture: Sprites().ball())
+            let start = Blob(animated: false)
             start.color = SKColor.blackColor()
-            start.colorBlendFactor = 0.5
+            start.colorBlendFactor = 0.9
             start.size = CGSize(width: 1, height: 1)
             start.position = CGPoint(x: CGFloat(level._startX) + 0.5, y: CGFloat(level._startY) + 0.5)
             start.zPosition = 0
@@ -201,8 +201,8 @@ class CreationView: GameView {
         }
     }
     
-    override func resetBall(instantly: Bool = false) {
-        super.resetBall(instantly)
+    override func resetBall(instantly instantly: Bool = false, shouldKill: Bool = false, shouldCharge: Bool = false) {
+        super.resetBall(instantly: instantly)
         
         if _ballX < 0 {
             _ball.removeFromParent()
