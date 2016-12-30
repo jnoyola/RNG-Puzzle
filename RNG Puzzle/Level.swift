@@ -26,7 +26,7 @@ class Level: NSObject, LevelProtocol {
     var _teleporters: [Point] = []
     var _stops = Set<PointRecord>()
     
-    var _correct: [PointRecord]? = nil
+    var _correct: [PointRecord?]? = nil
     
     
     @inline(__always) func getCode() -> String {
@@ -125,7 +125,7 @@ class Level: NSObject, LevelProtocol {
         _height = _width
     
         let numPathPieces = getNumPathPieces()
-        _correct = [PointRecord!](repeating: nil, count: numPathPieces + 1)
+        _correct = [PointRecord?](repeating: nil, count: numPathPieces + 1)
     
         startWithNumPathPieces(numPathPieces)
         
@@ -158,10 +158,10 @@ class Level: NSObject, LevelProtocol {
     
     func initRng() {
         let s = getTrueSeed()
-        let a = UInt8(s)
-        let b = UInt8(s >> 8)
-        let c = UInt8(s >> 16)
-        let d = UInt8(s >> 24)
+        let a = UInt8(truncatingBitPattern: s)
+        let b = UInt8(truncatingBitPattern: s >> 8)
+        let c = UInt8(truncatingBitPattern: s >> 16)
+        let d = UInt8(truncatingBitPattern: s >> 24)
         _rng = GKARC4RandomSource(seed: Data(bytes:[a, b, c, d]))
     }
     

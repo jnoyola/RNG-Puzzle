@@ -16,7 +16,7 @@ class CreationScene: PlayScene {
     var _pieceBank: PieceBank! = nil
     
     var _isMenu = true
-    var _sizeButtons = [SKSpriteNode!](repeating: nil, count: 8)
+    var _sizeButtons = [SKSpriteNode?](repeating: nil, count: 8)
 
     override func createGameView() {
         _gameView = CreationView(level: _level, parent: self, winCallback: complete)
@@ -43,9 +43,11 @@ class CreationScene: PlayScene {
         
         if _isMenu {
             for i in 0...(_sizeButtons.count - 1) {
-                if !_sizeButtons[i].isHidden && isPointInBounds(x: x, y: y, node: _sizeButtons[i]) {
-                    performSizeAction(i)
-                    return
+                if let sizeButton = _sizeButtons[i] {
+                    if !sizeButton.isHidden && isPointInBounds(x: x, y: y, node: sizeButton) {
+                        performSizeAction(i)
+                        return
+                    }
                 }
             }
         }
@@ -108,34 +110,34 @@ class CreationScene: PlayScene {
             sizeButton?.size = CGSize(width: buttonSize, height: buttonSize)
         }
         
-        _sizeButtons[0].position = CGPoint(x: x_left, y: y_mid + dist)
-        _sizeButtons[1].position = CGPoint(x: x_left, y: y_mid - dist)
+        _sizeButtons[0]?.position = CGPoint(x: x_left, y: y_mid + dist)
+        _sizeButtons[1]?.position = CGPoint(x: x_left, y: y_mid - dist)
         
-        _sizeButtons[2].position = CGPoint(x: x_right, y: y_mid + dist)
-        _sizeButtons[3].position = CGPoint(x: x_right, y: y_mid - dist)
+        _sizeButtons[2]?.position = CGPoint(x: x_right, y: y_mid + dist)
+        _sizeButtons[3]?.position = CGPoint(x: x_right, y: y_mid - dist)
         
-        _sizeButtons[4].position = CGPoint(x: x_mid + dist, y: y_bot)
-        _sizeButtons[5].position = CGPoint(x: x_mid - dist, y: y_bot)
+        _sizeButtons[4]?.position = CGPoint(x: x_mid + dist, y: y_bot)
+        _sizeButtons[5]?.position = CGPoint(x: x_mid - dist, y: y_bot)
         
-        _sizeButtons[6].position = CGPoint(x: x_mid + dist, y: y_top)
-        _sizeButtons[7].position = CGPoint(x: x_mid - dist, y: y_top)
+        _sizeButtons[6]?.position = CGPoint(x: x_mid + dist, y: y_top)
+        _sizeButtons[7]?.position = CGPoint(x: x_mid - dist, y: y_top)
     }
     
     func showSizeButtons(_ show: Bool) {
         _isMenu = show
         if show {
             let customLevel = _level as! CustomLevel
-            _sizeButtons[0].isHidden = !customLevel.canIncWidth()
-            _sizeButtons[1].isHidden = !customLevel.canDecWidth()
+            _sizeButtons[0]?.isHidden = !customLevel.canIncWidth()
+            _sizeButtons[1]?.isHidden = !customLevel.canDecWidth()
             
-            _sizeButtons[2].isHidden = !customLevel.canIncWidth()
-            _sizeButtons[3].isHidden = !customLevel.canDecWidth()
+            _sizeButtons[2]?.isHidden = !customLevel.canIncWidth()
+            _sizeButtons[3]?.isHidden = !customLevel.canDecWidth()
             
-            _sizeButtons[4].isHidden = !customLevel.canIncHeight()
-            _sizeButtons[5].isHidden = !customLevel.canDecHeight()
+            _sizeButtons[4]?.isHidden = !customLevel.canIncHeight()
+            _sizeButtons[5]?.isHidden = !customLevel.canDecHeight()
             
-            _sizeButtons[6].isHidden = !customLevel.canIncHeight()
-            _sizeButtons[7].isHidden = !customLevel.canDecHeight()
+            _sizeButtons[6]?.isHidden = !customLevel.canIncHeight()
+            _sizeButtons[7]?.isHidden = !customLevel.canDecHeight()
         } else {
             for sizeButton in _sizeButtons {
                 sizeButton?.isHidden = true

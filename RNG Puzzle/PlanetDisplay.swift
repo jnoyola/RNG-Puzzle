@@ -13,14 +13,14 @@ class PlanetDisplay: SKNode {
     let _taunts = [
         "Don't worry, it gets much harder",
         "Enjoy the easy ones while you can",
-        "I really hope you haven't died yet",
-        "Do you have to think yet?",
+        "I really hope you haven't died already",
+        "Are you using the old noggin yet?",
         "Starting to get difficult?",
         "It took you that long to get here?",
         "Think you can go much further?",
         "Now you're getting somewhere",
         "OK, you must be cheating",
-        "I wonder what lies beyond",
+        "I wonder what lies beyond...",
         "Alright, you're on your own from here"
     ]
 

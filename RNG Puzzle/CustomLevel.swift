@@ -24,7 +24,7 @@ class CustomLevel: NSObject, LevelProtocol {
     var _grid: [[PieceType]]! = nil
     var _teleporters: [Point?]! = nil
     
-    var _correct: [PointRecord]? = nil
+    var _correct: [PointRecord?]? = nil
     
     
     @inline(__always) func getCode() -> String {

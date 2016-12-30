@@ -13,7 +13,7 @@ protocol LevelProtocol {
     var _height: Int { get }
     var _startX: Int { get }
     var _startY: Int { get }
-    var _correct: [PointRecord]? { get }
+    var _correct: [PointRecord?]? { get }
     
     func getCode() -> String
     func getSeedString() -> String

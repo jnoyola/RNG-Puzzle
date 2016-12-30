@@ -134,42 +134,44 @@ class GameView: SKNode {
         
         var i = 0
         var correct = _level._correct![i]
-        var piece = _level.getPieceSafely(point: (x: x, y: y))
-        while i < num {
-        
-            // Draw path
-            path.addLine(to: CGPoint(x: CGFloat(x) + 0.5, y: CGFloat(y) + 0.5))
+        if correct != nil {
+            var piece = _level.getPieceSafely(point: (x: x, y: y))
+            while i < num {
             
-            if x == correct.x && y == correct.y {
-                i += 1
-                if i == _level._correct!.count {
-                    break
+                // Draw path
+                path.addLine(to: CGPoint(x: CGFloat(x) + 0.5, y: CGFloat(y) + 0.5))
+                
+                if x == correct!.x && y == correct!.y {
+                    i += 1
+                    if i == _level._correct!.count {
+                        break
+                    }
+                    correct = _level._correct![i]
                 }
-                correct = _level._correct![i]
+                
+                if piece.contains(.Teleporter) {
+                    let dst = _level.getTeleporterPair(x: x, y: y)
+                    x = dst.x
+                    y = dst.y
+                    path.move(to: CGPoint(x: CGFloat(x) + 0.5, y: CGFloat(y) + 0.5))
+                } 
+                piece = getNextPiece(x: x, y: y, dir: correct!.dir)
+                
+                switch correct!.dir {
+                case .Right: x += 1
+                case .Up:    y += 1
+                case .Left:  x -= 1
+                case .Down:  y -= 1
+                default: break
+                }
             }
-            
-            if piece.contains(.Teleporter) {
-                let dst = _level.getTeleporterPair(x: x, y: y)
-                x = dst.x
-                y = dst.y
-                path.move(to: CGPoint(x: CGFloat(x) + 0.5, y: CGFloat(y) + 0.5))
-            } 
-            piece = getNextPiece(x: x, y: y, dir: correct.dir)
-            
-            switch correct.dir {
-            case .Right: x += 1
-            case .Up:    y += 1
-            case .Left:  x -= 1
-            case .Down:  y -= 1
-            default: break
-            }
+            _hintPath = SKShapeNode(path: path)
+            _hintPath!.strokeColor = UIColor.yellow
+            _hintPath!.lineWidth = 0.25
+            _hintPath!.isAntialiased = false
+            _hintPath!.zPosition = 0
+            self.addChild(_hintPath!)
         }
-        _hintPath = SKShapeNode(path: path)
-        _hintPath!.strokeColor = UIColor.yellow
-        _hintPath!.lineWidth = 0.25
-        _hintPath!.isAntialiased = false
-        _hintPath!.zPosition = 0
-        self.addChild(_hintPath!)
     }
     
     func resetBaseScale() {
@@ -351,7 +353,7 @@ class GameView: SKNode {
     func doneMoving() {
         if _level._correct != nil && _correctIdx < _level._correct!.count {
             let correct = _level._correct![_correctIdx]
-            if _ballX == correct.x && _ballY == correct.y {
+            if correct != nil && _ballX == correct!.x && _ballY == correct!.y {
                 _correctIdx += 1
             }
         }

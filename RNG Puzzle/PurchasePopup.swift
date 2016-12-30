@@ -19,8 +19,8 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
     var _closeLabel: SKLabelNode! = nil
     var _coinLabel: StarLabel! = nil
     
-    var _products: [SKProduct]! = nil
-    var _productLabels: [StarLabel]? = nil
+    var _products: [SKProduct?]! = nil
+    var _productLabels: [StarLabel?]? = nil
     
     var _purchaseAmounts = [Int]()
 
@@ -60,12 +60,14 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
             _playScene.closePurchasePopup()
         } else if _productLabels != nil {
             for i in 0...(_productLabels!.count - 1) {
-                if isPointInCoinLabelBounds(p, node: _productLabels![i]) {
-                    _purchaseAmounts.insert(ProductManager.defaultManager().getAmount(id: _products[i].productIdentifier), at: 0)
-                    _productLabels![i].animate()
-                    let payment = SKPayment(product: _products[i])
-                    SKPaymentQueue.default().add(payment)
-                    break
+                if _productLabels![i] != nil && _products[i] != nil {
+                    if isPointInCoinLabelBounds(p, node: _productLabels![i]!) {
+                        _purchaseAmounts.insert(ProductManager.defaultManager().getAmount(id: _products[i]!.productIdentifier), at: 0)
+                        _productLabels![i]!.animate()
+                        let payment = SKPayment(product: _products[i]!)
+                        SKPaymentQueue.default().add(payment)
+                        break
+                    }
                 }
             }
         }
@@ -194,15 +196,17 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
     func refreshProducts() {
         if _productLabels != nil {
             for productLabel in _productLabels! {
-                productLabel.removeFromParent()
+                productLabel?.removeFromParent()
             }
         }
         
         if ProductManager.defaultManager()._products != nil {
             _products = ProductManager.defaultManager()._products!
-            _productLabels = [StarLabel!](repeating: nil, count: _products.count)
+            _productLabels = [StarLabel?](repeating: nil, count: _products.count)
             for i in 0...(_products.count - 1) {
-                addProduct(_products[i], idx: i, total: _products.count)
+                if _products[i] != nil {
+                    addProduct(_products[i]!, idx: i, total: _products.count)
+                }
             }
         }
     }

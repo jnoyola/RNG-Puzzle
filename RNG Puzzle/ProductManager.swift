@@ -29,7 +29,7 @@ class ProductManager: NSObject, SKProductsRequestDelegate {
     ]
     let _amounts = [3, 10, 20, 100, 500]
     
-    var _products: [SKProduct]? = nil
+    var _products: [SKProduct?]? = nil
     
     func requestProductInfo()
     {
@@ -42,7 +42,7 @@ class ProductManager: NSObject, SKProductsRequestDelegate {
     
     func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
     
-        _products = [SKProduct!](repeating: nil, count: response.products.count)
+        _products = [SKProduct?](repeating: nil, count: response.products.count)
         for product in response.products {
             let i = _ids[product.productIdentifier]
             _products![i!] = product

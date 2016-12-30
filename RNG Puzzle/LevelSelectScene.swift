@@ -26,6 +26,7 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
     
     var _holdTimer: Timer? = nil
     var _justHeld = false
+    var _justClosedSample = false
     var _grayOut: SKShapeNode! = nil
 
     override func didMove(to view: SKView) {
@@ -43,13 +44,16 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
         _playLabel = addLabel("Play", color: SKColor.white)
         
         // Text Input
-        _textInput = UITextField.init()
-        _textInput!.backgroundColor = UIColor.white
+        _textInput = TextField.init()
+        _textInput!.textColor = UIColor.white
+        _textInput!.tintColor = UIColor.white
+        _textInput!.backgroundColor = UIColor.clear
+        _textInput!.layer.borderColor = Constants.TITLE_COLOR.cgColor
         _textInput!.textAlignment = .center
         _textInput!.contentVerticalAlignment = .bottom
         _textInput!.keyboardType = .decimalPad
         _textInput!.autocorrectionType = .no
-        _textInput!.placeholder = "Level"
+        _textInput!.attributedPlaceholder = NSAttributedString(string: "Level", attributes: [NSForegroundColorAttributeName: UIColor.gray])
         _textInput!.text = String(maxLevel)
         _textInput!.delegate = self
         view.addSubview(self._textInput!)
@@ -108,24 +112,33 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         _textInput?.resignFirstResponder()
-        _planetarium.hideSample()
-        _grayOut.isHidden = true
-        _textInput?.backgroundColor = UIColor.white
         
-        let p = touches.first!.location(in: self)
-        if p.y < _planetarium.position.y * 2 {
-            _vx = 0
-            _planetarium.hideMarkers(false, speed: 0)
+        if !_grayOut.isHidden {
+            _planetarium.hideSample()
+            _grayOut.isHidden = true
+            _textInput?.textColor = UIColor.white
+            _textInput?.layer.borderColor = Constants.TITLE_COLOR.cgColor
+            _justClosedSample = true
+        } else {
+            let p = touches.first!.location(in: self)
+            if p.y < _planetarium.position.y * 2 {
+                _vx = 0
+                _planetarium.hideMarkers(false, speed: 0)
+            }
+        
+            _holdTimer?.invalidate()
+            _holdTimer = Timer.scheduledTimer(timeInterval: 0.25, target: self, selector: #selector(completeHold), userInfo: NSValue(cgPoint: p), repeats: false)
         }
-        
-        _holdTimer?.invalidate()
-        _holdTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(completeHold), userInfo: NSValue(cgPoint: p), repeats: false)
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         cancelHold()
         if _justHeld {
             _justHeld = false
+            return
+        }
+        if _justClosedSample {
+            _justClosedSample = false
             return
         }
     
@@ -158,10 +171,11 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
     func completeHold(timer: Timer) {
         let p = (timer.userInfo as! NSValue).cgPointValue
         _holdTimer = nil
-        _justHeld = true
         if _planetarium.hold(p) {
+            _justHeld = true
             _grayOut.isHidden = false
-            _textInput?.backgroundColor = UIColor.darkGray
+            _textInput?.textColor = UIColor.darkGray
+            _textInput?.layer.borderColor = UIColor(red: 0, green: 0.2, blue: 0.2, alpha: 1.0).cgColor
         }
     }
     
@@ -265,12 +279,18 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
         _playLabel.fontSize = s * Constants.TEXT_SCALE
         _playLabel.position = CGPoint(x: w * 0.85, y: h * 0.69 - s * Constants.TEXT_SCALE * 0.4)
         
-        let inputWidth: CGFloat = 200.0/480.0 * w
-        let inputHeight: CGFloat = s * Constants.TEXT_SCALE * 1.25
-        let inputX = 0.5 * w - inputWidth / 2
-        let inputY = 0.31 * h - inputHeight / 2
-        _textInput?.frame = CGRect(x: inputX, y: inputY, width: inputWidth, height: inputHeight)
-        _textInput?.font = UIFont(name: Constants.FONT, size: s * Constants.TEXT_SCALE)
+        if _textInput != nil {
+            let inputWidth: CGFloat = s * 200.0/480.0
+            let inputHeight: CGFloat = s * Constants.TEXT_SCALE * 1.5
+            let inputX = 0.5 * w - inputWidth / 2
+            let inputY = 0.31 * h - inputHeight / 2
+            _textInput!.frame = CGRect(x: inputX, y: inputY, width: inputWidth, height: inputHeight)
+            _textInput!.font = UIFont(name: Constants.FONT, size: s * Constants.TEXT_SCALE)
+            
+            let thickness: CGFloat = inputHeight * 0.05
+            _textInput!.layer.borderWidth = thickness
+            _textInput!.layer.cornerRadius = thickness * 4
+        }
         
         _planetarium.refreshLayout(size: size)
         _planetarium.position.y = h * 0.32
