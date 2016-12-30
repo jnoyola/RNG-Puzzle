@@ -30,13 +30,13 @@ class PlanetCompleteScene: SKScene {
         super.init(coder: aDecoder)
     }
     
-    override func didMoveToView(view: SKView) {
-        backgroundColor = SKColor.blackColor()
+    override func didMove(to view: SKView) {
+        backgroundColor = SKColor.black
         
         _titleLabel = addLabel("Planet Complete!", color: Constants.TITLE_COLOR)
-        _questionLabel = addLabel("Cosmic travel method?", color: SKColor.whiteColor())
-        _viewAdLabel = addLabel("View ad", color: SKColor.whiteColor())
-        _sacrificeLabel = StarLabel(text: "Sacrifice", color: SKColor.whiteColor(), starText: "10", anchor: .Left)
+        _questionLabel = addLabel("Cosmic travel method?", color: SKColor.white)
+        _viewAdLabel = addLabel("View ad", color: SKColor.white)
+        _sacrificeLabel = StarLabel(text: "Sacrifice", color: SKColor.white, starText: "10", anchor: .left)
         addChild(_sacrificeLabel)
         
         _planet = PlanetDisplay(baseLevel: _baseLevel, showStars: false, showLevels: false, showTaunt: false)
@@ -45,7 +45,7 @@ class PlanetCompleteScene: SKScene {
         refreshLayout()
     }
     
-    func addLabel(text: String, color: SKColor) -> SKLabelNode {
+    func addLabel(_ text: String, color: SKColor) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: Constants.FONT)
         label.text = text
         label.fontColor = color
@@ -63,7 +63,7 @@ class PlanetCompleteScene: SKScene {
         let s = min(w, h)
         
         _titleLabel.fontSize = s * Constants.TITLE_SCALE
-        _titleLabel.position = CGPointMake(w * 0.5, h * 0.85)
+        _titleLabel.position = CGPoint(x: w * 0.5, y: h * 0.85)
         
         let y = s * (Constants.ICON_SCALE - Constants.TEXT_SCALE)
         
@@ -77,10 +77,10 @@ class PlanetCompleteScene: SKScene {
         _sacrificeLabel.position = CGPoint(x: s * Constants.ICON_SCALE * 1.2, y: y)
         
         _planet.position = CGPoint(x: w * 0.5, y: h * 0.5)
-        _planet.refreshLayout(size)
+        _planet.refreshLayout(size: size)
     }
     
-    override func didChangeSize(oldSize: CGSize) {
+    override func didChangeSize(_ oldSize: CGSize) {
         refreshLayout()
     }
 }

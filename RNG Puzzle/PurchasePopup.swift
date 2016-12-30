@@ -19,8 +19,8 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
     var _closeLabel: SKLabelNode! = nil
     var _coinLabel: StarLabel! = nil
     
-    var _products: [SKProduct!]! = nil
-    var _productLabels: [StarLabel!]? = nil
+    var _products: [SKProduct]! = nil
+    var _productLabels: [StarLabel]? = nil
     
     var _purchaseAmounts = [Int]()
 
@@ -29,16 +29,16 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
         
         _playScene = parent
         _cornerRadius = cornerRadius
-        fillColor = UIColor.whiteColor()
+        fillColor = UIColor.white
         
-        SKPaymentQueue.defaultQueue().addTransactionObserver(self)
+        SKPaymentQueue.default().add(self)
     }
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
     
-    func addLabel(text: String, color: SKColor, fontSize: CGFloat, x: CGFloat, y: CGFloat) -> SKLabelNode {
+    func addLabel(_ text: String, color: SKColor, fontSize: CGFloat, x: CGFloat, y: CGFloat) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: Constants.FONT)
         label.text = text
         label.fontColor = color
@@ -54,24 +54,24 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
         }
     }
     
-    func touch(p: CGPoint) {
+    func touch(_ p: CGPoint) {
         if isPointInBounds(p, node: _closeLabel) {
-            SKPaymentQueue.defaultQueue().removeTransactionObserver(self)
+            SKPaymentQueue.default().remove(self)
             _playScene.closePurchasePopup()
         } else if _productLabels != nil {
             for i in 0...(_productLabels!.count - 1) {
                 if isPointInCoinLabelBounds(p, node: _productLabels![i]) {
-                    _purchaseAmounts.insert(ProductManager.defaultManager().getAmount(_products[i].productIdentifier), atIndex: 0)
+                    _purchaseAmounts.insert(ProductManager.defaultManager().getAmount(id: _products[i].productIdentifier), at: 0)
                     _productLabels![i].animate()
                     let payment = SKPayment(product: _products[i])
-                    SKPaymentQueue.defaultQueue().addPayment(payment)
+                    SKPaymentQueue.default().add(payment)
                     break
                 }
             }
         }
     }
     
-    func isPointInBounds(p: CGPoint, node: SKNode) -> Bool {
+    func isPointInBounds(_ p: CGPoint, node: SKNode) -> Bool {
         let x1 = node.frame.minX - 30
         let x2 = node.frame.maxX + 30
         let y1 = node.frame.minY - 30
@@ -82,7 +82,7 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
         return false
     }
     
-    func isPointInCoinLabelBounds(p: CGPoint, node: StarLabel) -> Bool {
+    func isPointInCoinLabelBounds(_ p: CGPoint, node: StarLabel) -> Bool {
         let x1 = node.position.x + node._minX
         let x2 = node.position.x + node._maxX
         let y1 = node.position.y + node._minY
@@ -93,25 +93,25 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
         return false
     }
     
-    func paymentQueue(queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+    func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         for transaction in transactions {
             switch transaction.transactionState {
-            case .Purchased:
+            case .purchased:
                 var amount = _purchaseAmounts.popLast()
                 if amount == nil {
                     amount = 3
                 }
                 purchaseCoins(amount!)
-                SKPaymentQueue.defaultQueue().finishTransaction(transaction)
+                SKPaymentQueue.default().finishTransaction(transaction)
                 
-            case .Failed:
+            case .failed:
                 if !_purchaseAmounts.isEmpty {
-                    _purchaseAmounts.popLast()
+                    _purchaseAmounts.removeLast()
                 }
-                SKPaymentQueue.defaultQueue().finishTransaction(transaction)
+                SKPaymentQueue.default().finishTransaction(transaction)
                 
-            case .Restored:
-                SKPaymentQueue.defaultQueue().finishTransaction(transaction)
+            case .restored:
+                SKPaymentQueue.default().finishTransaction(transaction)
                 
             default:
                 break
@@ -119,13 +119,13 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
         }
     }
     
-    func purchaseCoins(amount: Int) {
+    func purchaseCoins(_ amount: Int) {
         Storage.addStars(amount)
         refreshCoins()
         _coinLabel.animate()
     }
     
-    func addProduct(product: SKProduct, idx: Int, total: Int) {
+    func addProduct(_ product: SKProduct, idx: Int, total: Int) {
         let w = frame.width
         let h = frame.height
         let s = min(w, h)
@@ -136,14 +136,14 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
             titleString += "  "
         }
         
-        let formatter = NSNumberFormatter()
-        formatter.numberStyle = .CurrencyStyle
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
         formatter.locale = product.priceLocale
-        let priceString = formatter.stringFromNumber(product.price)!
+        let priceString = formatter.string(from: product.price)!
         
         let text = "\(titleString)    \(priceString)"
         
-        let label = StarLabel(text: text, color: SKColor.blackColor(), anchor: .Left)
+        let label = StarLabel(text: text, color: SKColor.black, anchor: .left)
         label.setSize(s * 0.064)
         let x = w * 0.5 - s * 0.3
         let offsetFromCenter = CGFloat(total - 1) / 2 - CGFloat(idx)
@@ -156,18 +156,18 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
     func refreshLayout(size: CGSize) {
         removeAllChildren()
     
-        let rect = CGRect(origin: CGPointZero, size: size)
-        self.path = CGPathCreateWithRoundedRect(rect, _cornerRadius, _cornerRadius, nil)
+        let rect = CGRect(origin: CGPoint.zero, size: size)
+        self.path = CGPath(roundedRect: rect, cornerWidth: _cornerRadius, cornerHeight: _cornerRadius, transform: nil)
         
         let w = frame.width
         let h = frame.height
         let s = min(w, h)
         
         // Title
-        _titleLabel = addLabel("Purchase More?", color: SKColor.blackColor(), fontSize: s * 0.064, x: w * 0.5, y: h - s * 0.1)
+        _titleLabel = addLabel("Purchase More?", color: SKColor.black, fontSize: s * 0.064, x: w * 0.5, y: h - s * 0.1)
         
         // Close
-        _closeLabel = addLabel("Close", color: SKColor.blackColor(), fontSize: s * 0.064, x: w * 0.5, y: s * 0.05)
+        _closeLabel = addLabel("Close", color: SKColor.black, fontSize: s * 0.064, x: w * 0.5, y: s * 0.05)
         
         refreshCoins()
         
@@ -182,7 +182,7 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
         if _coinLabel != nil {
             _coinLabel.removeFromParent()
         }
-        _coinLabel = StarLabel(text: "\(Storage.loadStars())", color: SKColor.blackColor(), anchor: .Left)
+        _coinLabel = StarLabel(text: "\(Storage.loadStars())", color: SKColor.black, anchor: .left)
         _coinLabel.setSize(s * Constants.TEXT_SCALE)
         _coinLabel.position = CGPoint(x: s * Constants.ICON_SCALE, y: h - s * Constants.ICON_SCALE)
         _coinLabel.zPosition = 50
@@ -200,7 +200,7 @@ class PurchasePopup: SKShapeNode, SKPaymentTransactionObserver {
         
         if ProductManager.defaultManager()._products != nil {
             _products = ProductManager.defaultManager()._products!
-            _productLabels = [StarLabel!](count: _products.count, repeatedValue: nil)
+            _productLabels = [StarLabel!](repeating: nil, count: _products.count)
             for i in 0...(_products.count - 1) {
                 addProduct(_products[i], idx: i, total: _products.count)
             }

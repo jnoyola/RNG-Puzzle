@@ -16,7 +16,7 @@ class CreationScene: PlayScene {
     var _pieceBank: PieceBank! = nil
     
     var _isMenu = true
-    var _sizeButtons = [SKSpriteNode!](count: 8, repeatedValue: nil)
+    var _sizeButtons = [SKSpriteNode!](repeating: nil, count: 8)
 
     override func createGameView() {
         _gameView = CreationView(level: _level, parent: self, winCallback: complete)
@@ -37,13 +37,13 @@ class CreationScene: PlayScene {
     }
 
     override func handleTap(sender: UITapGestureRecognizer) {
-        let p = sender.locationInView(sender.view)
+        let p = sender.location(in: sender.view)
         let x = p.x
         let y = size.height - p.y
         
         if _isMenu {
             for i in 0...(_sizeButtons.count - 1) {
-                if !_sizeButtons[i].hidden && isPointInBounds(x: x, y: y, node: _sizeButtons[i]) {
+                if !_sizeButtons[i].isHidden && isPointInBounds(x: x, y: y, node: _sizeButtons[i]) {
                     performSizeAction(i)
                     return
                 }
@@ -64,7 +64,7 @@ class CreationScene: PlayScene {
         }
     }
     
-    func isPointInBounds(x x: CGFloat, y: CGFloat, node: SKNode) -> Bool {
+    func isPointInBounds(x: CGFloat, y: CGFloat, node: SKNode) -> Bool {
         let x1 = node.frame.minX - node.frame.width / 2
         let x2 = node.frame.maxX + node.frame.width / 2
         let y1 = node.frame.minY - node.frame.height / 2
@@ -81,10 +81,10 @@ class CreationScene: PlayScene {
         _gameView.resetBall()
     }
     
-    override func update(currentTime: NSTimeInterval) {}
+    override func update(_ currentTime: TimeInterval) {}
     
     override func refreshHUD() {
-        (_marginRight, _marginBottom) = _pieceBank.refreshLayout(size)
+        (_marginRight, _marginBottom) = _pieceBank.refreshLayout(size: size)
         refreshSizeButtons()
     }
     
@@ -105,7 +105,7 @@ class CreationScene: PlayScene {
         let dist = pad + buttonSize / 2
         
         for sizeButton in _sizeButtons {
-            sizeButton.size = CGSize(width: buttonSize, height: buttonSize)
+            sizeButton?.size = CGSize(width: buttonSize, height: buttonSize)
         }
         
         _sizeButtons[0].position = CGPoint(x: x_left, y: y_mid + dist)
@@ -121,29 +121,29 @@ class CreationScene: PlayScene {
         _sizeButtons[7].position = CGPoint(x: x_mid - dist, y: y_top)
     }
     
-    func showSizeButtons(show: Bool) {
+    func showSizeButtons(_ show: Bool) {
         _isMenu = show
         if show {
             let customLevel = _level as! CustomLevel
-            _sizeButtons[0].hidden = !customLevel.canIncWidth()
-            _sizeButtons[1].hidden = !customLevel.canDecWidth()
+            _sizeButtons[0].isHidden = !customLevel.canIncWidth()
+            _sizeButtons[1].isHidden = !customLevel.canDecWidth()
             
-            _sizeButtons[2].hidden = !customLevel.canIncWidth()
-            _sizeButtons[3].hidden = !customLevel.canDecWidth()
+            _sizeButtons[2].isHidden = !customLevel.canIncWidth()
+            _sizeButtons[3].isHidden = !customLevel.canDecWidth()
             
-            _sizeButtons[4].hidden = !customLevel.canIncHeight()
-            _sizeButtons[5].hidden = !customLevel.canDecHeight()
+            _sizeButtons[4].isHidden = !customLevel.canIncHeight()
+            _sizeButtons[5].isHidden = !customLevel.canDecHeight()
             
-            _sizeButtons[6].hidden = !customLevel.canIncHeight()
-            _sizeButtons[7].hidden = !customLevel.canDecHeight()
+            _sizeButtons[6].isHidden = !customLevel.canIncHeight()
+            _sizeButtons[7].isHidden = !customLevel.canDecHeight()
         } else {
             for sizeButton in _sizeButtons {
-                sizeButton.hidden = true
+                sizeButton?.isHidden = true
             }
         }
     }
     
-    func performSizeAction(action: Int) {
+    func performSizeAction(_ action: Int) {
         switch action {
         case 0:
             _gameView.position = CGPoint(x: _gameView.position.x - _gameView.getWidth() / CGFloat(_level._width), y: _gameView.position.y)
@@ -207,7 +207,7 @@ class CreationScene: PlayScene {
         } else if numSolutions < 1 {
             AlertManager.defaultManager().alert("Your puzzle does not have a solution.")
         } else {
-            AlertManager.defaultManager().creationFinishWarning(self, numSolutions: numSolutions, name: name)
+            AlertManager.defaultManager().creationFinishWarning(scene: self, numSolutions: numSolutions, name: name)
         }
     }
     

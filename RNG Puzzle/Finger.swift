@@ -24,7 +24,7 @@ class Finger: NSObject {
         let sprites = PieceSprites()
         _finger = SKSpriteNode(texture: sprites.finger())
         _shadow = SKSpriteNode(texture: sprites.finger_shadow())
-        resetSize(parent)
+        resetSize(parent: parent)
         
         _finger.zPosition = 11
         _shadow.zPosition = 10
@@ -34,7 +34,7 @@ class Finger: NSObject {
         parent.addChild(_shadow)
     }
     
-    func setPosition(x x:CGFloat, y: CGFloat, z: CGFloat) {
+    func setPosition(x: CGFloat, y: CGFloat, z: CGFloat) {
         _x = x
         _y = y
         _z = z
@@ -49,7 +49,7 @@ class Finger: NSObject {
         _shadow.size = size
     }
 
-    func animateTo(x x: CGFloat, y: CGFloat, z: CGFloat, duration: Double, callback: () -> Void) {
+    func animateTo(x: CGFloat, y: CGFloat, z: CGFloat, duration: Double, callback: @escaping () -> Void) {
         // Update prematurely -- don't use these for anything important
         _x = x
         _y = y
@@ -59,19 +59,19 @@ class Finger: NSObject {
         let shadowPoint = CGPoint(x: x, y: y)
         
         let fingerAction = SKAction.sequence([
-            SKAction.moveTo(fingerPoint, duration: duration),
-            SKAction.runBlock({ callback() })
+            SKAction.move(to: fingerPoint, duration: duration),
+            SKAction.run({ callback() })
         ])
-        let shadowAction = SKAction.moveTo(shadowPoint, duration: duration)
+        let shadowAction = SKAction.move(to: shadowPoint, duration: duration)
         
-        _finger.runAction(fingerAction, withKey: "action")
-        _shadow.runAction(shadowAction, withKey: "action")
+        _finger.run(fingerAction, withKey: "action")
+        _shadow.run(shadowAction, withKey: "action")
     }
     
     func remove() {
         _finger.removeFromParent()
         _shadow.removeFromParent()
-        _finger.removeActionForKey("action")
-        _shadow.removeActionForKey("action")
+        _finger.removeAction(forKey: "action")
+        _shadow.removeAction(forKey: "action")
     }
 }

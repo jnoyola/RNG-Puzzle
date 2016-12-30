@@ -39,29 +39,29 @@ class PauseScene: SKScene {
         super.init(coder: aDecoder)
     }
     
-    override func didMoveToView(view: SKView) {
-        backgroundColor = SKColor.blackColor()
+    override func didMove(to view: SKView) {
+        backgroundColor = SKColor.black
         
         // Title
         _titleLabel = addLabel("Paused", color: Constants.TITLE_COLOR)
         
         // Copy Level ID
-        _copyLabel = addLabel("Copy Level ID", color: SKColor.grayColor())
+        _copyLabel = addLabel("Copy Level ID", color: SKColor.gray)
         
         // Quit
-        _quitLabel = addLabel("Quit", color: SKColor.whiteColor())
+        _quitLabel = addLabel("Quit", color: SKColor.white)
         
         // Resume
-        _resumeLabel = addLabel("Resume", color: SKColor.whiteColor())
+        _resumeLabel = addLabel("Resume", color: SKColor.white)
         
         // Star Label
-        _starLabel = StarLabel(text: "\(Storage.loadStars())", color: SKColor.whiteColor(), anchor: .Left)
+        _starLabel = StarLabel(text: "\(Storage.loadStars())", color: SKColor.white, anchor: .left)
         addChild(_starLabel)
         
         // Timer
         _timerLabel = SKLabelNode(fontNamed: Constants.FONT)
-        _timerLabel.horizontalAlignmentMode = .Left
-        _timerLabel.fontColor = UIColor.whiteColor()
+        _timerLabel.horizontalAlignmentMode = .left
+        _timerLabel.fontColor = UIColor.white
         updateTimerLabel()
         addChild(_timerLabel)
         
@@ -71,14 +71,14 @@ class PauseScene: SKScene {
         
         refreshLayout()
         
-        _playScene.view?.paused = true
+        _playScene.view?.isPaused = true
     }
     
-    override func willMoveFromView(view: SKView) {
-        _playScene.view?.paused = false
+    override func willMove(from view: SKView) {
+        _playScene.view?.isPaused = false
     }
     
-    func addLabel(text: String, color: SKColor) -> SKLabelNode {
+    func addLabel(_ text: String, color: SKColor) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: Constants.FONT)
         label.text = text
         label.fontColor = color
@@ -86,9 +86,9 @@ class PauseScene: SKScene {
         return label
     }
     
-    override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         let touch = touches.first!
-        let p = touch.locationInNode(self)
+        let p = touch.location(in: self)
         
         if _purchasePopup != nil {
             _purchasePopup!.touch(p)
@@ -100,7 +100,7 @@ class PauseScene: SKScene {
         
         if p.x > w * 0.25 && p.x < w * 0.75 && p.y > h * 0.55 && p.y < h * 0.79 {
             // Copy Level ID
-            UIPasteboard.generalPasteboard().string = _level.getCode()
+            UIPasteboard.general.string = _level.getCode()
             _copyLabel.text = "Level ID Copied"
         } else if isPointInBounds(p, node: _quitLabel) {
             // Quit
@@ -113,7 +113,7 @@ class PauseScene: SKScene {
         }
     }
     
-    func isPointInBounds(p: CGPoint, node: SKNode) -> Bool {
+    func isPointInBounds(_ p: CGPoint, node: SKNode) -> Bool {
         let x1 = node.frame.minX - node.frame.height * 0.5
         let x2 = node.frame.maxX + node.frame.height * 0.5
         let y1 = node.frame.minY - node.frame.height * 0.5
@@ -145,13 +145,13 @@ class PauseScene: SKScene {
         _resumeLabel.fontSize = s * Constants.TEXT_SCALE
         _resumeLabel.position = CGPoint(x: w * 0.85, y: h * 0.47)
         
-        _muteShareDisplay.position = CGPointZero
-        _muteShareDisplay.refreshLayout(size)
+        _muteShareDisplay.position = CGPoint.zero
+        _muteShareDisplay.refreshLayout(size: size)
         
         if _levelLabel != nil {
             _levelLabel.removeFromParent()
         }
-        _levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * Constants.TEXT_SCALE, color: SKColor.whiteColor())
+        _levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * Constants.TEXT_SCALE, color: SKColor.white)
         _levelLabel.position = CGPoint(x: w * 0.5, y: h * 0.67)
         self.addChild(_levelLabel)
         
@@ -182,7 +182,7 @@ class PauseScene: SKScene {
         let str = String(format:"%d:%02d", abs(_timerCount) / 60, abs(_timerCount) % 60)
         _timerLabel.text = str
         if _timerCount <= 10 {
-            _timerLabel.fontColor = UIColor.redColor()
+            _timerLabel.fontColor = UIColor.red
         }
     }
     
@@ -190,10 +190,10 @@ class PauseScene: SKScene {
         let w = size.width
         let h = size.height
         
-        _purchasePopup?.refreshLayout(CGSize(width: w, height: h))
+        _purchasePopup?.refreshLayout(size: CGSize(width: w, height: h))
     }
     
-    override func didChangeSize(oldSize: CGSize) {
+    override func didChangeSize(_ oldSize: CGSize) {
         refreshLayout()
     }
 }

@@ -36,7 +36,7 @@ class MuteShareDisplay: SKNode {
         _score = score
         
         _muteButton = SKSpriteNode()
-        refreshMuteButton(Storage.isMuted())
+        refreshMuteButton(isMuted: Storage.isMuted())
         addChild(_muteButton)
         
         _messagesButton = SKSpriteNode(imageNamed: "icon_messages")
@@ -59,19 +59,19 @@ class MuteShareDisplay: SKNode {
         }
     }
     
-    func tap(p: CGPoint) {
+    func tap(_ p: CGPoint) {
         if isPointInBounds(p, node: _muteButton) {
-            refreshMuteButton(Storage.toggleMute())
+            refreshMuteButton(isMuted: Storage.toggleMute())
         } else if isPointInBounds(p, node: _facebookButton) {
-            AlertManager.defaultManager().shareFacebook(_shareType, level: _level, duration: _duration)
+            AlertManager.defaultManager().shareFacebook(type: _shareType, level: _level, duration: _duration)
         } else if isPointInBounds(p, node: _messagesButton) {
-            AlertManager.defaultManager().shareMessages(_shareType, level: _level, duration: _duration)
+            AlertManager.defaultManager().shareMessages(type: _shareType, level: _level, duration: _duration)
         } else if isPointInBounds(p, node: _twitterButton) {
-            AlertManager.defaultManager().shareTwitter(_shareType, level: _level, duration: _duration)
+            AlertManager.defaultManager().shareTwitter(type: _shareType, level: _level, duration: _duration)
         }
     }
     
-    func isPointInBounds(p: CGPoint, node: SKNode) -> Bool {
+    func isPointInBounds(_ p: CGPoint, node: SKNode) -> Bool {
         let margin = node.frame.size.width * 0.25
         
         let x1 = node.frame.minX - margin

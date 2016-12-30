@@ -10,30 +10,30 @@ import Foundation
 
 class WeightedRandomArray: NSObject {
     var _array: [PieceType]! = nil
-    var _totalWeight = 0
+    var _totalWeight: UInt32 = 0
     
     init(array: [PieceType]) {
         super.init()
         _array = array
         for piece in array {
-            _totalWeight += getWeight(piece)
+            _totalWeight += getWeight(piece: piece)
         }
     }
     
     func popRandom() -> PieceType {
-        let r = random() % _totalWeight
+        let r = arc4random_uniform(UInt32(_totalWeight))
         var iPiece = 0
-        var cumWeight = 0
+        var cumWeight: UInt32 = 0
         while true {
-            cumWeight += getWeight(_array[iPiece])
+            cumWeight += getWeight(piece: _array[iPiece])
             if cumWeight > r {
                 break
             }
             iPiece += 1
         }
         let piece = _array[iPiece]
-        _array.removeAtIndex(iPiece)
-        _totalWeight -= getWeight(piece)
+        _array.remove(at: iPiece)
+        _totalWeight -= getWeight(piece: piece)
         return piece
     }
 
@@ -41,7 +41,7 @@ class WeightedRandomArray: NSObject {
         return _array.count
     }
     
-    func getWeight(piece: PieceType) -> Int {
+    func getWeight(piece: PieceType) -> UInt32 {
         if piece.contains(.Block) {
             return 30
         } else if piece.contains(.Corner1) ||

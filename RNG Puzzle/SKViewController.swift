@@ -31,7 +31,7 @@ class SKViewController: UIViewController, ALAdDisplayDelegate, Refreshable {
     }
 
     override func loadView() {
-        view = SKView(frame: UIScreen.mainScreen().bounds)
+        view = SKView(frame: UIScreen.main.bounds)
     }
     
     override func viewDidLoad() {
@@ -39,17 +39,17 @@ class SKViewController: UIViewController, ALAdDisplayDelegate, Refreshable {
     
         let skView = view as! SKView
         skView.ignoresSiblingOrder = true
-        _scene.scaleMode = .ResizeFill
+        _scene.scaleMode = .resizeFill
         skView.presentScene(_scene)
         
         
         
         if _scene is CreationScene && false {
-            if GADRewardBasedVideoAd.sharedInstance().ready {
+            if GADRewardBasedVideoAd.sharedInstance().isReady {
                 _presentingAd = true
-                GADRewardBasedVideoAd.sharedInstance().presentFromRootViewController(self)
-                GADRewardBasedVideoAd.sharedInstance().loadRequest(GADRequest(), withAdUnitID: "ca-app-pub-7708975293508353/5034943423")
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(1 * Double(NSEC_PER_SEC))), dispatch_get_main_queue()) {
+                GADRewardBasedVideoAd.sharedInstance().present(fromRootViewController: self)
+                GADRewardBasedVideoAd.sharedInstance().load(GADRequest(), withAdUnitID: "ca-app-pub-7708975293508353/5034943423")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     self._presentingAd = false
                 }
             } else if ALIncentivizedInterstitialAd.isReadyForDisplay() {
@@ -60,38 +60,38 @@ class SKViewController: UIViewController, ALAdDisplayDelegate, Refreshable {
         }
     }
     
-    func ad(ad: ALAd, wasDisplayedIn view: UIView) {}
-    func ad(ad: ALAd, wasClickedIn view: UIView) {}
-    func ad(ad: ALAd, wasHiddenIn view: UIView) {
+    func ad(_ ad: ALAd, wasDisplayedIn view: UIView) {}
+    func ad(_ ad: ALAd, wasClickedIn view: UIView) {}
+    func ad(_ ad: ALAd, wasHiddenIn view: UIView) {
         _presentingAd = false
         ALIncentivizedInterstitialAd.preloadAndNotify(nil)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
 //        navigationController!.setToolbarHidden(true, animated: true)
         navigationController!.setNavigationBarHidden(true, animated: true)
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         /*if !_presentingAd {
             _scene.willMoveFromView(view as! SKView)
         }*/
     }
 
-    override func shouldAutorotate() -> Bool {
+    override var shouldAutorotate: Bool {
         return true
     }
 
-    override func supportedInterfaceOrientations() -> UIInterfaceOrientationMask {
-        return .AllButUpsideDown
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .allButUpsideDown
+    }
+
+    override var prefersStatusBarHidden: Bool {
+        return true
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Release any cached data, images, etc that aren't in use.
-    }
-
-    override func prefersStatusBarHidden() -> Bool {
-        return true
     }
 }

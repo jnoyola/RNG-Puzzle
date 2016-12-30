@@ -35,9 +35,9 @@ class Planet: SKNode {
         super.init(coder: aDecoder)
     }
     
-    func createPlanet(planetIdx: Int, ringIdx: Int, color: UIColor, angle: CGFloat) {
+    func createPlanet(_ planetIdx: Int, ringIdx: Int, color: UIColor, angle: CGFloat) {
         _planet = SKSpriteNode(imageNamed: "planet\(planetIdx)")
-        _planet.position = CGPointZero
+        _planet.position = CGPoint.zero
         _planet.zPosition = 10
         _planet.zRotation = angle
         _planet.color = color
@@ -46,7 +46,7 @@ class Planet: SKNode {
         
         if ringIdx < _numRings {
             _top = SKSpriteNode(imageNamed: "ring\(ringIdx)_top")
-            _top!.position = CGPointZero
+            _top!.position = CGPoint.zero
             _top!.zPosition = 11
             _top!.zRotation = angle
             _top!.color = color
@@ -54,7 +54,7 @@ class Planet: SKNode {
             addChild(_top!)
             
             _bot = SKSpriteNode(imageNamed: "ring\(ringIdx)_bottom")
-            _bot!.position = CGPointZero
+            _bot!.position = CGPoint.zero
             _bot!.zPosition = 9
             _bot!.zRotation = angle
             _bot!.color = color
@@ -63,7 +63,7 @@ class Planet: SKNode {
         }
     }
     
-    func setSize(size: CGSize) {
+    func setSize(_ size: CGSize) {
         _planet.size = size
         _top?.size = size
         _bot?.size = size

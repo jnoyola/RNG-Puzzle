@@ -13,11 +13,11 @@ public class Constants {
     static let TEXT_SCALE: CGFloat = 0.08
     static let ICON_TO_TEXT_SCALE: CGFloat = 1.3
     static let ICON_SCALE = TEXT_SCALE * ICON_TO_TEXT_SCALE
-    static let TITLE_COLOR = UIColor.cyanColor()
+    static let TITLE_COLOR = UIColor.cyan
     
     static let HINT_COST = 5
     
-    static func colorForLevel(level: Int) -> UIColor {
+    static func colorForLevel(_ level: Int) -> UIColor {
         let h = CGFloat((level + 35) % 50) / 50
         let s = min(1, 0.3 + 0.7 * CGFloat(level) / 200)
         let v = min(1, 0.5 + 0.5 * CGFloat(level) / 200)

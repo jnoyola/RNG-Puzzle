@@ -20,30 +20,30 @@ class InstructionsScene: SKScene {
     
     let dx: CGFloat = 50
     
-    override func didMoveToView(view: SKView) {
-        backgroundColor = SKColor.blackColor()
+    override func didMove(to view: SKView) {
+        backgroundColor = SKColor.black
         
         setStep(1)
     }
     
-    func addLabel(text: String, color: SKColor, fontSize: CGFloat, x: CGFloat, y: CGFloat, z: CGFloat = 0, hidden: Bool = false) -> SKLabelNode {
+    func addLabel(_ text: String, color: SKColor, fontSize: CGFloat, x: CGFloat, y: CGFloat, z: CGFloat = 0, hidden: Bool = false) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: Constants.FONT)
         label.text = text
         label.fontColor = color
         label.fontSize = fontSize
         label.position = CGPoint(x: x, y: y)
         label.zPosition = z
-        label.horizontalAlignmentMode = .Center
-        label.hidden = hidden
+        label.horizontalAlignmentMode = .center
+        label.isHidden = hidden
         self.addChild(label)
         return label
     }
     
-    override func didChangeSize(oldSize: CGSize) {
+    override func didChangeSize(_ oldSize: CGSize) {
         setStep(_curStep)
     }
 
-    func setStep(step: Int) {
+    func setStep(_ step: Int) {
         if step == 0 || step > _maxStep {
             AppDelegate.popViewController(animated: true)
             return
@@ -68,9 +68,9 @@ class InstructionsScene: SKScene {
         performActionsForStep(step)
     }
     
-    override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         let touch = touches.first!
-        let p = touch.locationInNode(self)
+        let p = touch.location(in: self)
         if (p.y > size.height * 0.35 && p.y < size.height * 0.65) {
             if (p.x < size.width * 0.25) {
                 // <
@@ -82,7 +82,7 @@ class InstructionsScene: SKScene {
         }
     }
     
-    func setStepElements(step: Int) {
+    func setStepElements(_ step: Int) {
         var title: String! = nil
         var descText: String! = nil
         var copyText: String? = nil
@@ -149,41 +149,41 @@ class InstructionsScene: SKScene {
         let s = min(w, h)
         
         // Title
-        let titleLabel = SKMultilineLabel(text: titleText, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: (3 * h + _gameView!.getHeight()) / 4), fontName: Constants.FONT, fontSize: s * Constants.TITLE_SCALE, fontColor: Constants.TITLE_COLOR, spacing: 1.25, alignment: .Center, shouldShowBorder: false)
+        let titleLabel = SKMultilineLabel(text: titleText, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: (3 * h + _gameView!.getHeight()) / 4), fontName: Constants.FONT, fontSize: s * Constants.TITLE_SCALE, fontColor: Constants.TITLE_COLOR, spacing: 1.25, alignment: .center, shouldShowBorder: false)
         addChild(titleLabel)
         
         // < button
-        addLabel("<", color: SKColor.whiteColor(), fontSize: s * 0.1, x: w * 0.1, y: h * 0.5 - s * 0.04)
+        var _ = addLabel("<", color: SKColor.white, fontSize: s * 0.1, x: w * 0.1, y: h * 0.5 - s * 0.04)
         
         // > button
-        addLabel(">", color: SKColor.whiteColor(), fontSize: s * 0.1, x: w * 0.898, y: h * 0.5 - s * 0.04)
+        _ = addLabel(">", color: SKColor.white, fontSize: s * 0.1, x: w * 0.898, y: h * 0.5 - s * 0.04)
         
         // Paused
         if paused {
-            _pauseLabel = addLabel("Paused", color: SKColor.whiteColor(), fontSize: s * Constants.TEXT_SCALE, x: w * 0.5, y: h * 0.5 - s * Constants.TEXT_SCALE * 0.4, z: 20, hidden: true)
+            _pauseLabel = addLabel("Paused", color: SKColor.white, fontSize: s * Constants.TEXT_SCALE, x: w * 0.5, y: h * 0.5 - s * Constants.TEXT_SCALE * 0.4, z: 20, hidden: true)
         } else if timed {
-            _pauseLabel = addLabel("0:30", color: SKColor.whiteColor(), fontSize: s * Constants.TEXT_SCALE, x: w * 0.5, y: h * 0.5 - s * Constants.TEXT_SCALE * 0.4, z: 20)
+            _pauseLabel = addLabel("0:30", color: SKColor.white, fontSize: s * Constants.TEXT_SCALE, x: w * 0.5, y: h * 0.5 - s * Constants.TEXT_SCALE * 0.4, z: 20)
         }
 
         // Copy Label
         if copyText != nil {
-            addLabel(copyText!, color: SKColor.grayColor(), fontSize: s * 0.04, x: w * 0.5, y: h * 0.49 - s * 0.05, z: 20)
+            _ = addLabel(copyText!, color: SKColor.gray, fontSize: s * 0.04, x: w * 0.5, y: h * 0.49 - s * 0.05, z: 20)
         }
         
         // Description
-        let descLabel = SKMultilineLabel(text: descText, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: (h - _gameView!.getHeight()) / 4), fontName: Constants.FONT, fontSize: s * Constants.TEXT_SCALE * 0.75, fontColor: SKColor.whiteColor(), spacing: 1.5, alignment: .Center, shouldShowBorder: false)
+        let descLabel = SKMultilineLabel(text: descText, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: (h - _gameView!.getHeight()) / 4), fontName: Constants.FONT, fontSize: s * Constants.TEXT_SCALE * 0.75, fontColor: SKColor.white, spacing: 1.5, alignment: .center, shouldShowBorder: false)
         addChild(descLabel)
         
         // Level ID
         if showLevelID {
-            let codeLabel = LevelLabel(level: 21, seed: "3194", size: s * 0.08, color: SKColor.whiteColor())
-            codeLabel.position = CGPointMake(w * 0.5, h * 0.49)
+            let codeLabel = LevelLabel(level: 21, seed: "3194", size: s * 0.08, color: SKColor.white)
+            codeLabel.position = CGPoint(x: w * 0.5, y: h * 0.49)
             codeLabel.zPosition = 20
             addChild(codeLabel)
         }
     }
     
-    func setStepGame(step: Int) {
+    func setStepGame(_ step: Int) {
         let level = Level(instruction: step)
         if step == 11 {
             _gameView = CreationView(level: level, parent: self, winCallback: nil)
@@ -201,7 +201,7 @@ class InstructionsScene: SKScene {
         addChild(_gameView!)
     }
     
-    func performActionsForStep(step: Int) {
+    func performActionsForStep(_ step: Int) {
         switch (step) {
         case 2:
             startSwipeRight()
@@ -226,15 +226,15 @@ class InstructionsScene: SKScene {
         let s = min(w, h)
         
         _finger1 = Finger(x: w * 0.25, y: h * 0.5 - s * 0.15, z: 15, parent: self)
-        dispatch_async(dispatch_get_main_queue(), {
+        DispatchQueue.main.async {
             self.swipeRight_1()
-        })
+        }
     }
     func startSwipeCombo() {
         _finger1 = Finger(x: size.width * 0.3, y: size.height * 0.5, z: 15, parent: self)
-        dispatch_async(dispatch_get_main_queue(), {
+        DispatchQueue.main.async {
             self.swipeCombo_1()
-        })
+        }
     }
     func startTap() {
         let w = size.width
@@ -242,9 +242,9 @@ class InstructionsScene: SKScene {
         let s = min(w, h)
         
         _finger1 = Finger(x: w * 0.5, y: h * 0.5 - s * 0.15, z: 15, parent: self)
-        dispatch_async(dispatch_get_main_queue(), {
+        DispatchQueue.main.async {
             self.tap_1()
-        })
+        }
     }
     func startPinchPan() {
         let w = size.width
@@ -253,10 +253,10 @@ class InstructionsScene: SKScene {
         
         _finger1 = Finger(x: w * 0.25, y: h * 0.5 - s * 0.15, z: 15, parent: self)
         _finger2 = Finger(x: w * 0.75, y: h * 0.5 - s * 0.15, z: 15, parent: self)
-        dispatch_async(dispatch_get_main_queue(), {
+        DispatchQueue.main.async {
             self.pinch1_1()
             self.pinch2_1()
-        })
+        }
     }
     
     
@@ -341,7 +341,7 @@ class InstructionsScene: SKScene {
     }
     func tap_2() {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y, z: 15, duration: 0.5, callback: tap_1)
-        _pauseLabel.hidden = !_pauseLabel.hidden
+        _pauseLabel.isHidden = !_pauseLabel.isHidden
     }
     
     func pinch1_1() {
@@ -356,8 +356,8 @@ class InstructionsScene: SKScene {
         let scaleFactor = targetScale / startScale
         let duration: Double = 0.5
         
-        _gameView!.runAction(SKAction.moveTo(CGPoint(x: (size.width - _gameView!.getWidth() * scaleFactor) / 2, y: (size.height - _gameView!.getHeight() * scaleFactor) / 2), duration: duration))
-        _gameView!.runAction(SKAction.customActionWithDuration(duration, actionBlock:
+        _gameView!.run(SKAction.move(to: CGPoint(x: (size.width - _gameView!.getWidth() * scaleFactor) / 2, y: (size.height - _gameView!.getHeight() * scaleFactor) / 2), duration: duration))
+        _gameView!.run(SKAction.customAction(withDuration: duration, actionBlock:
             { (node: SKNode, elapsedTime: CGFloat) -> Void in
                 let scale = elapsedTime / CGFloat(duration) * (targetScale - startScale) + startScale
                 self._gameView!.setScale(scale)
@@ -367,7 +367,7 @@ class InstructionsScene: SKScene {
     func pan1_1() {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y + dx, z: 0, duration: 0.5, callback: pan1_2)
         
-        _gameView!.runAction(SKAction.moveByX(0, y: dx, duration: 0.5))
+        _gameView!.run(SKAction.moveBy(x: 0, y: dx, duration: 0.5))
     }
     func pan1_2() {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y, z: 15, duration: 0.5, callback: pinch1_3)
@@ -383,8 +383,8 @@ class InstructionsScene: SKScene {
         let startScale = _gameView!._scale
         let duration: Double = 0.5
         
-        _gameView!.runAction(SKAction.moveTo(CGPoint(x: _gameView!.position.x - _gameView!.getWidth() / 2, y: _gameView!.position.y - _gameView!.getHeight() / 2), duration: duration))
-        _gameView!.runAction(SKAction.customActionWithDuration(duration, actionBlock:
+        _gameView!.run(SKAction.move(to: CGPoint(x: _gameView!.position.x - _gameView!.getWidth() / 2, y: _gameView!.position.y - _gameView!.getHeight() / 2), duration: duration))
+        _gameView!.run(SKAction.customAction(withDuration: duration, actionBlock:
             { (node: SKNode, elapsedTime: CGFloat) -> Void in
                 let scale = elapsedTime / CGFloat(duration) * (targetScale - startScale) + startScale
                 self._gameView!.setScale(scale)
@@ -394,7 +394,7 @@ class InstructionsScene: SKScene {
     func pan1_3() {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y - dx, z: 0, duration: 0.5, callback: pan1_4)
         
-        _gameView!.runAction(SKAction.moveByX(0, y: -dx, duration: 0.5))
+        _gameView!.run(SKAction.moveBy(x: 0, y: -dx, duration: 0.5))
     }
     func pan1_4() {
         _finger1.animateTo(x: _finger1._x, y: _finger1._y, z: 15, duration: 0.5, callback: pinch1_1)

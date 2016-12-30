@@ -15,12 +15,12 @@ class CreationView: GameView {
     var _selectedPoint: Point? = nil
     var _selectionSquare: SKShapeNode! = nil
 
-    override func drawPieces(level: LevelProtocol) {
+    override func drawPieces(_ level: LevelProtocol) {
         super.drawPieces(level)
         
         if level._startX >= 0 {
             let start = Blob(animated: false)
-            start.color = SKColor.blackColor()
+            start.color = SKColor.black
             start.colorBlendFactor = 0.9
             start.size = CGSize(width: 1, height: 1)
             start.position = CGPoint(x: CGFloat(level._startX) + 0.5, y: CGFloat(level._startY) + 0.5)
@@ -28,22 +28,22 @@ class CreationView: GameView {
             addChild(start)
         }
         
-        _selectionSquare = SKShapeNode(rectOfSize: CGSize(width: 2.2, height: 2.2))
-        _selectionSquare.strokeColor = UIColor.whiteColor()
+        _selectionSquare = SKShapeNode(rectOf: CGSize(width: 2.2, height: 2.2))
+        _selectionSquare.strokeColor = UIColor.white
         _selectionSquare.lineWidth = 0.1
         _selectionSquare.setScale(0.5)
-        _selectionSquare.antialiased = false
+        _selectionSquare.isAntialiased = false
         _selectionSquare.zPosition = 15
     }
     
-    func selectAtPoint(x x: CGFloat, y: CGFloat) -> Set<Int>? {
+    func selectAtPoint(x: CGFloat, y: CGFloat) -> Set<Int>? {
         
         let p = getCoordsOfPoint(x: x, y: y)
         if p.x >= 0 && p.x < _level._width && p.y >= 0 && p.y < _level._height {
             _selectionSquare.removeFromParent()
             _selectedPoint = p
             markSelected()
-            return getAllowedPieces(p)
+            return getAllowedPieces(point: p)
         } else {
             deselect()
             return nil
@@ -58,7 +58,7 @@ class CreationView: GameView {
         addChild(_selectionSquare)
     }
     
-    func selectPiece(piece: PieceType) -> Set<Int>? {
+    func selectPiece(_ piece: PieceType) -> Set<Int>? {
         if piece == .Stop || _selectedPoint == nil {
             deselect()
             return nil
@@ -71,7 +71,7 @@ class CreationView: GameView {
         // If we're overwriting the target, reset its coordinates
         let oldPiece = _level.getPiece(x: _selectedPoint!.x, y: _selectedPoint!.y)
         if oldPiece == .Teleporter {
-            customLevel.removeTeleporter(_selectedPoint!)
+            customLevel.removeTeleporter(point: _selectedPoint!)
         } else if oldPiece == .Used {
             customLevel._startX = -1
             customLevel._startY = -1
@@ -116,7 +116,7 @@ class CreationView: GameView {
             addChild(_ball)
         }
     
-        return getAllowedPieces(_selectedPoint!)
+        return getAllowedPieces(point: _selectedPoint!)
     }
     
     func getAllowedPieces(point: Point) -> Set<Int> {
@@ -131,7 +131,7 @@ class CreationView: GameView {
         
         // Check if we've already exhausted all teleporter IDs
         if (_level as! CustomLevel)._teleporters.count >= 64 {
-            pieces.popFirst()
+            pieces.removeFirst()
         }
         
         pieces.insert(PieceType.Block.rawValue)
@@ -185,7 +185,7 @@ class CreationView: GameView {
         return pieces
     }
     
-    func getCoordsOfPoint(x x: CGFloat, y: CGFloat) -> Point {
+    func getCoordsOfPoint(x: CGFloat, y: CGFloat) -> Point {
         let w = getWidth()
         let h = getHeight()
         
@@ -195,13 +195,13 @@ class CreationView: GameView {
         return (x: x, y: y)
     }
     
-    override func attemptMove(dir: Direction, swipe: CGPoint) {
+    override func attemptMove(_ dir: Direction, swipe: CGPoint) {
         if _ball.parent != nil {
             super.attemptMove(dir, swipe: swipe)
         }
     }
     
-    override func resetBall(instantly instantly: Bool = false, shouldKill: Bool = false, shouldCharge: Bool = false) {
+    override func resetBall(instantly: Bool = false, shouldKill: Bool = false, shouldCharge: Bool = false) {
         super.resetBall(instantly: instantly)
         
         if _ballX < 0 {

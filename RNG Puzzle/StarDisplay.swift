@@ -34,7 +34,7 @@ class StarDisplay: SKNode {
         super.init(coder: aDecoder)
     }
     
-    func createStar(idx: Int) -> Star {
+    func createStar(_ idx: Int) -> Star {
         var star: Star! = nil
         if idx <= _oldScore {
             star = Star(type: .Filled, scene: _scene)
@@ -47,7 +47,7 @@ class StarDisplay: SKNode {
         return star
     }
     
-    func setSize(size: CGFloat) {
+    func setSize(_ size: CGFloat) {
         let offset: CGFloat = 1
         for i in 0...2 {
             let x = CGFloat(i - 1) * offset * size
@@ -56,25 +56,24 @@ class StarDisplay: SKNode {
         }
     }
     
-    func explodeTo(dest: CGPoint, completion: (numStars: Int) -> Void) {
+    func explodeTo(_ dest: CGPoint, completion: @escaping (_ numStars: Int) -> Void) {
         if _hasFired {
             return
         }
         _hasFired = true
         
         if _oldScore < _newScore {
-            let delay = Int64(0.5 * Double(NSEC_PER_SEC))
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay), dispatch_get_main_queue(), {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 for i in self._oldScore ..< self._newScore {
                     if i == self._oldScore {
-                        self._stars[i].explodeTo(dest, completion: {
-                            completion(numStars: self._newScore - self._oldScore)
+                        self._stars[i].explodeTo(dest: dest, completion: {
+                            completion(self._newScore - self._oldScore)
                         })
                     } else {
-                        self._stars[i].explodeTo(dest)
+                        self._stars[i].explodeTo(dest: dest)
                     }
                 }
-            })
+            }
         }
     }
 }

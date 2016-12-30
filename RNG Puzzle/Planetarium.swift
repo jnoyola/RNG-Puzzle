@@ -27,7 +27,7 @@ class Planetarium: SKNode {
         _showStars = showStars
         _showTaunt = showTaunt
         
-        refreshPlanets(nil)
+        refreshPlanets(size: nil)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -49,7 +49,7 @@ class Planetarium: SKNode {
         
         if size != nil {
             for planet in _planets {
-                planet.refresh(size!)
+                planet.refresh(size: size!)
             }
         }
         
@@ -61,17 +61,17 @@ class Planetarium: SKNode {
                 _planets.append(planet)
                 
                 if size != nil {
-                    planet.refreshLayout(size!)
+                    planet.refreshLayout(size: size!)
                 }
             }
         }
         
         if size != nil {
-            refreshLayout(size!)
+            refreshLayout(size: size!)
         }
     }
     
-    func hideMarkers(shouldHide: Bool, speed: CGFloat) {
+    func hideMarkers(_ shouldHide: Bool, speed: CGFloat) {
         _markersHidden = shouldHide
         
         var duration = 0.0
@@ -84,7 +84,7 @@ class Planetarium: SKNode {
         }
     }
     
-    func selectLevel(level: Int, animated: Bool = true) {
+    func selectLevel(_ level: Int, animated: Bool = true) {
         if level > 0 {
             _level = level
             selectPlanet((level - 1) / 10, animated: animated)
@@ -94,19 +94,19 @@ class Planetarium: SKNode {
         }
     }
     
-    func selectPlanet(idx: Int, animated: Bool) {
+    func selectPlanet(_ idx: Int, animated: Bool) {
         let planet = _planets[idx]
         let x = _offset - planet.position.x
         
         if animated {
             let duration = abs(Double(x - position.x)) * 0.0005
-            runAction(SKAction.moveToX(x, duration: duration))
+            run(SKAction.moveTo(x: x, duration: duration))
         } else {
             position.x = x
         }
     }
     
-    func tap(p: CGPoint) -> Int? {
+    func tap(_ p: CGPoint) -> Int? {
         var planetIdx = Int((p.x - position.x + _planetOffset / 2) / _planetOffset)
         planetIdx = max(planetIdx, 0)
         planetIdx = min(planetIdx, _planets.count - 1)
@@ -116,7 +116,7 @@ class Planetarium: SKNode {
         return _planets[planetIdx].tap(x: x, y: y)
     }
     
-    func hold(p: CGPoint) -> Bool {
+    func hold(_ p: CGPoint) -> Bool {
         let planetIdx = Int((p.x - position.x + _planetOffset / 2) / _planetOffset)
         let x = p.x - position.x - _planets[planetIdx].position.x
         let y = p.y - position.y
@@ -163,7 +163,7 @@ class Planetarium: SKNode {
         for i in 0..<_planets.count {
             let x = _planetOffset * CGFloat(i)
             _planets[i].position = CGPoint(x: x, y: 0)
-            _planets[i].refreshLayout(size)
+            _planets[i].refreshLayout(size: size)
         }
         
         if _level == 0 {

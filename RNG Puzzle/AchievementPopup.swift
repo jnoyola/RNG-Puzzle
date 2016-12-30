@@ -25,14 +25,14 @@ class AchievementPopup: Popup {
             addChild(_icon!)
         }
         
-        _nameLabel = addLabel(name, color: SKColor.blackColor())
+        _nameLabel = addLabel(name, color: SKColor.black)
     }
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
     
-    func addLabel(text: String, color: SKColor) -> SKLabelNode {
+    func addLabel(_ text: String, color: SKColor) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: Constants.FONT)
         label.text = text
         label.fontColor = color
@@ -41,7 +41,7 @@ class AchievementPopup: Popup {
     }
 
     override func refreshLayout(size: CGSize) {
-        super.refreshLayout(size)
+        super.refreshLayout(size: size)
     
         let w = size.width
         let h = size.height
@@ -58,7 +58,7 @@ class AchievementPopup: Popup {
         
         // Description
         _descLabel?.removeFromParent()
-        _descLabel = SKMultilineLabel(text: _description, labelWidth: s * 0.9, pos: CGPoint(x: w * 0.5, y: s * (0.24 - Constants.TEXT_SCALE * 1.5)), fontName: Constants.FONT, fontSize: s * Constants.TEXT_SCALE * 0.75, fontColor: UIColor.darkGrayColor(), spacing: 1.5, alignment: .Center, shouldShowBorder: false)
+        _descLabel = SKMultilineLabel(text: _description, labelWidth: s * 0.9, pos: CGPoint(x: w * 0.5, y: s * (0.24 - Constants.TEXT_SCALE * 1.5)), fontName: Constants.FONT, fontSize: s * Constants.TEXT_SCALE * 0.75, fontColor: UIColor.darkGray, spacing: 1.5, alignment: .center, shouldShowBorder: false)
         addChild(_descLabel!)
     }
     

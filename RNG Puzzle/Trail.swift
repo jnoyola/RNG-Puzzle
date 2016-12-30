@@ -17,9 +17,9 @@ class Trail: CAShapeLayer {
     init(size: CGSize) {
         super.init()
         
-        path = hermiteWithPoints(choosePoints(size)).CGPath
-        fillColor = UIColor.clearColor().CGColor
-        strokeColor = UIColor.blackColor().CGColor
+        path = hermiteWithPoints(choosePoints(size: size)).cgPath
+        fillColor = UIColor.clear.cgColor
+        strokeColor = UIColor.black.cgColor
         lineWidth = _lineWidth
         
         animate()
@@ -29,7 +29,7 @@ class Trail: CAShapeLayer {
         super.init(coder: aDecoder)
     }
     
-    func random(a a: CGFloat, b: CGFloat) -> CGFloat{
+    func random(a: CGFloat, b: CGFloat) -> CGFloat{
         return CGFloat(arc4random()) / CGFloat(UINT32_MAX) * (b - a) + a
     }
     
@@ -46,7 +46,7 @@ class Trail: CAShapeLayer {
         
         points.append(CGPoint(x: random(a: w * 0.25, b: w * 0.75), y: random(a: h * 0.25, b: h * 0.75)))
         
-        if rand() % 3 != 0 {
+        if arc4random_uniform(3) != 0 {
             points.append(CGPoint(x: random(a: w * 0.25, b: w * 0.75), y: random(a: h * 0.25, b: h * 0.75)))
         }
         
@@ -56,11 +56,11 @@ class Trail: CAShapeLayer {
         return points
     }
     
-    func hermiteWithPoints(points: [CGPoint], alpha: CGFloat = 1/3) -> UIBezierPath
+    func hermiteWithPoints(_ points: [CGPoint], alpha: CGFloat = 1/3) -> UIBezierPath
     {
         let curve = UIBezierPath()
         
-        curve.moveToPoint(points[0])
+        curve.move(to: points[0])
         
         let n = points.count - 1
         
@@ -103,7 +103,7 @@ class Trail: CAShapeLayer {
             
             let controlPoint2 = CGPoint(x: currentPoint.x - mx * alpha, y: currentPoint.y - my * alpha)
             
-            curve.addCurveToPoint(endPoint, controlPoint1: controlPoint1, controlPoint2: controlPoint2)
+            curve.addCurve(to: endPoint, controlPoint1: controlPoint1, controlPoint2: controlPoint2)
         }
         
         return curve
@@ -129,8 +129,8 @@ class Trail: CAShapeLayer {
         endAnim.fromValue = 0
         endAnim.toValue = 1 + _margin
         
-        addAnimation(startAnim, forKey: "strokeStart")
-        addAnimation(endAnim, forKey: "strokeEnd")
+        add(startAnim, forKey: "strokeStart")
+        add(endAnim, forKey: "strokeEnd")
         
         CATransaction.commit()
     }

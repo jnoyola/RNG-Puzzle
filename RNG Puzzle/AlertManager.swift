@@ -21,7 +21,7 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
     }
 
     func getTopViewController() -> UIViewController {
-        return (UIApplication.sharedApplication().delegate!.window!!.rootViewController! as! UINavigationController).visibleViewController!
+        return (UIApplication.shared.delegate!.window!!.rootViewController! as! UINavigationController).visibleViewController!
     }
     
     func shareMessages(type: MuteShareDisplay.ShareType, level: LevelProtocol?, duration: Int) {
@@ -34,7 +34,7 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
 
             vcMessages.messageComposeDelegate = self
 
-            getTopViewController().presentViewController(vcMessages, animated: true, completion: nil)
+            getTopViewController().present(vcMessages, animated: true, completion: nil)
         }
         else
         {
@@ -42,60 +42,63 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
         }
     }
     
-    @objc func messageComposeViewController(controller: MFMessageComposeViewController, didFinishWithResult result: MessageComposeResult) {
-        getTopViewController().dismissViewControllerAnimated(true, completion: nil)
+    @objc func messageComposeViewController(_ didFinishWithcontroller: MFMessageComposeViewController, didFinishWith result: MessageComposeResult) {
+        getTopViewController().dismiss(animated: true, completion: nil)
     }
     
     func shareFacebook(type: MuteShareDisplay.ShareType, level: LevelProtocol?, duration: Int) {
-        if SLComposeViewController.isAvailableForServiceType(SLServiceTypeFacebook) {
+        if SLComposeViewController.isAvailable(forServiceType: SLServiceTypeFacebook) {
             let vcFacebook = SLComposeViewController(forServiceType: SLServiceTypeFacebook)
      
-            vcFacebook.addURL(NSURL(string: "https://itunes.apple.com/us/app/id1096009046"))
-     
-            getTopViewController().presentViewController(vcFacebook, animated: true, completion: nil)
+            if vcFacebook != nil {
+                vcFacebook!.add(URL(string: "https://itunes.apple.com/us/app/id1096009046"))
+                getTopViewController().present(vcFacebook!, animated: true, completion: nil)
+            }
         } else {
             alert("You are not logged in to Facebook.")
         }
     }
     
     func shareTwitter(type: MuteShareDisplay.ShareType, level: LevelProtocol?, duration: Int) {
-        if SLComposeViewController.isAvailableForServiceType(SLServiceTypeTwitter) {
+        if SLComposeViewController.isAvailable(forServiceType: SLServiceTypeTwitter) {
             // Initialize the default view controller for sharing the post.
             let vcTwitter = SLComposeViewController(forServiceType: SLServiceTypeTwitter)
      
-            let text = "Check out AI Puzzle in the App Store!\nhttps://itunes.apple.com/us/app/id1096009046 #AIPuzzle"
-            vcTwitter.setInitialText(text)
-     
-//            // Set the note text as the default post message.
-//            if count(self.noteTextview.text) <= 140 {
-//                twitterComposeVC.setInitialText("\(self.noteTextview.text)")
-//            }
-//            else {
-//                let index = advance(self.noteTextview.text.startIndex, 140)
-//                let subText = self.noteTextview.text.substringToIndex(index)
-//                twitterComposeVC.setInitialText("\(subText)")
-//            }
-     
-            getTopViewController().presentViewController(vcTwitter, animated: true, completion: nil)
+            if vcTwitter != nil {
+                let text = "Check out AI Puzzle in the App Store!\nhttps://itunes.apple.com/us/app/id1096009046 #AIPuzzle"
+                vcTwitter!.setInitialText(text)
+         
+    //            // Set the note text as the default post message.
+    //            if count(self.noteTextview.text) <= 140 {
+    //                twitterComposeVC.setInitialText("\(self.noteTextview.text)")
+    //            }
+    //            else {
+    //                let index = advance(self.noteTextview.text.startIndex, 140)
+    //                let subText = self.noteTextview.text.substringToIndex(index)
+    //                twitterComposeVC.setInitialText("\(subText)")
+    //            }
+         
+                getTopViewController().present(vcTwitter!, animated: true, completion: nil)
+            }
         }
         else {
             alert("You are not logged in to Twitter.")
         }
     }
     
-    func alert(message: String) {
-        let alertController = UIAlertController(title: "Error", message: message, preferredStyle: UIAlertControllerStyle.Alert)
-        alertController.addAction(UIAlertAction(title: "Dismiss", style: UIAlertActionStyle.Default, handler: nil))
-        getTopViewController().presentViewController(alertController, animated: true, completion: nil)
+    func alert(_ message: String) {
+        let alertController = UIAlertController(title: "Error", message: message, preferredStyle: UIAlertControllerStyle.alert)
+        alertController.addAction(UIAlertAction(title: "Dismiss", style: UIAlertActionStyle.default, handler: nil))
+        getTopViewController().present(alertController, animated: true, completion: nil)
     }
     
     func creationCancelWarning(scene: CreationScene) {
-        let alertController = UIAlertController(title: nil, message: "All changes will be discarded.", preferredStyle: UIAlertControllerStyle.Alert)
-        alertController.addAction(UIAlertAction(title: "Keep", style: UIAlertActionStyle.Default, handler: nil))
-        alertController.addAction(UIAlertAction(title: "Discard", style: UIAlertActionStyle.Destructive, handler: { action -> Void in
+        let alertController = UIAlertController(title: nil, message: "All changes will be discarded.", preferredStyle: UIAlertControllerStyle.alert)
+        alertController.addAction(UIAlertAction(title: "Keep", style: UIAlertActionStyle.default, handler: nil))
+        alertController.addAction(UIAlertAction(title: "Discard", style: UIAlertActionStyle.destructive, handler: { action -> Void in
             scene.cancelDone()
         }))
-        getTopViewController().presentViewController(alertController, animated: true, completion: nil)
+        getTopViewController().present(alertController, animated: true, completion: nil)
     }
     
     func creationFinishWarning(scene: CreationScene, numSolutions: Int, name: String) {
@@ -106,21 +109,21 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
         msg += "."
         
         var nameField: UITextField? = nil
-        let alertController = UIAlertController(title: nil, message: msg, preferredStyle: UIAlertControllerStyle.Alert)
-        alertController.addTextFieldWithConfigurationHandler({ textField -> Void in
+        let alertController = UIAlertController(title: nil, message: msg, preferredStyle: UIAlertControllerStyle.alert)
+        alertController.addTextField(configurationHandler: { textField -> Void in
             textField.placeholder = "Name"
             textField.text = name
             nameField = textField
         })
-        alertController.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.Default, handler: nil))
-        alertController.addAction(UIAlertAction(title: "Finish", style: UIAlertActionStyle.Default, handler: { action -> Void in
+        alertController.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.default, handler: nil))
+        alertController.addAction(UIAlertAction(title: "Finish", style: UIAlertActionStyle.default, handler: { action -> Void in
             var name = "My Puzzle"
             if nameField != nil && !nameField!.text!.isEmpty {
                 name = nameField!.text!
             }
-            scene.finishDone(name)
+            scene.finishDone(name: name)
         }))
-        getTopViewController().presentViewController(alertController, animated: true, completion: nil)
+        getTopViewController().present(alertController, animated: true, completion: nil)
     }
 
 }

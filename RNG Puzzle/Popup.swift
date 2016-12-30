@@ -29,12 +29,12 @@ class Popup: SKShapeNode {
         _heightScale = heightScale
         _cornerRadius = cornerRadius
         _state = state
-        fillColor = UIColor.whiteColor()
+        fillColor = UIColor.white
         
         if addBackground {
             _background = SKShapeNode()
             _background!.lineWidth = 0
-            _background!.fillColor = SKColor.blackColor()
+            _background!.fillColor = SKColor.black
             _background!.alpha = 0.8
             _background!.zPosition = -1
             addChild(_background!)
@@ -45,16 +45,16 @@ class Popup: SKShapeNode {
         super.init(coder: aDecoder)
     }
     
-    func open(completion: () -> Void) {
+    func open(completion: @escaping () -> Void) {
         _state = .Open
-        runAction(SKAction.moveToY(_yOpen, duration: 0.2), completion: completion)
+        run(SKAction.moveTo(y: _yOpen, duration: 0.2), completion: completion)
     }
     
     func close() {
         _state = .Closed
         _background?.removeFromParent()
         _background = nil
-        runAction(SKAction.moveToY(_yClose, duration: 0.2), completion: {
+        run(SKAction.moveTo(y: _yClose, duration: 0.2), completion: {
             self.removeFromParent()
         })
     }
@@ -69,13 +69,13 @@ class Popup: SKShapeNode {
         let y = _state == .Open ? _yOpen : _yClose
     
         let rect = CGRect(origin: CGPoint(x: (w - s) * 0.5, y: 0), size: CGSize(width: s, height: s * _heightScale))
-        path = CGPathCreateWithRoundedRect(rect, _cornerRadius, _cornerRadius, nil)
+        path = CGPath(roundedRect: rect, cornerWidth: _cornerRadius, cornerHeight: _cornerRadius, transform: nil)
         position = CGPoint(x: 0, y: y)
         
         // Background
         if _background != nil {
             let bgRect = CGRect(origin: CGPoint(x: 0, y: -_yOpen), size: CGSize(width: size.width, height: size.height))
-            _background!.path = CGPathCreateWithRect(bgRect, nil)
+            _background!.path = CGPath(rect: bgRect, transform: nil)
         }
     }
     

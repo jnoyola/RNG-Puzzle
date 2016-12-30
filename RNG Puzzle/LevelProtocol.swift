@@ -13,34 +13,34 @@ protocol LevelProtocol {
     var _height: Int { get }
     var _startX: Int { get }
     var _startY: Int { get }
-    var _correct: [PointRecord!]? { get }
+    var _correct: [PointRecord]? { get }
     
     func getCode() -> String
     func getSeedString() -> String
     
     func generate(debug: Bool) -> Bool
     
-    func getPiece(x x: Int, y: Int) -> PieceType
+    func getPiece(x: Int, y: Int) -> PieceType
     func getPieceSafely(point: (x: Int, y: Int)) -> PieceType
     
-    func getTeleporterPair(x x: Int, y: Int) -> (x: Int, y: Int)
+    func getTeleporterPair(x: Int, y: Int) -> (x: Int, y: Int)
 }
 
 extension LevelProtocol {
     
     typealias Point = (x: Int, y: Int)
     
-    static func getWidthForLevel(level: Int) -> Int {
+    static func getWidthForLevel(_ level: Int) -> Int {
         return 4 + level / 3
     }
     
-    static func getLevelRangeForWidth(width: Int) -> (min: Int, max: Int) {
+    static func getLevelRangeForWidth(_ width: Int) -> (min: Int, max: Int) {
         let min = (width - 4) * 3
         let max = min + 2
         return (min: min, max: max)
     }
     
-    func getAdjPosFrom(x x: Int, y: Int, dir: Direction) -> Point {
+    func getAdjPosFrom(x: Int, y: Int, dir: Direction) -> Point {
         switch dir {
             case .Right: return (x: x + 1, y: y)
             case .Up:    return (x: x, y: y + 1)
@@ -54,14 +54,14 @@ extension LevelProtocol {
         return getNumSolutions(x: _startX, y: _startY, dir: .Still, visited: Set<PointRecord>())
     }
     
-    func getNumSolutions(x x: Int, y: Int, dir: Direction, visited: Set<PointRecord>) -> Int {
+    func getNumSolutions(x: Int, y: Int, dir: Direction, visited: Set<PointRecord>) -> Int {
         var x = x
         var y = y
         var dir = dir
         var visited = visited
     
         while true {
-            let piece = getPieceSafely((x: x, y: y))
+            let piece = getPieceSafely(point: (x: x, y: y))
             if piece.contains(.Target) {
                 return 1
             }
@@ -69,7 +69,7 @@ extension LevelProtocol {
                 return 0
             }
             
-            var dirs = [Direction](count: 1, repeatedValue: dir)
+            var dirs = [Direction](repeating: dir, count: 1)
             if (dir == .Still) {
                 dirs = PieceType.getNextDirections(.Still)
             }
@@ -97,7 +97,7 @@ extension LevelProtocol {
                 }
                 
                 let nextPoint = getAdjPosFrom(x: x, y: y, dir: dir)
-                let nextPiece = getPieceSafely(nextPoint)
+                let nextPiece = getPieceSafely(point: nextPoint)
                 if nextPiece.isWallFromDir(dir) {
                     dirs = PieceType.getNextDirections(dir)
                 }

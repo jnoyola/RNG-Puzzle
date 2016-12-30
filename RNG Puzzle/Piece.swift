@@ -14,7 +14,7 @@ enum Direction {
     case Down
 }
 
-struct PieceType: OptionSetType {
+struct PieceType: OptionSet {
     let rawValue: Int
     
     static let None =       PieceType(rawValue: 0)
@@ -30,7 +30,7 @@ struct PieceType: OptionSetType {
     static let Stop =       PieceType(rawValue: 1 << 9) // 512
     static let Used2 =      PieceType(rawValue: 1 << 10)// 1024
     
-    func isWallFromDir(dir: Direction) -> Bool {
+    func isWallFromDir(_ dir: Direction) -> Bool {
         if contains(.Block) ||
            (contains(.Corner1) && (dir == .Right || dir == .Up))   ||
            (contains(.Corner2) && (dir == .Up    || dir == .Left)) ||
@@ -41,7 +41,7 @@ struct PieceType: OptionSetType {
         return false
     }
     
-    static func getNextDirections(dir: Direction) -> [Direction] {
+    static func getNextDirections(_ dir: Direction) -> [Direction] {
         switch (dir) {
         case .Up: fallthrough
         case .Down: return [Direction.Left, Direction.Right]
@@ -51,7 +51,7 @@ struct PieceType: OptionSetType {
         }
     }
     
-    func getNextDirections(dir: Direction) -> [Direction] {
+    func getNextDirections(_ dir: Direction) -> [Direction] {
         if contains(.Corner1) {
             if dir == .Left {
                 return [Direction.Up]

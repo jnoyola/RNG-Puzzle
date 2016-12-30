@@ -10,9 +10,9 @@ import UIKit
 
 class NavigationBar: UINavigationBar {
 
-    override func sizeThatFits(size: CGSize) -> CGSize {
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
     
-        if let window = UIApplication.sharedApplication().delegate!.window! {
+        if let window = UIApplication.shared.delegate!.window! {
         let frame = window.frame
         let w = frame.width
         let h = frame.height

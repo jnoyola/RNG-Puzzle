@@ -11,7 +11,7 @@ import Foundation
 class Storage: NSObject {
 
     static func registerDefaults() {
-        NSUserDefaults.standardUserDefaults().registerDefaults([
+        UserDefaults.standard.register(defaults: [
             "scores": [NSNumber](),
             "stars": 3,
             "customNames": [NSString](),
@@ -32,7 +32,7 @@ class Storage: NSObject {
     }
     
     static func loadScores() -> [NSNumber] {
-        return NSUserDefaults.standardUserDefaults().objectForKey("scores") as! [NSNumber]
+        return UserDefaults.standard.object(forKey: "scores") as! [NSNumber]
     }
     
     static func loadScore(level: Int) -> Int {
@@ -50,99 +50,99 @@ class Storage: NSObject {
         return loadScores().count + 1
     }
     
-    static func saveScore(score: NSNumber, forLevel level: Int) {
+    static func saveScore(_ score: Int, forLevel level: Int) {
         var scores = loadScores()
         
         if level <= scores.count {
-            scores[level - 1] = score
+            scores[level - 1] = score as NSNumber
         } else {
-            scores.append(score)
-            NSNotificationCenter.defaultCenter().postNotificationName("maxLevelChanged", object: nil)
+            scores.append(score as NSNumber)
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "maxLevelChanged"), object: nil)
         }
         
-        NSUserDefaults.standardUserDefaults().setObject(scores, forKey: "scores")
+        UserDefaults.standard.set(scores, forKey: "scores")
     }
     
     static func loadStars() -> Int {
-        return NSUserDefaults.standardUserDefaults().integerForKey("stars")
+        return UserDefaults.standard.integer(forKey: "stars")
     }
 
-    static func addStars(amt: Int) {
+    static func addStars(_ amt: Int) {
         let stars = loadStars() + amt
-        NSUserDefaults.standardUserDefaults().setInteger(stars, forKey: "stars")
+        UserDefaults.standard.set(stars, forKey: "stars")
     }
     
     static func loadCustomLevelNames() -> [NSString] {
-        return NSUserDefaults.standardUserDefaults().objectForKey("customNames") as! [NSString]
+        return UserDefaults.standard.object(forKey: "customNames") as! [NSString]
     }
     
     static func loadCustomLevelCode(index: Int) -> NSString {
-        return (NSUserDefaults.standardUserDefaults().objectForKey("customCodes") as! [NSString])[index]
+        return (UserDefaults.standard.object(forKey: "customCodes") as! [NSString])[index]
     }
     
-    static func saveCustomLevel(level: LevelProtocol, name: String) {
+    static func saveCustomLevel(_ level: LevelProtocol, name: String) {
         var names = loadCustomLevelNames()
-        var codes = NSUserDefaults.standardUserDefaults().objectForKey("customCodes") as! [NSString]
+        var codes = UserDefaults.standard.object(forKey: "customCodes") as! [NSString]
         
-        names.append(name)
-        codes.append(level.getCode())
+        names.append(name as NSString)
+        codes.append(level.getCode() as NSString)
         
-        NSUserDefaults.standardUserDefaults().setObject(names, forKey: "customNames")
-        NSUserDefaults.standardUserDefaults().setObject(codes, forKey: "customCodes")
+        UserDefaults.standard.set(names, forKey: "customNames")
+        UserDefaults.standard.set(codes, forKey: "customCodes")
     }
     
-    static func editCustomLevel(level: LevelProtocol, name: String, index: Int) {
+    static func editCustomLevel(_ level: LevelProtocol, name: String, index: Int) {
         var names = loadCustomLevelNames()
-        var codes = NSUserDefaults.standardUserDefaults().objectForKey("customCodes") as! [NSString]
+        var codes = UserDefaults.standard.object(forKey: "customCodes") as! [NSString]
         
-        names[index] = name
-        codes[index] = level.getCode()
+        names[index] = name as NSString
+        codes[index] = level.getCode() as NSString
         
-        NSUserDefaults.standardUserDefaults().setObject(names, forKey: "customNames")
-        NSUserDefaults.standardUserDefaults().setObject(codes, forKey: "customCodes")
+        UserDefaults.standard.set(names, forKey: "customNames")
+        UserDefaults.standard.set(codes, forKey: "customCodes")
     }
     
     static func deleteCustomLevel(index: Int) {
         var names = loadCustomLevelNames()
-        var codes = NSUserDefaults.standardUserDefaults().objectForKey("customCodes") as! [NSString]
+        var codes = UserDefaults.standard.object(forKey: "customCodes") as! [NSString]
         
-        names.removeAtIndex(index)
-        codes.removeAtIndex(index)
+        names.remove(at: index)
+        codes.remove(at: index)
         
-        NSUserDefaults.standardUserDefaults().setObject(names, forKey: "customNames")
-        NSUserDefaults.standardUserDefaults().setObject(codes, forKey: "customCodes")
+        UserDefaults.standard.set(names, forKey: "customNames")
+        UserDefaults.standard.set(codes, forKey: "customCodes")
     }
     
-    static func incProperty(key: String, amount: Int = 1) -> Int {
-        var newAmount = NSUserDefaults.standardUserDefaults().integerForKey(key)
+    static func incProperty(_ key: String, amount: Int = 1) -> Int {
+        var newAmount = UserDefaults.standard.integer(forKey: key)
         newAmount += amount
         
-        NSUserDefaults.standardUserDefaults().setInteger(newAmount, forKey: key)
+        UserDefaults.standard.set(newAmount, forKey: key)
         
         return newAmount
     }
     
     static func resetAchievements() {
-        NSUserDefaults.standardUserDefaults().setInteger(0, forKey: "voidAvoider")
-        NSUserDefaults.standardUserDefaults().setInteger(0, forKey: "speedRacer")
-        NSUserDefaults.standardUserDefaults().setInteger(0, forKey: "builder")
-        NSUserDefaults.standardUserDefaults().setInteger(0, forKey: "fan")
-        NSUserDefaults.standardUserDefaults().setInteger(0, forKey: "birdie")
-        NSUserDefaults.standardUserDefaults().setInteger(0, forKey: "bookie")
-        NSUserDefaults.standardUserDefaults().setInteger(0, forKey: "timeTraveler")
-        NSUserDefaults.standardUserDefaults().setInteger(0, forKey: "starCatcher")
-        NSUserDefaults.standardUserDefaults().setInteger(0, forKey: "bigSpender")
-        NSUserDefaults.standardUserDefaults().setInteger(0, forKey: "collector")
-        NSUserDefaults.standardUserDefaults().setInteger(0, forKey: "theBeast")
+        UserDefaults.standard.set(0, forKey: "voidAvoider")
+        UserDefaults.standard.set(0, forKey: "speedRacer")
+        UserDefaults.standard.set(0, forKey: "builder")
+        UserDefaults.standard.set(0, forKey: "fan")
+        UserDefaults.standard.set(0, forKey: "birdie")
+        UserDefaults.standard.set(0, forKey: "bookie")
+        UserDefaults.standard.set(0, forKey: "timeTraveler")
+        UserDefaults.standard.set(0, forKey: "starCatcher")
+        UserDefaults.standard.set(0, forKey: "bigSpender")
+        UserDefaults.standard.set(0, forKey: "collector")
+        UserDefaults.standard.set(0, forKey: "theBeast")
     }
     
     static func isMuted() -> Bool {
-        return NSUserDefaults.standardUserDefaults().boolForKey("isMuted")
+        return UserDefaults.standard.bool(forKey: "isMuted")
     }
     
     static func toggleMute() -> Bool {
         let newIsMuted = !isMuted()
-        NSUserDefaults.standardUserDefaults().setBool(newIsMuted, forKey: "isMuted")
+        UserDefaults.standard.set(newIsMuted, forKey: "isMuted")
         return newIsMuted
     }
 }

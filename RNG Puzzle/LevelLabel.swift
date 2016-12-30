@@ -18,16 +18,16 @@ class LevelLabel: SKNode {
         levelLabel.text = "Level \(level)"
         levelLabel.fontSize = size
         levelLabel.fontColor = color
-        levelLabel.horizontalAlignmentMode = .Center
+        levelLabel.horizontalAlignmentMode = .center
         
         let seedLabel = SKLabelNode(fontNamed: Constants.FONT)
         seedLabel.text = ".\(seed)"
         seedLabel.fontSize = size * 0.7
         seedLabel.fontColor = color
-        seedLabel.horizontalAlignmentMode = .Center
+        seedLabel.horizontalAlignmentMode = .center
         
-        levelLabel.position = CGPointMake(-seedLabel.frame.size.width / 2, 0)
-        seedLabel.position = CGPointMake(levelLabel.frame.size.width / 2, 0)
+        levelLabel.position = CGPoint(x: -seedLabel.frame.size.width / 2, y: 0)
+        seedLabel.position = CGPoint(x: levelLabel.frame.size.width / 2, y: 0)
         
         addChild(levelLabel)
         addChild(seedLabel)

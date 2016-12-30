@@ -26,7 +26,7 @@ class MyPuzzlesController: UITableViewController, Refreshable {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = UIColor.blackColor()
+        view.backgroundColor = UIColor.black
         
         let w = view.frame.width
         let h = view.frame.height
@@ -41,22 +41,22 @@ class MyPuzzlesController: UITableViewController, Refreshable {
             NSForegroundColorAttributeName: Constants.TITLE_COLOR,
             NSFontAttributeName: font
         ]
-        navigationController!.navigationBar.barTintColor = UIColor.blackColor()
-        navigationController!.navigationBar.tintColor = UIColor.whiteColor()
+        navigationController!.navigationBar.barTintColor = UIColor.black
+        navigationController!.navigationBar.tintColor = UIColor.white
         
-        let backButton = UIBarButtonItem(title: "<", style: .Plain, target: self, action: #selector(back))
+        let backButton = UIBarButtonItem(title: "<", style: .plain, target: self, action: #selector(back))
         backButton.setTitleTextAttributes([
             NSFontAttributeName: font
-        ], forState: .Normal)
-        navigationItem.setLeftBarButtonItem(backButton, animated: false)
+            ], for: .normal)
+        navigationItem.setLeftBarButton(backButton, animated: false)
         
         let addFont = UIFont(name: Constants.FONT, size: s * Constants.TEXT_SCALE * 2)!
         
-        let addButton = UIBarButtonItem(title: "+", style: .Plain, target: self, action: #selector(newLevel))
+        let addButton = UIBarButtonItem(title: "+", style: .plain, target: self, action: #selector(newLevel))
         addButton.setTitleTextAttributes([
             NSFontAttributeName: addFont
-        ], forState: .Normal)
-        navigationItem.setRightBarButtonItem(addButton, animated: false)
+            ], for: .normal)
+        navigationItem.setRightBarButton(addButton, animated: false)
         
 //        // Toolbar
 //        navigationController!.toolbar.barTintColor = UIColor.blackColor()
@@ -70,7 +70,7 @@ class MyPuzzlesController: UITableViewController, Refreshable {
         tableView.rowHeight = s * Constants.TEXT_SCALE * 1.5
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
 //        navigationController!.setToolbarHidden(false, animated: true)
         navigationController!.setNavigationBarHidden(false, animated: true)
         navigationController!.navigationBar.topItem?.title = "My Puzzles"
@@ -84,15 +84,15 @@ class MyPuzzlesController: UITableViewController, Refreshable {
         AppDelegate.pushViewController(SKViewController(scene: CustomLevelSelectScene()), animated: true, offset: 1)
     }
     
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return _levelNames.count
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let w = view.frame.width
         let h = view.frame.height
@@ -102,67 +102,67 @@ class MyPuzzlesController: UITableViewController, Refreshable {
 
         cell.textLabel?.text = "\(_levelNames[indexPath.row])"
         cell.textLabel?.font = UIFont(name: Constants.FONT, size: s * Constants.TEXT_SCALE * 0.75)!
-        cell.textLabel?.textColor = UIColor.whiteColor()
-        cell.backgroundColor = UIColor.blackColor()
+        cell.textLabel?.textColor = UIColor.white
+        cell.backgroundColor = UIColor.black
         
         
         let selectionView = UIView()
-        selectionView.backgroundColor = UIColor.grayColor()
+        selectionView.backgroundColor = UIColor.gray
         cell.selectedBackgroundView = selectionView
 
         return cell
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        let code = Storage.loadCustomLevelCode(indexPath.row)
-        let level = LevelParser.parse(code as String, allowCustom: true)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let code = Storage.loadCustomLevelCode(index: indexPath.row)
+        let level = LevelParser.parse(code: code as String, allowCustom: true)
         if level != nil {
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 let playScene = PlayScene(size: self.view.bounds.size, level: level!)
-                playScene.scaleMode = .ResizeFill
+                playScene.scaleMode = .resizeFill
                 AppDelegate.pushViewController(SKViewController(scene: playScene), animated: true, offset: 1)
             }
         }
     }
     
-    override func tableView(tableView: UITableView, canEditRowAtIndexPath indexPath: NSIndexPath) -> Bool {
+    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
     }
     
-    override func tableView(tableView: UITableView, editActionsForRowAtIndexPath indexPath: NSIndexPath) -> [UITableViewRowAction]? {
-        return [UITableViewRowAction(style: .Default, title: "Delete", handler: {rowAction, indexPath in
-                    Storage.deleteCustomLevel(indexPath.row)
+    override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
+        return [UITableViewRowAction(style: .default, title: "Delete", handler: {rowAction, indexPath in
+                    Storage.deleteCustomLevel(index: indexPath.row)
                     self._levelNames = Storage.loadCustomLevelNames()
-                    self.tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
+                    self.tableView.deleteRows(at: [indexPath], with: .automatic)
                 }),
-                UITableViewRowAction(style: .Normal, title: "Edit", handler: {rowAction, indexPath in
-                    let code = Storage.loadCustomLevelCode(indexPath.row)
-                    let level = LevelParser.parse(code as String, allowCustom: true)
+                UITableViewRowAction(style: .normal, title: "Edit", handler: {rowAction, indexPath in
+                    let code = Storage.loadCustomLevelCode(index: indexPath.row)
+                    let level = LevelParser.parse(code: code as String, allowCustom: true)
                     if level != nil {
-                        dispatch_async(dispatch_get_main_queue()) {
-                            let creationScene = CreationScene(size: UIScreen.mainScreen().bounds.size, level: level!)
+                        DispatchQueue.main.async {
+                            let creationScene = CreationScene(size: UIScreen.main.bounds.size, level: level!)
                             creationScene._editIndex = indexPath.row
-                            creationScene.scaleMode = .ResizeFill
+                            creationScene.scaleMode = .resizeFill
                             AppDelegate.pushViewController(SKViewController(scene: creationScene), animated: true, offset: 1)
                         }
                     }
                 })]
     }
 
-    override func shouldAutorotate() -> Bool {
+    override var shouldAutorotate: Bool {
         return true
     }
 
-    override func supportedInterfaceOrientations() -> UIInterfaceOrientationMask {
-        return .AllButUpsideDown
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .allButUpsideDown
+    }
+
+    override var prefersStatusBarHidden: Bool {
+        return true
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Release any cached data, images, etc that aren't in use.
-    }
-
-    override func prefersStatusBarHidden() -> Bool {
-        return true
     }
 }

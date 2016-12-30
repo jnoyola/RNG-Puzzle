@@ -13,11 +13,11 @@ class LevelParser: NSObject {
     static func parse(code: String, allowGenerated: Bool = false, allowCustom: Bool = false) -> LevelProtocol? {
         var level: LevelProtocol? = nil
         
-        let tokens = code.componentsSeparatedByString(".")
+        let tokens = code.components(separatedBy: ".")
         
         // Check for non-digits
-        let badCharacters = NSCharacterSet.decimalDigitCharacterSet().invertedSet
-        if !tokens[0].isEmpty && tokens[0].rangeOfCharacterFromSet(badCharacters) == nil {
+        let badCharacters = NSCharacterSet.decimalDigits.inverted
+        if !tokens[0].isEmpty && tokens[0].rangeOfCharacter(from: badCharacters) == nil {
         
             // Parse level
             let levelNum = (tokens[0] as NSString).integerValue

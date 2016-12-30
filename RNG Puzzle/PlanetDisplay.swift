@@ -55,7 +55,7 @@ class PlanetDisplay: SKNode {
             addLevelMarkers()
         }
         
-        if showTaunt && Storage.loadScore(_baseLevel + 1) >= 0 {
+        if showTaunt && Storage.loadScore(level: _baseLevel + 1) >= 0 {
             addTaunt()
         }
     }
@@ -82,13 +82,13 @@ class PlanetDisplay: SKNode {
         if _showLevels {
             for i in 0 ... 9 {
                 let level = _baseLevel + i + 1
-                let score = Storage.loadScore(level)
+                let score = Storage.loadScore(level: level)
                 refreshLevelMarker(i, level: level, score: score)
             }
         }
     }
     
-    func refreshLevelMarker(i: Int, level: Int, score: Int) {
+    func refreshLevelMarker(_ i: Int, level: Int, score: Int) {
         if _showStars {
             var stars = _levelStars[i]
             if score > 0 {
@@ -101,13 +101,13 @@ class PlanetDisplay: SKNode {
             _levelStars[i] = stars
         }
 
-        _levelLabels[i].fontColor = score >= 0 ? UIColor.whiteColor() : UIColor.darkGrayColor()
+        _levelLabels[i].fontColor = score >= 0 ? UIColor.white : UIColor.darkGray
     }
     
     func addTaunt() {
         _tauntLabel = SKLabelNode(fontNamed: Constants.FONT)
         _tauntLabel!.text = _taunts[_baseLevel / 10]
-        _tauntLabel!.fontColor = UIColor.whiteColor()
+        _tauntLabel!.fontColor = UIColor.white
         addChild(_tauntLabel!)
     }
     
@@ -118,47 +118,47 @@ class PlanetDisplay: SKNode {
             addTaunt()
         }
         
-        refreshLayout(size)
+        refreshLayout(size: size)
     }
     
     func displaySample() {
-        let levelNum = _baseLevel + 1 + Int(rand() % 10)
+        let levelNum = _baseLevel + 1 + Int(arc4random_uniform(10))
         _sample = GameSample(levelNum: levelNum, parentScene: parent!.parent! as! SKScene)
         _sample!.zPosition = 100
         _sample!.setScale(0)
         addChild(_sample!)
         
-        _sample!.runAction(SKAction.scaleTo(1, duration: 0.1))
+        _sample!.run(SKAction.scale(to: 1, duration: 0.1))
     }
     
     func hideSample() {
         if _sample != nil {
-            _sample!.runAction(SKAction.scaleTo(0, duration: 0.1), completion: {
+            _sample!.run(SKAction.scale(to: 0, duration: 0.1), completion: {
                 self._sample!.removeFromParent()
                 self._sample = nil
             })
         }
     }
     
-    func hideLevelMarkers(shouldHide: Bool, duration: Double) {
+    func hideLevelMarkers(_ shouldHide: Bool, duration: Double) {
         if _showLevels {
             if duration > 0 {
-                let action = shouldHide ? SKAction.fadeOutWithDuration(duration) : SKAction.fadeInWithDuration(duration)
+                let action = shouldHide ? SKAction.fadeOut(withDuration: duration) : SKAction.fadeIn(withDuration: duration)
             
                 for label in _levelLabels {
                     label.removeAllActions()
-                    label.runAction(action)
+                    label.run(action)
                 }
                 if _showStars {
                     for list in _levelStars {
                         for star in list {
                             star.removeAllActions()
-                            star.runAction(action)
+                            star.run(action)
                         }
                     }
                 }
                 _tauntLabel?.removeAllActions()
-                _tauntLabel?.runAction(action)
+                _tauntLabel?.run(action)
             } else {
                 for label in _levelLabels {
                     label.removeAllActions()
@@ -178,9 +178,9 @@ class PlanetDisplay: SKNode {
         }
     }
     
-    func tap(x x: CGFloat, y: CGFloat) -> Int? {
+    func tap(x: CGFloat, y: CGFloat) -> Int? {
         if _showLevels {
-            var dMin = CGFloat.max
+            var dMin = CGFloat.greatestFiniteMagnitude
             var iMin = 0
             
             for i in 0...9 {
@@ -209,7 +209,7 @@ class PlanetDisplay: SKNode {
         return nil
     }
     
-    func hold(x x: CGFloat, y: CGFloat) -> Bool {
+    func hold(x: CGFloat, y: CGFloat) -> Bool {
         if (x * x) + (y * y) < _rad * _rad {
             displaySample()
             return true
@@ -273,7 +273,7 @@ class PlanetDisplay: SKNode {
         
         if _showLevels {
             for i in 1...10 {
-                refreshLevelMarker(i, s: s)
+                refreshLevelMarker(levelMod: i, s: s)
             }
         }
         

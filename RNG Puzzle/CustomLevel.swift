@@ -21,10 +21,10 @@ class CustomLevel: NSObject, LevelProtocol {
     var _startY = -1
     var _targetX = -1
     var _targetY = -1
-    var _grid: [[PieceType]!]! = nil
+    var _grid: [[PieceType]]! = nil
     var _teleporters: [Point?]! = nil
     
-    var _correct: [PointRecord!]? = nil
+    var _correct: [PointRecord]? = nil
     
     
     @inline(__always) func getCode() -> String {
@@ -32,15 +32,15 @@ class CustomLevel: NSObject, LevelProtocol {
     }
     
     @inline(__always) func getSeedString() -> String {
-        let prefix = _seed.substringToIndex(_seed.startIndex.advancedBy(4))
+        let prefix = (_seed as NSString).substring(to: 4)
         return "\(prefix)..."
     }
     
-    @inline(__always) func getPiece(x x: Int, y: Int) -> PieceType {
+    @inline(__always) func getPiece(x: Int, y: Int) -> PieceType {
         return _grid[y][x]
     }
     
-    @inline(__always) func setPiece(x x: Int, y: Int, type: PieceType) {
+    @inline(__always) func setPiece(x: Int, y: Int, type: PieceType) {
         _grid[y][x] = type
     }
     
@@ -51,7 +51,7 @@ class CustomLevel: NSObject, LevelProtocol {
         return .Void
     }
     
-    func getTeleporterPair(x x: Int, y: Int) -> Point {
+    func getTeleporterPair(x: Int, y: Int) -> Point {
         for i in 0...(_teleporters.count - 1) {
             let p0 = _teleporters[i]
             if p0 == nil {
@@ -94,17 +94,17 @@ class CustomLevel: NSObject, LevelProtocol {
     func createNew() {
         _width = CustomLevel.getWidthForLevel(_level)
         _height = _width
-        _grid = [[PieceType]!](count: _height, repeatedValue: nil)
+        _grid = [[PieceType]!](repeating: nil, count: _height)
         for j in 0...(_height - 1) {
-            _grid[j] = [PieceType](count: _width, repeatedValue: .None)
+            _grid[j] = [PieceType](repeating: .None, count: _width)
         }
         _teleporters = []
     }
     
-    func loadFromSeed(seed: String) -> Bool {
+    func loadFromSeed(_ seed: String) -> Bool {
         _seed = seed
-        if let data = NSData(base64EncodedString: seed, options: NSDataBase64DecodingOptions.IgnoreUnknownCharacters) {
-            var bytes = [UInt8](count: data.length, repeatedValue: 0)
+        if let data = NSData(base64Encoded: seed, options: NSData.Base64DecodingOptions.ignoreUnknownCharacters) {
+            var bytes = [UInt8](repeating: 0, count: data.length)
             data.getBytes(&bytes, length: bytes.count)
             
             if bytes.count < 6 {
@@ -136,11 +136,11 @@ class CustomLevel: NSObject, LevelProtocol {
                 return false
             }
             
-            _grid = [[PieceType]!](count: _height, repeatedValue: nil)
+            _grid = [[PieceType]!](repeating: nil, count: _height)
             for j in 0...(_height - 1) {
-                _grid[j] = [PieceType](count: _width, repeatedValue: .None)
+                _grid[j] = [PieceType](repeating: .None, count: _width)
             }
-            _teleporters = [Point?](count: 64, repeatedValue: nil)
+            _teleporters = [Point?](repeating: nil, count: 64)
             
             /* We are descending down this tree, where 0s go left, 1s go right,
              * and each branch has a state label. The state following a 
@@ -207,7 +207,7 @@ class CustomLevel: NSObject, LevelProtocol {
                 }
                 
                 if type != nil {
-                    if type != .None {
+                    if type != .none {
                         setPiece(x: i, y: j, type: type!)
                         if type == .Teleporter {
                             setTeleporterForID(x: i, y: j, id: teleporterID)
@@ -251,7 +251,7 @@ class CustomLevel: NSObject, LevelProtocol {
         return true
     }
     
-    func setTeleporterForID(x x: Int, y: Int, id: Int) {
+    func setTeleporterForID(x: Int, y: Int, id: Int) {
         if _teleporters[2 * id] == nil {
             _teleporters[2 * id] = (x: x, y: y)
         } else {
@@ -259,7 +259,7 @@ class CustomLevel: NSObject, LevelProtocol {
         }
     }
     
-    func getTeleporterID(x x: Int, y: Int) -> Int {
+    func getTeleporterID(x: Int, y: Int) -> Int {
         for i in 0...(_teleporters.count - 1) {
             let teleporter = _teleporters[i]
             if teleporter == nil {
@@ -386,7 +386,7 @@ class CustomLevel: NSObject, LevelProtocol {
         }
         
         let data = NSData(bytes: &bytes, length: bytes.count)
-        _seed = data.base64EncodedStringWithOptions(NSDataBase64EncodingOptions.init(rawValue: 0))
+        _seed = data.base64EncodedString(options: NSData.Base64EncodingOptions.init(rawValue: 0))
     }
     
     func canDecWidth() -> Bool {
@@ -407,7 +407,7 @@ class CustomLevel: NSObject, LevelProtocol {
     
     func incLeft() {
         for j in 0...(_height - 1) {
-            _grid[j].insert(.None, atIndex: 0)
+            _grid[j].insert(.None, at: 0)
         }
         changeOrigin(dx: 1)
         _width += 1
@@ -449,8 +449,8 @@ class CustomLevel: NSObject, LevelProtocol {
     }
     
     func incBottom() {
-        let row = [PieceType](count: _width, repeatedValue: .None)
-        _grid.insert(row, atIndex: 0)
+        let row = [PieceType](repeating: .None, count: _width)
+        _grid.insert(row, at: 0)
         changeOrigin(dy: 1)
         _height += 1
         updateLevel()
@@ -467,7 +467,7 @@ class CustomLevel: NSObject, LevelProtocol {
     }
     
     func incTop() {
-        let row = [PieceType](count: _width, repeatedValue: .None)
+        let row = [PieceType](repeating: .None, count: _width)
         _grid.append(row)
         _height += 1
         updateLevel()
@@ -492,11 +492,11 @@ class CustomLevel: NSObject, LevelProtocol {
         }
     }
     
-    func checkRemovedPiece(x x: Int, y: Int) {
+    func checkRemovedPiece(x: Int, y: Int) {
         let piece = getPiece(x: x, y: y)
     
         if piece == .Teleporter {
-            removeTeleporter((x: x, y: y))
+            removeTeleporter(point: (x: x, y: y))
         } else if x == _startX && y == _startY {
             _startX = -1
             _startY = -1
@@ -506,7 +506,7 @@ class CustomLevel: NSObject, LevelProtocol {
         }
     }
     
-    func changeOrigin(dx dx: Int = 0, dy: Int = 0) {
+    func changeOrigin(dx: Int = 0, dy: Int = 0) {
         for i in 0 ..< _teleporters.count {
             let p = _teleporters[i]
             if p == nil {
@@ -534,14 +534,14 @@ class CustomLevel: NSObject, LevelProtocol {
             return
         }
         
-        let t1 = _teleporters.removeAtIndex(id * 2)
+        let t1 = _teleporters.remove(at: id * 2)
         
         // Make sure there's another teleporter to remove
         if id * 2 >= _teleporters.count {
             return
         }
         
-        let t2 = _teleporters.removeAtIndex(id * 2)
+        let t2 = _teleporters.remove(at: id * 2)
         
         if t1!.x != point.x || t1!.y != point.y {
             setPiece(x: t1!.x, y: t1!.y, type: .None)

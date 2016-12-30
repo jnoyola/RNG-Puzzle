@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import GameKit
 
 class Level: NSObject, LevelProtocol {
 
@@ -15,6 +16,7 @@ class Level: NSObject, LevelProtocol {
     var _level = 1
     var _seed = UInt32(time(nil)) % 10000
     var _isRandom = true
+    var _rng: GKRandomSource! = nil
     
     var _width = 0
     var _height = 0
@@ -24,7 +26,7 @@ class Level: NSObject, LevelProtocol {
     var _teleporters: [Point] = []
     var _stops = Set<PointRecord>()
     
-    var _correct: [PointRecord!]? = nil
+    var _correct: [PointRecord]? = nil
     
     
     @inline(__always) func getCode() -> String {
@@ -35,31 +37,31 @@ class Level: NSObject, LevelProtocol {
         return "\(_seed)"
     }
     
-    @inline(__always) func getPiece(x x: Int, y: Int) -> PieceType {
+    @inline(__always) func getPiece(x: Int, y: Int) -> PieceType {
         return _grid[y * _width + x]
     }
     
-    @inline(__always) func setPiece(x x: Int, y: Int, type: PieceType) {
+    @inline(__always) func setPiece(x: Int, y: Int, type: PieceType) {
         if !type.contains(.Stop) && getPiece(x: x, y: y).contains(.Stop) {
             _stops.remove(PointRecord(x: x, y: y))
         }
         _grid[y * _width + x] = type
     }
     
-    @inline(__always) func addPiece(x x: Int, y: Int, type: PieceType) {
+    @inline(__always) func addPiece(x: Int, y: Int, type: PieceType) {
         var piece = getPiece(x: x, y: y)
         piece.insert(type)
         setPiece(x: x, y: y, type: piece)
     }
     
-    @inline(__always) func addStop(x x: Int, y: Int) {
+    @inline(__always) func addStop(x: Int, y: Int) {
         var piece = getPiece(x: x, y: y)
         piece.insert(.Stop)
         setPiece(x: x, y: y, type: piece)
         _stops.insert(PointRecord(x: x, y: y))
     }
     
-    @inline(__always) func addDirectedStop(x x: Int, y: Int, dir: Direction) {
+    @inline(__always) func addDirectedStop(x: Int, y: Int, dir: Direction) {
         var piece = getPiece(x: x, y: y)
         piece.insert(.Stop)
         setPiece(x: x, y: y, type: piece)
@@ -91,7 +93,7 @@ class Level: NSObject, LevelProtocol {
         return .Void
     }
     
-    func getTeleporterPair(x x: Int, y: Int) -> Point {
+    func getTeleporterPair(x: Int, y: Int) -> Point {
         for i in 0...(_teleporters.count - 1) {
             let p0 = _teleporters[i]
             if x == p0.x && y == p0.y {
@@ -117,13 +119,13 @@ class Level: NSObject, LevelProtocol {
     }
     
     func generate(debug: Bool) -> Bool {
-        srandom(getTrueSeed())
+        initRng()
 
         _width = Level.getWidthForLevel(_level)
         _height = _width
     
         let numPathPieces = getNumPathPieces()
-        _correct = [PointRecord!](count: numPathPieces + 1, repeatedValue: nil)
+        _correct = [PointRecord!](repeating: nil, count: numPathPieces + 1)
     
         startWithNumPathPieces(numPathPieces)
         
@@ -143,25 +145,35 @@ class Level: NSObject, LevelProtocol {
         // just with a different seed
         var trueSeed = _seed % 10000
         if (_level + 1) % 3 == 0 {
-            trueSeed = UINT32_MAX - _seed
+            trueSeed = UInt32.max - _seed
         }
         
+        // TODO: RETEST ALL LEVELS
         // Random bug causing infinite loop when creating dead ends
         if _level == 36 && trueSeed == 6190 {
-            trueSeed = 10000
+            // trueSeed = 10000
         }
         return trueSeed
+    }
+    
+    func initRng() {
+        let s = getTrueSeed()
+        let a = UInt8(s)
+        let b = UInt8(s >> 8)
+        let c = UInt8(s >> 16)
+        let d = UInt8(s >> 24)
+        _rng = GKARC4RandomSource(seed: Data(bytes:[a, b, c, d]))
     }
     
     func getNumPathPieces() -> Int {
         return 1 + (_level - 1) / 3
     }
     
-    func startWithNumPathPieces(num: Int) {
+    func startWithNumPathPieces(_ num: Int) {
         while true {
-            _grid = [PieceType](count: _width * _height, repeatedValue: .None)
-            _startX = random() % _width
-            _startY = random() % _height
+            _grid = [PieceType](repeating: .None, count: _width * _height)
+            _startX = _rng.nextInt(upperBound: _width)
+            _startY = _rng.nextInt(upperBound: _height)
             addStop(x: _startX, y: _startY)
             
             var dirs = PieceType.getNextDirections(.Still)
@@ -171,7 +183,7 @@ class Level: NSObject, LevelProtocol {
         }
     }
     
-    func nextWithNumPathPieces(num: Int, x: Int, y: Int, inout dirs: [Direction], isTruePath: Bool) -> Bool {
+    func nextWithNumPathPieces(_ num: Int, x: Int, y: Int, dirs: inout [Direction], isTruePath: Bool) -> Bool {
         if num == 0 && !isTruePath {
         
             // Finish projecting the dead end forward to make sure we didn't create a shortcut
@@ -188,7 +200,7 @@ class Level: NSObject, LevelProtocol {
                 
                 // Make sure a corner doesn't force the ball through wall
                 let nextPos = getAdjPosFrom(x: x, y: y, dir: dir)
-                let nextPiece = getPieceSafely(nextPos)
+                let nextPiece = getPieceSafely(point: nextPos)
                 if nextPiece.isWallFromDir(dir) {
                     return false
                 }
@@ -196,7 +208,7 @@ class Level: NSObject, LevelProtocol {
                 // Make sure a wall can't be placed right in front of this corner
                 let lastDir = getPiece(x: x, y: y).getNextDirections(getOppDir(dir))[0]
                 let lastPos = getAdjPosFrom(x: x, y: y, dir: lastDir)
-                let lastPiece = getPieceSafely(lastPos)
+                let lastPiece = getPieceSafely(point: lastPos)
                 if lastPiece == .None {
                     setPiece(x: lastPos.x, y: lastPos.y, type: .Used)
                 }
@@ -211,7 +223,7 @@ class Level: NSObject, LevelProtocol {
     
         while dirs.count > 0 {
             // Pick random direction from those remaining
-            let iDir = random() % dirs.count
+            let iDir = _rng.nextInt(upperBound: dirs.count)
             let dir = dirs[iDir]
             
             // Get offsets
@@ -224,7 +236,7 @@ class Level: NSObject, LevelProtocol {
                 var offsetIndices = [Int](0...(offsets.count - 1))
                 while offsetIndices.count > 0 {
                     // Pick random offset from those remaining
-                    let iOffsetIndex = random() % offsetIndices.count
+                    let iOffsetIndex = _rng.nextInt(upperBound: offsetIndices.count)
                     let iOffset = offsetIndices[iOffsetIndex]
                     let offset = offsets[iOffset]
             
@@ -237,7 +249,7 @@ class Level: NSObject, LevelProtocol {
                     // We can't use head recursion because the following pieces might
                     // depend on the placement of the current path and piece
                     for i in 0 ..< iOffset {
-                        setUsed(offsets[i])
+                        setUsed(point: offsets[i])
                     }
                 
                     // There are 4 options here:
@@ -252,7 +264,7 @@ class Level: NSObject, LevelProtocol {
                     //      We must bounce
                     
                     if num == 0 {
-                        if stopOutsideWallShortcuts(.Target, x: offset.x, y: offset.y, dir: dir) {
+                        if stopOutsideWallShortcuts(piece: .Target, x: offset.x, y: offset.y, dir: dir) {
                             setPiece(x: offset.x, y: offset.y, type: .Target)
                             return true
                         }
@@ -281,7 +293,7 @@ class Level: NSObject, LevelProtocol {
                                 // If we're placing a .Block, we have to check if the next space
                                 // is empty or if it already contains a wall
                                 nextPiecePos = getAdjPosFrom(x: offset.x, y: offset.y, dir: dir)
-                                let nextPiece = getPieceSafely(nextPiecePos)
+                                let nextPiece = getPieceSafely(point: nextPiecePos)
                                 if nextPiece == .None {
                                     // The next space is empty. We can place a block there.
                                     addStop(x: offset.x, y: offset.y)
@@ -290,7 +302,7 @@ class Level: NSObject, LevelProtocol {
                                 
                                     // Check if this placement created shortcuts connected by new
                                     // unplanned stops
-                                    if !stopOutsideWallShortcuts(piece, x: nextPiecePos.x, y: nextPiecePos.y, dir: dir) {
+                                    if !stopOutsideWallShortcuts(piece: piece, x: nextPiecePos.x, y: nextPiecePos.y, dir: dir) {
                                         alreadyFailed = true
                                     }
                                 } else if iOffset == offsets.count - 1 && nextPiece.isWallFromDir(dir) {
@@ -322,8 +334,8 @@ class Level: NSObject, LevelProtocol {
                                 // Make 10 attempts at finding a valid exit location
                                 // The exit point must be an empty space with at least one open adjacent space
                                 for _ in 0...9 {
-                                    let x = random() % _width
-                                    let y = random() % _height
+                                    let x = _rng.nextInt(upperBound: _width)
+                                    let y = _rng.nextInt(upperBound: _height)
                                     // Make sure we're not putting the exit at the same location as the entrance
                                     // We haven't marked the grid yet, so isValidTeleporterExit can't catch this
                                     if x == offset.x && y == offset.y {
@@ -343,7 +355,7 @@ class Level: NSObject, LevelProtocol {
                                         // Make sure we're not in the special case where the player can go through
                                         // the teleporter a different direction and stop on the exit, creating a
                                         // shortcut
-                                        if allowsTeleporterShortcuts(offset, exitX: x, exitY: y, dir: dir) {
+                                        if allowsTeleporterShortcuts(teleporter: offset, exitX: x, exitY: y, dir: dir) {
                                             alreadyFailed = true
                                         }
                                         break
@@ -358,7 +370,7 @@ class Level: NSObject, LevelProtocol {
                                 
                                 // Check if this placement would create shortcuts connected by new
                                 // unplanned stops
-                                if !stopOutsideWallShortcuts(piece, x: offset.x, y: offset.y, dir: dir) {
+                                if !stopOutsideWallShortcuts(piece: piece, x: offset.x, y: offset.y, dir: dir) {
                                     continue
                                 }
                                 
@@ -406,21 +418,21 @@ class Level: NSObject, LevelProtocol {
                     // This offset wasn't valid.
                     // Undo the path and piece placement, and remove the offset index.
                     for i in 0...iOffset {
-                        setUnused(offsets[i])
+                        setUnused(point: offsets[i])
                     }
-                    offsetIndices.removeAtIndex(iOffsetIndex)
+                    offsetIndices.remove(at: iOffsetIndex)
                 }
             }
             
             // This direction wasn't valid. Remove it.
-            dirs.removeAtIndex(iDir)
+            dirs.remove(at: iDir)
         }
     
         // No valid directions. Time to undo?
         return false
     }
     
-    func getOffsetsFrom(x x: Int, y: Int, dir: Direction) -> [Point] {
+    func getOffsetsFrom(x: Int, y: Int, dir: Direction) -> [Point] {
         var x = x
         var y = y
         var offsets = [Point]()
@@ -435,7 +447,7 @@ class Level: NSObject, LevelProtocol {
             
             // if type is .None, add it to array
             // if type is not .None or .Used, break
-            let type = getPieceSafely((x: x, y: y))
+            let type = getPieceSafely(point: (x: x, y: y))
             if type == .None {
                 if offsets.count > 0 && offsets[0].x == x && offsets[0].y == y {
                     break
@@ -452,14 +464,14 @@ class Level: NSObject, LevelProtocol {
         return offsets
     }
     
-    func getPiecesFromDir(dir: Direction) -> [PieceType] {
+    func getPiecesFromDir(_ dir: Direction) -> [PieceType] {
         
         // Half the time, only allow Blocks
-        if random() % 2 == 0 {
-            return [PieceType](count: 1, repeatedValue: .Block)
+        if _rng.nextInt(upperBound: 2) == 0 {
+            return [PieceType](repeating: .Block, count: 1)
         }
         
-        var pieces = [PieceType](count: 4, repeatedValue: .Block)
+        var pieces = [PieceType](repeating: .Block, count: 4)
         pieces[1] = .Teleporter
         switch dir {
             case .Left:
@@ -483,7 +495,7 @@ class Level: NSObject, LevelProtocol {
         var unplannedStops = [Point]()
         var dirs: [Direction]
         if piece.contains(.Block) || piece.contains(.Target) {
-            dirs = [Direction](count: 3, repeatedValue: .Still)
+            dirs = [Direction](repeating: .Still, count: 3)
             // Check the 3 directions not including the one we came from
             switch dir {
                 case .Right:
@@ -505,7 +517,7 @@ class Level: NSObject, LevelProtocol {
                 default: break
             }
         } else {
-            dirs = [Direction](count: 2, repeatedValue: .Still)
+            dirs = [Direction](repeating: .Still, count: 2)
             // Check the 2 directions extending from walls
             if piece.contains(.Corner1) {
                 dirs[0] = .Left
@@ -525,8 +537,8 @@ class Level: NSObject, LevelProtocol {
         for wallDir in dirs {
             let point = getAdjPosFrom(x: x, y: y, dir: wallDir)
             var lastPoint: Point? = nil
-            if getStopInLineWithPoint(point, dir: wallDir, lastPoint: &lastPoint).contains(.Stop) {
-                if piece.contains(.Target) || getPieceSafely(point).contains(.Teleporter) {
+            if getStopInLineWithPoint(point: point, dir: wallDir, lastPoint: &lastPoint).contains(.Stop) {
+                if piece.contains(.Target) || getPieceSafely(point: point).contains(.Teleporter) {
                     return false
                 } else {
                     // Now that we would be creating an unplanned stop here,
@@ -536,7 +548,7 @@ class Level: NSObject, LevelProtocol {
                     if additionalUnplannedStops == nil {
                         return false
                     }
-                    unplannedStops.appendContentsOf(additionalUnplannedStops!)
+                    unplannedStops.append(contentsOf: additionalUnplannedStops!)
                     
                     unplannedStops.append(point)
                 }
@@ -552,7 +564,7 @@ class Level: NSObject, LevelProtocol {
         return true
     }
     
-    func getStopInLineWithPoint(point: Point, dir: Direction, inout lastPoint: Point?) -> PieceType {
+    func getStopInLineWithPoint(point: Point, dir: Direction, lastPoint: inout Point?) -> PieceType {
         var point = point
         if lastPoint != nil {
             lastPoint = (x: -1, y: -1)
@@ -560,7 +572,7 @@ class Level: NSObject, LevelProtocol {
         
         var usedTeleporters = Set<PointRecord>()
         while true {
-            let type = getPieceSafely(point)
+            let type = getPieceSafely(point: point)
             
             if type.contains(.Teleporter) {
             
@@ -599,7 +611,7 @@ class Level: NSObject, LevelProtocol {
         }
     }
     
-    func getUnplannedStopsForPlannedStopAt(x x: Int, y: Int, dirs: [Direction], visited: Set<PointRecord>) -> [Point]? {
+    func getUnplannedStopsForPlannedStopAt(x: Int, y: Int, dirs: [Direction], visited: Set<PointRecord>) -> [Point]? {
         var visited = visited
     
         // Recursively get unplanned stops for the intended planned stop placement
@@ -616,8 +628,8 @@ class Level: NSObject, LevelProtocol {
         for dir in dirs {
             let point = getAdjPosFrom(x: x, y: y, dir: dir)
             var lastPoint: Point? = (x: -1, y: -1)
-            let extendedSpaceType = getStopInLineWithPoint(point, dir: dir, lastPoint: &lastPoint)
-            let lastPiece = getPieceSafely(lastPoint!)
+            let extendedSpaceType = getStopInLineWithPoint(point: point, dir: dir, lastPoint: &lastPoint)
+            let lastPiece = getPieceSafely(point: lastPoint!)
             if extendedSpaceType.contains(.Stop) ||
                extendedSpaceType.contains(.Target) ||
                (extendedSpaceType != .Void && lastPiece.contains(.Used)) ||
@@ -632,7 +644,7 @@ class Level: NSObject, LevelProtocol {
                     if additionalCoords == nil {
                         return nil
                     } else {
-                        coordsForRetroStops.appendContentsOf(additionalCoords!)
+                        coordsForRetroStops.append(contentsOf: additionalCoords!)
                     }
                     coordsForRetroStops.append(lastPoint!)
                 }
@@ -642,27 +654,27 @@ class Level: NSObject, LevelProtocol {
         return coordsForRetroStops
     }
 
-    func isValidTeleporterExitAt(x x: Int, y: Int) -> Bool {
+    func isValidTeleporterExitAt(x: Int, y: Int) -> Bool {
         if getPiece(x: x, y: y) != .None {
             return false
         }
         
-        var piece = getPieceSafely((x: x - 1, y: y))
+        var piece = getPieceSafely(point: (x: x - 1, y: y))
         if piece.contains(.Used) || piece == .None {
             return true
         }
         
-        piece = getPieceSafely((x: x + 1, y: y))
+        piece = getPieceSafely(point: (x: x + 1, y: y))
         if piece.contains(.Used) || piece == .None {
             return true
         }
         
-        piece = getPieceSafely((x: x, y: y - 1))
+        piece = getPieceSafely(point: (x: x, y: y - 1))
         if piece.contains(.Used) || piece == .None {
             return true
         }
         
-        piece = getPieceSafely((x: x, y: y + 1))
+        piece = getPieceSafely(point: (x: x, y: y + 1))
         if piece.contains(.Used) || piece == .None {
             return true
         }
@@ -671,12 +683,12 @@ class Level: NSObject, LevelProtocol {
     }
     
     func allowsTeleporterShortcuts(teleporter: Point, exitX: Int, exitY: Int, dir: Direction) -> Bool {
-        let unplannedStops1 = getTeleporterUnplannedStops(teleporter.x, inY: teleporter.y, outX: exitX, outY: exitY, dir: dir)
+        let unplannedStops1 = getTeleporterUnplannedStops(inX: teleporter.x, inY: teleporter.y, outX: exitX, outY: exitY, dir: dir)
         if unplannedStops1 == nil {
             return true
         }
 
-        let unplannedStops2 = getTeleporterUnplannedStops(exitX, inY: exitY, outX: teleporter.x, outY: teleporter.y, dir: getOppDir(dir))
+        let unplannedStops2 = getTeleporterUnplannedStops(inX: exitX, inY: exitY, outX: teleporter.x, outY: teleporter.y, dir: getOppDir(dir))
         if unplannedStops2 == nil {
             return true
         }
@@ -691,7 +703,7 @@ class Level: NSObject, LevelProtocol {
     }
     
     func getTeleporterUnplannedStops(inX: Int, inY: Int, outX: Int, outY: Int, dir: Direction) -> [Point]? {
-        var dirs = [Direction](count: 3, repeatedValue: .Still)
+        var dirs = [Direction](repeating: .Still, count: 3)
         // Check the 3 directions not including the one we came from
         switch dir {
             case .Right:
@@ -718,21 +730,21 @@ class Level: NSObject, LevelProtocol {
         for inDir in dirs {
             let inPos = getAdjPosFrom(x: inX, y: inY, dir: inDir)
             var lastPoint: Point? = nil
-            if getStopInLineWithPoint(inPos, dir: inDir, lastPoint: &lastPoint).contains(.Stop) {
+            if getStopInLineWithPoint(point: inPos, dir: inDir, lastPoint: &lastPoint).contains(.Stop) {
                 let outDir = getOppDir(inDir)
-                let outDirs = [Direction](count: 1, repeatedValue: outDir)
+                let outDirs = [Direction](repeating: outDir, count: 1)
                 let additionalUnplannedStops = getUnplannedStopsForPlannedStopAt(x: outX, y: outY, dirs: outDirs, visited: Set<PointRecord>())
                 if additionalUnplannedStops == nil {
                     return nil
                 } else {
-                    unplannedStops.appendContentsOf(additionalUnplannedStops!)
+                    unplannedStops.append(contentsOf: additionalUnplannedStops!)
                 }
             }
         }
         return unplannedStops
     }
     
-    func getOppDir(dir: Direction) -> Direction {
+    func getOppDir(_ dir: Direction) -> Direction {
         switch dir {
         case .Up: return .Down
         case .Down: return .Up
@@ -753,12 +765,12 @@ class Level: NSObject, LevelProtocol {
             if stop!.dir == .Still {
                 dirs = PieceType.getNextDirections(.Still)
             } else {
-                dirs = [Direction](count: 1, repeatedValue: stop!.dir)
+                dirs = [Direction](repeating: stop!.dir, count: 1)
             }
             for dir in dirs {
                 let point = getAdjPosFrom(x: stop!.x, y: stop!.y, dir: dir)
-                if getPieceSafely(point) == .None {
-                    if createDeadEnd(point, dir: dir) {
+                if getPieceSafely(point: point) == .None {
+                    if createDeadEnd(point: point, dir: dir) {
                         numDeadEnds += 1
                         break
                     }
@@ -768,7 +780,7 @@ class Level: NSObject, LevelProtocol {
     }
     
     func createDeadEnd(point: Point, dir: Direction) -> Bool {
-        var dirs = [Direction](count: 1, repeatedValue: dir)
+        var dirs = [Direction](repeating: dir, count: 1)
         if nextWithNumPathPieces(1, x: point.x, y: point.y, dirs: &dirs, isTruePath: false) {
             addPiece(x: point.x, y: point.y, type: .Used)
             return true
@@ -776,11 +788,11 @@ class Level: NSObject, LevelProtocol {
         return false
     }
     
-    func addUselessBlocks(num: Int) {
+    func addUselessBlocks(_ num: Int) {
         for x in 0..._width-1 {
             for y in 0..._height-1 {
             
-                if getPiece(x: x, y: y) != .None || random() % 8 == 0 {
+                if getPiece(x: x, y: y) != .None || _rng.nextInt(upperBound: 8) == 0 {
                     continue
                 }
                 
@@ -788,7 +800,7 @@ class Level: NSObject, LevelProtocol {
                 let dirs = PieceType.getNextDirections(.Still)
                 var lastPoint: Point? = nil
                 for dir in dirs {
-                    if getStopInLineWithPoint((x: x, y: y), dir: dir, lastPoint: &lastPoint).contains(.Stop) {
+                    if getStopInLineWithPoint(point: (x: x, y: y), dir: dir, lastPoint: &lastPoint).contains(.Stop) {
                         success = false
                         break
                     }
@@ -808,7 +820,7 @@ class Level: NSObject, LevelProtocol {
     
         _width = 8
         _height = 3
-        _grid = [PieceType](count: _width * _height, repeatedValue: .None)
+        _grid = [PieceType](repeating: .None, count: _width * _height)
         
         switch (instruction) {
         case 1:
@@ -906,7 +918,7 @@ class Level: NSObject, LevelProtocol {
     func generateTestLevel() {
         _width = 8
         _height = 8
-        _grid = [PieceType](count: _width * _height, repeatedValue: .None)
+        _grid = [PieceType](repeating: .None, count: _width * _height)
     
         _startX = 0
         _startY = 0

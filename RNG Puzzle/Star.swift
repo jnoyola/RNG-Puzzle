@@ -32,7 +32,7 @@ class Star: SKNode {
         case .Filled: _star = SKSpriteNode(imageNamed: "star_emblem")
         case .Empty: _star = SKSpriteNode(imageNamed: "star_missing_emblem")
         }
-        _star.position = CGPointZero
+        _star.position = CGPoint.zero
         addChild(_star)
     }
     
@@ -40,7 +40,7 @@ class Star: SKNode {
         super.init(coder: aDecoder)
     }
     
-    func setSize(size: CGFloat) {
+    func setSize(_ size: CGFloat) {
         _size = size
         _star.size = CGSize(width: _size, height: _size)
     }
@@ -61,30 +61,30 @@ class Star: SKNode {
             shard.zPosition = 10000
             shard.zRotation = angle
             if _scene != nil {
-                shard.position = _scene!.convertPoint(self.position, fromNode: self.parent!)
+                shard.position = _scene!.convert(self.position, from: self.parent!)
                 _scene!.addChild(shard)
             } else {
-                shard.position = CGPointZero
+                shard.position = CGPoint.zero
                 addChild(shard)
             }
             
             // Note that angle 0 points up
             let dx = -sin(angle) * _size * _explosionScale
             let dy = cos(angle) * _size * _explosionScale
-            let actionExplode = SKAction.moveByX(dx, y: dy, duration: 0.04)
+            let actionExplode = SKAction.moveBy(x: dx, y: dy, duration: 0.04)
             
-            let actionWait = SKAction.waitForDuration(0.25)
+            let actionWait = SKAction.wait(forDuration: 0.25)
             
-            let duration = 0.5 + Double(rand() % 5) * 0.05
+            let duration = 0.5 + Double(arc4random_uniform(5)) * 0.05
         
             let newAngle = atan2(dest.y - shard.position.y, dest.x - shard.position.x) + CGFloat(M_PI) / 2
-            let actionRotate = SKAction.rotateToAngle(newAngle, duration: duration, shortestUnitArc: true)
-            actionRotate.timingMode = .EaseIn
+            let actionRotate = SKAction.rotate(toAngle: newAngle, duration: duration, shortestUnitArc: true)
+            actionRotate.timingMode = .easeIn
             
-            let actionTarget = SKAction.moveTo(dest, duration: duration)
-            actionTarget.timingMode = .EaseIn
+            let actionTarget = SKAction.move(to: dest, duration: duration)
+            actionTarget.timingMode = .easeIn
             
-            shard.runAction(SKAction.sequence([actionExplode, actionWait, SKAction.group([actionRotate, actionTarget])]), completion: {
+            shard.run(SKAction.sequence([actionExplode, actionWait, SKAction.group([actionRotate, actionTarget])]), completion: {
                 shard.removeFromParent()
                 if i == 0 {
                     completion?()
@@ -94,7 +94,7 @@ class Star: SKNode {
     }
     
     func fade() {
-        _star.color = SKColor.blackColor()
+        _star.color = SKColor.black
         _star.colorBlendFactor = 0.5
     }
 }

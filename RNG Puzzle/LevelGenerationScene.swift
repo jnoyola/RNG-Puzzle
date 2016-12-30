@@ -22,14 +22,14 @@ class LevelGenerationScene: SKScene {
         super.init(coder: aDecoder)
     }
     
-    override func didMoveToView(view: SKView) {
-        backgroundColor = SKColor.blackColor()
+    override func didMove(to view: SKView) {
+        backgroundColor = SKColor.black
         
         refreshLayout()
         
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+        DispatchQueue.global(qos: .default).async {
             NSLog("Generating: \(self._level.getCode())")
-            self._level.generate(false)
+            let _ = self._level.generate(debug: false)
             usleep(500000)
         
 //             DEBUG CODE
@@ -46,7 +46,7 @@ class LevelGenerationScene: SKScene {
 //                }
 //            }
             
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 let playScene = PlayScene(size: self.size, level: self._level)
                 playScene.scaleMode = self.scaleMode
                 AppDelegate.pushViewController(SKViewController(scene: playScene), animated: true, offset: 0)
@@ -54,12 +54,12 @@ class LevelGenerationScene: SKScene {
         }
     }
     
-    func addLabel(text: String, size: CGFloat, color: SKColor, y: CGFloat) {
+    func addLabel(_ text: String, size: CGFloat, color: SKColor, y: CGFloat) {
         let label = SKLabelNode(fontNamed: Constants.FONT)
         label.text = text
         label.fontSize = size
         label.fontColor = color
-        label.position = CGPointMake(self.size.width * 0.5, self.size.height * y)
+        label.position = CGPoint(x: self.size.width * 0.5, y: self.size.height * y)
         self.addChild(label)
     }
     
@@ -78,12 +78,12 @@ class LevelGenerationScene: SKScene {
         addLabel("Generating...", size: s * Constants.TITLE_SCALE, color: Constants.TITLE_COLOR, y: 0.85)
         
         // Level
-        let levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * Constants.TEXT_SCALE, color: SKColor.whiteColor())
-        levelLabel.position = CGPointMake(w * 0.5, h * 0.67)
+        let levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * Constants.TEXT_SCALE, color: SKColor.white)
+        levelLabel.position = CGPoint(x: w * 0.5, y: h * 0.67)
         addChild(levelLabel)
     }
     
-    override func didChangeSize(oldSize: CGSize) {
+    override func didChangeSize(_ oldSize: CGSize) {
         refreshLayout()
     }
 }

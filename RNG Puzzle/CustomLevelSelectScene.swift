@@ -10,8 +10,8 @@ import SpriteKit
 
 class CustomLevelSelectScene: LevelSelectScene {
 
-    override func didMoveToView(view: SKView) {
-        super.didMoveToView(view)
+    override func didMove(to view: SKView) {
+        super.didMove(to: view)
         
         _titleLabel.text = "Create or Load"
         
@@ -33,7 +33,7 @@ class CustomLevelSelectScene: LevelSelectScene {
     }
     
     override func play() {
-        let level = LevelParser.parse(_textInput!.text!, allowCustom: true)
+        let level = LevelParser.parse(code: _textInput!.text!, allowCustom: true)
         if (level != nil) {
             AppDelegate.pushViewController(SKViewController(scene: CreationScene(size: size, level: level!)), animated: true, offset: 0)
         }

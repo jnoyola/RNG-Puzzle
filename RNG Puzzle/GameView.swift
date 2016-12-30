@@ -64,7 +64,7 @@ class GameView: SKNode {
         super.init(coder: aDecoder)
     }
     
-    func drawLevel(level: LevelProtocol) {
+    func drawLevel(_ level: LevelProtocol) {
     
         // Draw Pieces
         drawPieces(level)
@@ -80,7 +80,7 @@ class GameView: SKNode {
         self.addChild(bg)
     }
     
-    func drawPieces(level: LevelProtocol) {
+    func drawPieces(_ level: LevelProtocol) {
         let sprites = PieceSprites()
         
         for i in 0...(level._width-1) {
@@ -100,11 +100,11 @@ class GameView: SKNode {
                     node = SKSpriteNode(texture: sprites.corner4())
                 } else if piece.contains(.Teleporter) {
                     node = SKSpriteNode(texture: sprites.teleporter())
-                    node.runAction(SKAction.repeatActionForever(SKAction.rotateByAngle(CGFloat(M_PI), duration: 0.5)))
+                    node.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(M_PI), duration: 0.5)))
                     z = 1
                 } else if piece.contains(.Target) {
                     node = SKSpriteNode(texture: sprites.target())
-                    node.runAction(SKAction.repeatActionForever(SKAction.rotateByAngle(CGFloat(M_PI), duration: 0.5)))
+                    node.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(M_PI), duration: 0.5)))
                     z = 1
                 } else {
                     continue
@@ -128,17 +128,17 @@ class GameView: SKNode {
     
         var x = _level._startX
         var y = _level._startY
-        let path = CGPathCreateMutable()
+        let path = CGMutablePath()
         //var usedTeleporters = Set<PointRecord>()
-        CGPathMoveToPoint(path, nil, CGFloat(x) + 0.5, CGFloat(y) + 0.5)
+        path.move(to: CGPoint(x: CGFloat(x) + 0.5, y: CGFloat(y) + 0.5))
         
         var i = 0
         var correct = _level._correct![i]
-        var piece = _level.getPieceSafely((x: x, y: y))
+        var piece = _level.getPieceSafely(point: (x: x, y: y))
         while i < num {
         
             // Draw path
-            CGPathAddLineToPoint(path, nil, CGFloat(x) + 0.5, CGFloat(y) + 0.5)
+            path.addLine(to: CGPoint(x: CGFloat(x) + 0.5, y: CGFloat(y) + 0.5))
             
             if x == correct.x && y == correct.y {
                 i += 1
@@ -152,7 +152,7 @@ class GameView: SKNode {
                 let dst = _level.getTeleporterPair(x: x, y: y)
                 x = dst.x
                 y = dst.y
-                CGPathMoveToPoint(path, nil, CGFloat(x) + 0.5, CGFloat(y) + 0.5)
+                path.move(to: CGPoint(x: CGFloat(x) + 0.5, y: CGFloat(y) + 0.5))
             } 
             piece = getNextPiece(x: x, y: y, dir: correct.dir)
             
@@ -165,9 +165,9 @@ class GameView: SKNode {
             }
         }
         _hintPath = SKShapeNode(path: path)
-        _hintPath!.strokeColor = UIColor.yellowColor()
+        _hintPath!.strokeColor = UIColor.yellow
         _hintPath!.lineWidth = 0.25
-        _hintPath!.antialiased = false
+        _hintPath!.isAntialiased = false
         _hintPath!.zPosition = 0
         self.addChild(_hintPath!)
     }
@@ -184,17 +184,17 @@ class GameView: SKNode {
         setBaseScale(scale)
     }
     
-    func setBaseScale(scale: CGFloat) {
+    func setBaseScale(_ scale: CGFloat) {
         _baseScale = scale
         _scale = 1.0
         super.setScale(scale)
     }
     
-    func scale(scale: CGFloat) {
+    func scale(_ scale: CGFloat) {
         setScale(_scale * scale)
     }
         
-    override func setScale(scale: CGFloat) {
+    override func setScale(_ scale: CGFloat) {
         _scale = scale
         
         if !(_parent is InstructionsScene) && !(_parent is LevelSelectScene) {
@@ -231,10 +231,10 @@ class GameView: SKNode {
     
     // -----------------------------------------------------------------------
     
-    func resetBall(instantly instantly: Bool = false, shouldKill: Bool = false, shouldCharge: Bool = false) {
+    func resetBall(instantly: Bool = false, shouldKill: Bool = false, shouldCharge: Bool = false) {
         if shouldKill {
-            let path = NSBundle.mainBundle().pathForResource("Explosion", ofType: "sks")
-            let particle = NSKeyedUnarchiver.unarchiveObjectWithFile(path!) as! SKEmitterNode
+            let path = Bundle.main.path(forResource: "Explosion", ofType: "sks")
+            let particle = NSKeyedUnarchiver.unarchiveObject(withFile: path!) as! SKEmitterNode
             particle.position = _ball.position
             particle.zPosition = 15
             particle.setScale(0.1)
@@ -248,7 +248,7 @@ class GameView: SKNode {
             }
         }
     
-        _ball.reset(true)
+        _ball.reset(hard: true)
         stop()
         _ballX = _level._startX
         _ballY = _level._startY
@@ -256,7 +256,7 @@ class GameView: SKNode {
         _ball.position = CGPoint(x: CGFloat(_ballX) + 0.5, y: CGFloat(_ballY) + 0.5)
         _ball.zRotation = 0
         
-        resetView(instantly)
+        resetView(instantly: instantly)
     }
     
     func resetView(instantly: Bool = false, alwaysCenter: Bool = false) {
@@ -281,8 +281,8 @@ class GameView: SKNode {
             let startScale = _scale
             let duration: Double = 0.2
             
-            runAction(SKAction.moveTo(CGPoint(x: _origX, y: _origY), duration: duration))
-            runAction(SKAction.customActionWithDuration(duration, actionBlock:
+            run(SKAction.move(to: CGPoint(x: _origX, y: _origY), duration: duration))
+            run(SKAction.customAction(withDuration: duration, actionBlock:
                 { (node: SKNode, elapsedTime: CGFloat) -> Void in
                     let scale = elapsedTime / CGFloat(duration) * (1 - startScale) + startScale
                     self.setScale(scale)
@@ -291,14 +291,14 @@ class GameView: SKNode {
         }
     }
     
-    func attemptMove(dir: Direction, swipe: CGPoint) {
+    func attemptMove(_ dir: Direction, swipe: CGPoint) {
         // Can't redirect ball while moving
         if _dir != .Still {
             return
         }
         
         // Can't move through walls
-        if cannotMove(updateNextPiece(dir), dir: dir) {
+        if cannotMove(piece: updateNextPiece(dir: dir), dir: dir) {
             return
         }
         
@@ -328,7 +328,7 @@ class GameView: SKNode {
         move(dir)
     }
     
-    func move(dir: Direction) {
+    func move(_ dir: Direction) {
         _ball.stopIdleTimer()
     
         _dir = dir
@@ -344,8 +344,8 @@ class GameView: SKNode {
         _ballX += x
         _ballY += y
         _ball.reset()
-        _ball.runAction(SKAction.rotateByAngle(_spin * _ballSpinSpeed, duration: _ballSpeed))
-        _ball.runAction(SKAction.moveByX(CGFloat(x), y: CGFloat(y), duration: _ballSpeed), completion: doneMoving)
+        _ball.run(SKAction.rotate(byAngle: _spin * _ballSpinSpeed, duration: _ballSpeed))
+        _ball.run(SKAction.moveBy(x: CGFloat(x), y: CGFloat(y), duration: _ballSpeed), completion: doneMoving)
     }
     
     func doneMoving() {
@@ -368,11 +368,11 @@ class GameView: SKNode {
             if _dir == .Still {
                 return
             }
-            if cannotMove(updateNextPiece(_dir), dir: _dir) {
-                stop(true)
+            if cannotMove(piece: updateNextPiece(dir: _dir), dir: _dir) {
+                stop(animated: true)
             } else {
                 move(_dir)
-                updateNextPiece(x: _ballX, y: _ballY)
+                let _ = updateNextPiece(x: _ballX, y: _ballY)
             }
             return
         } else if _nextPiece.contains(.Corner1) {
@@ -383,7 +383,7 @@ class GameView: SKNode {
                 _spin = -1
                 move(.Right)
             }
-            updateNextPiece(x: _ballX, y: _ballY)
+            let _ = updateNextPiece(x: _ballX, y: _ballY)
             return
         } else if _nextPiece.contains(.Corner2) {
             if _dir == .Down {
@@ -393,7 +393,7 @@ class GameView: SKNode {
                 _spin = -1
                 move(.Up)
             }
-            updateNextPiece(x: _ballX, y: _ballY)
+            let _ = updateNextPiece(x: _ballX, y: _ballY)
             return
         } else if _nextPiece.contains(.Corner3) {
             if _dir == .Right {
@@ -403,7 +403,7 @@ class GameView: SKNode {
                 _spin = -1
                 move(.Left)
             }
-            updateNextPiece(x: _ballX, y: _ballY)
+            let _ = updateNextPiece(x: _ballX, y: _ballY)
             return
         } else if _nextPiece.contains(.Corner4) {
             if _dir == .Up {
@@ -413,12 +413,12 @@ class GameView: SKNode {
                 _spin = -1
                 move(.Down)
             }
-            updateNextPiece(x: _ballX, y: _ballY)
+            let _ = updateNextPiece(x: _ballX, y: _ballY)
             return
         }
         
-        if cannotMove(updateNextPiece(_dir), dir: _dir) {
-            stop(true)
+        if cannotMove(piece: updateNextPiece(dir: _dir), dir: _dir) {
+            stop(animated: true)
             return
         }
         
@@ -436,11 +436,11 @@ class GameView: SKNode {
         return false
     }
     
-    func getNextPiece(x x: Int, y: Int) -> PieceType {
-        return _level.getPieceSafely((x: x, y: y))
+    func getNextPiece(x: Int, y: Int) -> PieceType {
+        return _level.getPieceSafely(point: (x: x, y: y))
     }
     
-    func getNextPiece(x x: Int, y: Int, dir: Direction) -> PieceType {
+    func getNextPiece(x: Int, y: Int, dir: Direction) -> PieceType {
         switch dir {
         case .Right: return getNextPiece(x: x + 1, y: y)
         case .Up:    return getNextPiece(x: x, y: y + 1)
@@ -450,7 +450,7 @@ class GameView: SKNode {
         }
     }
     
-    func updateNextPiece(x x: Int, y: Int) -> PieceType {
+    func updateNextPiece(x: Int, y: Int) -> PieceType {
         _nextPiece = getNextPiece(x: x, y: y)
         return _nextPiece
     }
@@ -481,8 +481,8 @@ class GameView: SKNode {
     }
     
     func win() {
-        _ball.runAction(SKAction.rotateByAngle(_spin * _ballSpinSpeed, duration: _winDuration))
-        _ball.runAction(SKAction.scaleTo(0.01, duration: _winDuration), completion: { () -> Void in
+        _ball.run(SKAction.rotate(byAngle: _spin * _ballSpinSpeed, duration: _winDuration))
+        _ball.run(SKAction.scale(to: 0.01, duration: _winDuration), completion: { () -> Void in
             if (self._winCallback != nil) {
                 (self._winCallback!)()
             }
@@ -498,7 +498,7 @@ class GameView: SKNode {
     
     func hint() {
         _correctIdx += 3
-        drawPath(_correctIdx)
+        drawPath(num: _correctIdx)
     }
     
     func changeSize() {

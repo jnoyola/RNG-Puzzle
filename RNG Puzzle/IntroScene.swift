@@ -33,42 +33,42 @@ class IntroScene: SKScene, GKGameCenterControllerDelegate, Refreshable {
     var _maxLevel = 1
     
     deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(_foregroundNotification)
+        NotificationCenter.default.removeObserver(_foregroundNotification)
     }
 
-    override func didMoveToView(view: SKView) {
+    override func didMove(to view: SKView) {
         removeAllChildren()
-        backgroundColor = SKColor.blackColor()
+        backgroundColor = SKColor.black
         
         // Title
         _titleLabel = addLabel("Astro Maze", color: Constants.TITLE_COLOR)
         
         // Play
         _portalSprite = SKSpriteNode(texture: PieceSprites().target())
-        _portalSprite.runAction(SKAction.repeatActionForever(SKAction.rotateByAngle(CGFloat(M_PI), duration: 0.5)))
+        _portalSprite.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(M_PI), duration: 0.5)))
         _portalSprite.zPosition = -1
         addChild(_portalSprite)
-        _playLabel = addLabel("Play", color: SKColor.whiteColor())
+        _playLabel = addLabel("Play", color: SKColor.white)
         
         // My Puzzles
         _myLevelsIcon = SKSpriteNode(imageNamed: "icon_my_puzzles")
         addChild(_myLevelsIcon)
-        _myLevelsLabel = addLabel("Create", color: SKColor.whiteColor())
+        _myLevelsLabel = addLabel("Create", color: SKColor.white)
         
         // Items
         _itemsIcon = SKSpriteNode(imageNamed: "icon_items")
         addChild(_itemsIcon)
-        _itemsLabel = addLabel("Items", color: SKColor.whiteColor())
+        _itemsLabel = addLabel("Items", color: SKColor.white)
         
         // Help
         _instructionsIcon = SKSpriteNode(imageNamed: "icon_help")
         addChild(_instructionsIcon)
-        _instructionsLabel = addLabel("Help", color: SKColor.whiteColor())
+        _instructionsLabel = addLabel("Help", color: SKColor.white)
         
         // Scores
         _leaderboardIcon = SKSpriteNode(imageNamed: "icon_scores")
         addChild(_leaderboardIcon)
-        _leaderboardLabel = addLabel("Scores", color: SKColor.whiteColor())
+        _leaderboardLabel = addLabel("Scores", color: SKColor.white)
 
         // Social
         _muteShareDisplay = MuteShareDisplay(shareType: .App)
@@ -98,15 +98,15 @@ class IntroScene: SKScene, GKGameCenterControllerDelegate, Refreshable {
 //    }
     
     func createStars() {
-        let path = NSBundle.mainBundle().pathForResource("StarBackground", ofType: "sks")
-        _starEmitter = NSKeyedUnarchiver.unarchiveObjectWithFile(path!) as! SKEmitterNode
+        let path = Bundle.main.path(forResource: "StarBackground", ofType: "sks")
+        _starEmitter = NSKeyedUnarchiver.unarchiveObject(withFile: path!) as! SKEmitterNode
         _starEmitter.targetNode = self
         _starEmitter.zPosition = -10
         
         refreshStars()
         self.addChild(_starEmitter)
         
-        _foregroundNotification = NSNotificationCenter.defaultCenter().addObserverForName(UIApplicationDidEnterBackgroundNotification, object: nil, queue: nil, usingBlock: { Void in self._starEmitter.resetSimulation() })
+        _foregroundNotification = NotificationCenter.default.addObserver(forName: NSNotification.Name.UIApplicationDidEnterBackground, object: nil, queue: nil, using: { Void in self._starEmitter.resetSimulation() })
     }
     
     func refreshStars() {
@@ -124,7 +124,7 @@ class IntroScene: SKScene, GKGameCenterControllerDelegate, Refreshable {
         refreshStars()
     }
     
-    func addLabel(text: String, color: SKColor) -> SKLabelNode {
+    func addLabel(_ text: String, color: SKColor) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: Constants.FONT)
         label.text = text
         label.fontColor = color
@@ -132,9 +132,9 @@ class IntroScene: SKScene, GKGameCenterControllerDelegate, Refreshable {
         return label
     }
     
-    override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         let touch = touches.first!
-        let p = touch.locationInNode(self)
+        let p = touch.location(in: self)
         
         let distToPlay = pow(p.x - _portalSprite.position.x, 2) + pow(p.y - _portalSprite.position.y, 2)
         
@@ -156,7 +156,7 @@ class IntroScene: SKScene, GKGameCenterControllerDelegate, Refreshable {
         }
     }
     
-    func isPointInBounds(p: CGPoint, node: SKNode) -> Bool {
+    func isPointInBounds(_ p: CGPoint, node: SKNode) -> Bool {
         let w = size.width
         let h = size.height
         let s = min(w, h)
@@ -179,8 +179,8 @@ class IntroScene: SKScene, GKGameCenterControllerDelegate, Refreshable {
 //        AlertManager.defaultManager().getTopViewController().presentViewController(gcViewController, animated: true, completion: nil)
     }
     
-    func gameCenterViewControllerDidFinish(gameCenterViewController: GKGameCenterViewController) {
-        gameCenterViewController.dismissViewControllerAnimated(true, completion: nil)
+    func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
+        gameCenterViewController.dismiss(animated: true, completion: nil)
     }
     
     func refreshLayout() {
@@ -230,13 +230,13 @@ class IntroScene: SKScene, GKGameCenterControllerDelegate, Refreshable {
         _myLevelsLabel.fontSize = labelSize
         _myLevelsLabel.position = CGPoint(x: w * 0.83, y: labelY)
 
-        _muteShareDisplay.position = CGPointZero
-        _muteShareDisplay.refreshLayout(size)
+        _muteShareDisplay.position = CGPoint.zero
+        _muteShareDisplay.refreshLayout(size: size)
         
         refreshStars()
     }
     
-    override func didChangeSize(oldSize: CGSize) {
+    override func didChangeSize(_ oldSize: CGSize) {
         refreshLayout()
     }
 }

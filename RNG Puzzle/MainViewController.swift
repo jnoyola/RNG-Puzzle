@@ -16,7 +16,7 @@ class MainViewController: UIViewController, Refreshable {
     var _scene: SKScene! = nil
 
     override func loadView() {
-        view = SKView(frame: UIScreen.mainScreen().bounds)
+        view = SKView(frame: UIScreen.main.bounds)
     }
     
     override func viewDidLoad() {
@@ -25,7 +25,7 @@ class MainViewController: UIViewController, Refreshable {
         let skView = view as! SKView
         _scene = IntroScene(size: view.bounds.size)
         skView.ignoresSiblingOrder = true
-        _scene.scaleMode = .ResizeFill
+        _scene.scaleMode = .resizeFill
         skView.presentScene(_scene)
     }
     
@@ -33,25 +33,25 @@ class MainViewController: UIViewController, Refreshable {
         (_scene as? Refreshable)?.refresh()
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
 //        navigationController!.setToolbarHidden(true, animated: true)
         navigationController!.setNavigationBarHidden(true, animated: true)
     }
 
-    override func shouldAutorotate() -> Bool {
+    override var shouldAutorotate: Bool {
         return true
     }
 
-    override func supportedInterfaceOrientations() -> UIInterfaceOrientationMask {
-        return .AllButUpsideDown
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .allButUpsideDown
+    }
+
+    override var prefersStatusBarHidden: Bool {
+        return true
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Release any cached data, images, etc that aren't in use.
-    }
-
-    override func prefersStatusBarHidden() -> Bool {
-        return true
     }
 }

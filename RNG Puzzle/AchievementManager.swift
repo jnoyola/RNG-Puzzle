@@ -42,12 +42,12 @@ class AchievementManager: NSObject {
         case Twitter
     }
     
-    static func displayAchievements(achievements: [GKAchievement], scene: SKScene) -> [AchievementPopup] {
+    static func displayAchievements(_ achievements: [GKAchievement], scene: SKScene) -> [AchievementPopup] {
         var popups = [AchievementPopup]()
         
         // Insert in reverse order so the bottom popup (first in loop) gets the background
         var z: CGFloat = 1000
-        for achievement in achievements.reverse() {
+        for achievement in achievements.reversed() {
             if achievement.percentComplete == 100 {
                 let details = nameToDesc[achievement.identifier!]
                 let popup = AchievementPopup(name: details!.name, description: details!.description, image: achievement.identifier!, addBackground: z == 1000, state: .Open)
@@ -55,7 +55,7 @@ class AchievementManager: NSObject {
                 
                 let w = scene.size.width
                 let h = scene.size.height
-                popup.refreshLayout(CGSize(width: w, height: h))
+                popup.refreshLayout(size: CGSize(width: w, height: h))
                 popup.zPosition = z
                 scene.addChild(popup)
                 
@@ -63,10 +63,10 @@ class AchievementManager: NSObject {
             }
         }
         
-        return popups.reverse()
+        return popups.reversed()
     }
     
-    static func makeAchievement(name: String, percent: Double) -> GKAchievement {
+    static func makeAchievement(_ name: String, percent: Double) -> GKAchievement {
         let achievement = GKAchievement(identifier: name)
         achievement.percentComplete = percent * 100
         return achievement
@@ -176,7 +176,7 @@ class AchievementManager: NSObject {
     }
     
     static func resetAchievements() {
-        GKAchievement.resetAchievementsWithCompletionHandler({ error in
+        GKAchievement.resetAchievements(completionHandler: { error in
             if error != nil {
                 NSLog(error!.localizedDescription)
             }

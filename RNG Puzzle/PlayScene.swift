@@ -67,7 +67,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(_foregroundNotification)
+        NotificationCenter.default.removeObserver(_foregroundNotification)
     }
     
     func createGameView() {
@@ -80,8 +80,8 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     func createStars() {
-        let path = NSBundle.mainBundle().pathForResource("StarBackground", ofType: "sks")
-        _starEmitter = NSKeyedUnarchiver.unarchiveObjectWithFile(path!) as! SKEmitterNode
+        let path = Bundle.main.path(forResource: "StarBackground", ofType: "sks")
+        _starEmitter = NSKeyedUnarchiver.unarchiveObject(withFile: path!) as! SKEmitterNode
         _starEmitter.particlePositionRange = CGVector(dx: frame.width, dy: frame.height)
         _starEmitter.targetNode = self
         _starEmitter.zPosition = -10
@@ -89,19 +89,19 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         refreshStars()
         self.addChild(_starEmitter)
         
-        _foregroundNotification = NSNotificationCenter.defaultCenter().addObserverForName(UIApplicationDidEnterBackgroundNotification, object: nil, queue: nil, usingBlock: { Void in self.doPause() })
+        _foregroundNotification = NotificationCenter.default.addObserver(forName: NSNotification.Name.UIApplicationDidEnterBackground, object: nil, queue: nil, using: { Void in self.doPause() })
     }
     
     func createHUD() {
         // Star Label
-        _starLabel = StarLabel(text: "\(Storage.loadStars())", color: SKColor.whiteColor(), anchor: .Left)
+        _starLabel = StarLabel(text: "\(Storage.loadStars())", color: SKColor.white, anchor: .left)
         _starLabel.zPosition = 50
         addChild(_starLabel)
         
         // Timer
         _timerLabel = SKLabelNode(fontNamed: Constants.FONT)
-        _timerLabel.horizontalAlignmentMode = .Left
-        _timerLabel.fontColor = UIColor.whiteColor()
+        _timerLabel.horizontalAlignmentMode = .left
+        _timerLabel.fontColor = UIColor.white
         _timerLabel.zPosition = 50
         updateTimerLabel()
         addChild(_timerLabel)
@@ -112,12 +112,12 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         addChild(_pauseButton)
         
         // Hint Label
-        _hintLabel = StarLabel(text: "Hint", color: SKColor.whiteColor(), starText: String(Constants.HINT_COST), anchor: .Left)
+        _hintLabel = StarLabel(text: "Hint", color: SKColor.white, starText: String(Constants.HINT_COST), anchor: .left)
         addChild(_hintLabel)
     }
 
-    override func didMoveToView(view: SKView) {
-        backgroundColor = SKColor.blackColor()
+    override func didMove(to view: SKView) {
+        backgroundColor = SKColor.black
         _starEmitter.resetSimulation()
         
         // Tap for pausing
@@ -125,13 +125,13 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         
         // Swipe for moving
         _swipeUpRecognizer = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeUp))
-        _swipeUpRecognizer.direction = UISwipeGestureRecognizerDirection.Up
+        _swipeUpRecognizer.direction = UISwipeGestureRecognizerDirection.up
         _swipeDownRecognizer = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeDown))
-        _swipeDownRecognizer.direction = UISwipeGestureRecognizerDirection.Down
+        _swipeDownRecognizer.direction = UISwipeGestureRecognizerDirection.down
         _swipeLeftRecognizer = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeLeft))
-        _swipeLeftRecognizer.direction = UISwipeGestureRecognizerDirection.Left
+        _swipeLeftRecognizer.direction = UISwipeGestureRecognizerDirection.left
         _swipeRightRecognizer = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeRight))
-        _swipeRightRecognizer.direction = UISwipeGestureRecognizerDirection.Right
+        _swipeRightRecognizer.direction = UISwipeGestureRecognizerDirection.right
         
         // Pinch for zooming
         _pinchRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch))
@@ -142,10 +142,10 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         _panRecognizer.minimumNumberOfTouches = 2
         _panRecognizer.delegate = self
         
-        _tapRecognizer.requireGestureRecognizerToFail(_swipeUpRecognizer)
-        _tapRecognizer.requireGestureRecognizerToFail(_swipeDownRecognizer)
-        _tapRecognizer.requireGestureRecognizerToFail(_swipeLeftRecognizer)
-        _tapRecognizer.requireGestureRecognizerToFail(_swipeRightRecognizer)
+        _tapRecognizer.require(toFail: _swipeUpRecognizer)
+        _tapRecognizer.require(toFail: _swipeDownRecognizer)
+        _tapRecognizer.require(toFail: _swipeLeftRecognizer)
+        _tapRecognizer.require(toFail: _swipeRightRecognizer)
         
         view.addGestureRecognizer(_tapRecognizer)
         view.addGestureRecognizer(_swipeUpRecognizer)
@@ -156,7 +156,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         view.addGestureRecognizer(_panRecognizer)
     }
     
-    override func willMoveFromView(view: SKView) {
+    override func willMove(from view: SKView) {
         _prevUpdateTime = nil
         
         view.removeGestureRecognizer(_tapRecognizer)
@@ -168,7 +168,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         view.removeGestureRecognizer(_panRecognizer)
     }
     
-    func gestureRecognizer(gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWithGestureRecognizer otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return true
     }
     
@@ -177,7 +177,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         let h = size.height
         let s = min(w, h)
         
-        let p = sender.locationInView(sender.view)
+        let p = sender.location(in: sender.view)
         let yMin = h - s * Constants.TEXT_SCALE * 2.6
         let xMinPause = w - s * Constants.TEXT_SCALE * 2.6
         let xMaxHint = _hintLabel.position.x + _hintLabel._maxX
@@ -228,23 +228,23 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     func handleSwipeUp(sender: UITapGestureRecognizer) {
-        _gameView.attemptMove(.Up, swipe: sender.locationInView(sender.view))
+        _gameView.attemptMove(.Up, swipe: sender.location(in: sender.view))
     }
     
     func handleSwipeDown(sender: UITapGestureRecognizer) {
-        _gameView.attemptMove(.Down, swipe: sender.locationInView(sender.view))
+        _gameView.attemptMove(.Down, swipe: sender.location(in: sender.view))
     }
     
     func handleSwipeLeft(sender: UITapGestureRecognizer) {
-        _gameView.attemptMove(.Left, swipe: sender.locationInView(sender.view))
+        _gameView.attemptMove(.Left, swipe: sender.location(in: sender.view))
     }
     
     func handleSwipeRight(sender: UITapGestureRecognizer) {
-        _gameView.attemptMove(.Right, swipe: sender.locationInView(sender.view))
+        _gameView.attemptMove(.Right, swipe: sender.location(in: sender.view))
     }
     
     func handlePinch(sender: UIPinchGestureRecognizer) {
-        if sender.state == UIGestureRecognizerState.Ended {
+        if sender.state == UIGestureRecognizerState.ended {
             _lastScale = 1.0
             bringBackToScreen()
             return
@@ -258,7 +258,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         
         // Keep the pinch location fixed
         let newScale = _gameView._scale
-        let p = sender.locationInView(sender.view)
+        let p = sender.location(in: sender.view)
         let x0 = p.x
         let y0 = size.height - p.y
         let x1 = _gameView.position.x
@@ -267,16 +267,16 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     func handlePan(sender: UIPanGestureRecognizer) {
-        if sender.state == UIGestureRecognizerState.Ended {
+        if sender.state == UIGestureRecognizerState.ended {
             bringBackToScreen()
             return
         }
         _bringingBack = false
         
-        let v = sender.translationInView(sender.view)
+        let v = sender.translation(in: sender.view)
         let p = _gameView.position
         _gameView.position = CGPoint(x: p.x + v.x, y: p.y - v.y)
-        sender.setTranslation(CGPointZero, inView: sender.view)
+        sender.setTranslation(CGPoint.zero, in: sender.view)
     }
     
     func bringBackToScreen() {
@@ -306,13 +306,13 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         }
         
         if dX != 0 || dY != 0 {
-            _gameView.runAction(SKAction.moveByX(dX, y: dY, duration: 0.25), completion: { () -> Void in
+            _gameView.run(SKAction.moveBy(x: dX, y: dY, duration: 0.25), completion: { () -> Void in
                 self._bringingBack = false
             })
         }
     }
     
-    override func update(currentTime: NSTimeInterval) {
+    override func update(_ currentTime: TimeInterval) {
         var delta = currentTime
         if _prevUpdateTime != nil {
             delta -= _prevUpdateTime!
@@ -331,7 +331,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
             _prevTick -= 1
         }
             
-        if rand() % 200 == 0 {
+        if arc4random_uniform(200) == 0 {
             view?.layer.addSublayer(Trail(size: size))
         }
         
@@ -347,9 +347,9 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         let str = String(format:"%d:%02d", abs(Int(ceil(_timerCount))) / 60, abs(Int(ceil(_timerCount))) % 60)
         _timerLabel.text = str
         if _timerCount > 10 {
-            _timerLabel.fontColor = UIColor.whiteColor()
+            _timerLabel.fontColor = UIColor.white
         } else {
-            _timerLabel.fontColor = UIColor.redColor()
+            _timerLabel.fontColor = UIColor.red
         }
     }
     
@@ -357,13 +357,13 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         let duration = (_numTimerExpirations * _timerTotal) + (_timerTotal - Int(ceil(_timerCount)))
         
         // Get old score before saving achievements to show which stars have already been earned
-        let oldScore = Storage.loadScore(_level._level)
+        let oldScore = Storage.loadScore(level: _level._level)
     
         // Record achievements and advance saved level counter
-        let achievements = AchievementManager.recordLevelCompleted(_level, duration: duration, numTimerExpirations: _numTimerExpirations, didEnterVoid: _gameView._didEnterVoid)
+        let achievements = AchievementManager.recordLevelCompleted(level: _level, duration: duration, numTimerExpirations: _numTimerExpirations, didEnterVoid: _gameView._didEnterVoid)
         
         // Record stars earned
-        let newScore = Storage.loadScore(_level._level)
+        let newScore = Storage.loadScore(level: _level._level)
         Storage.addStars(newScore - oldScore)
     
         let levelCompleteScene = LevelCompleteScene(size: size, level: _level, timerCount: Int(ceil(_timerCount)), duration: duration, achievements: achievements, oldScore: oldScore, newScore: newScore)
@@ -406,7 +406,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         refreshStars()
     }
     
-    override func didChangeSize(oldSize: CGSize) {
+    override func didChangeSize(_ oldSize: CGSize) {
         if _gameView != nil && oldSize != _oldSize {
             _oldMarginRight = _marginRight
             _oldMarginBottom = _marginBottom

@@ -14,16 +14,16 @@ class Blob: SKSpriteNode {
     
     var _animated = true
     
-    var _idleTimer: NSTimer? = nil
+    var _idleTimer: Timer? = nil
     
     var _idleAnimations: [() -> Void]! = nil
-    var _stopAnimations: [(dir: Direction, dtheta: CGFloat, dt: Double) -> Void]! = nil
+    var _stopAnimations: [(_ dir: Direction, _ dtheta: CGFloat, _ dt: Double) -> Void]! = nil
     
     var resetAngle: CGFloat = 0
     var resetPos: CGPoint? = nil
 
     init(animated: Bool = true) {
-        super.init(texture: sprites.root_root(), color: UIColor.whiteColor(), size: CGSize(width: 1, height: 1))
+        super.init(texture: sprites.root_root(), color: UIColor.white, size: CGSize(width: 1, height: 1))
         
         _animated = animated
         
@@ -44,13 +44,13 @@ class Blob: SKSpriteNode {
         
         if hard {
             resetPos = nil
-            runAction(SKAction.setTexture(sprites.root_root()))
+            run(SKAction.setTexture(sprites.root_root()))
         } else {
             if resetPos != nil {
-                runAction(SKAction.sequence([
+                run(SKAction.sequence([
                     SKAction.setTexture(sprites.root_root()),
-                    SKAction.rotateToAngle(resetAngle, duration: 0),
-                    SKAction.moveTo(resetPos!, duration: 0)
+                    SKAction.rotate(toAngle: resetAngle, duration: 0),
+                    SKAction.move(to: resetPos!, duration: 0)
                 ]))
                 resetPos = nil
             }
@@ -59,7 +59,7 @@ class Blob: SKSpriteNode {
     
     func startIdleTimer() {
         _idleTimer?.invalidate()
-        _idleTimer = NSTimer.scheduledTimerWithTimeInterval(5, target: self, selector: #selector(idle), userInfo: nil, repeats: false)
+        _idleTimer = Timer.scheduledTimer(timeInterval: 5, target: self, selector: #selector(idle), userInfo: nil, repeats: false)
     }
     
     func stopIdleTimer() {
@@ -77,10 +77,10 @@ class Blob: SKSpriteNode {
         }
     }
     
-    func stop(dir dir: Direction, dtheta: CGFloat, dt: Double) {
+    func stop(dir: Direction, dtheta: CGFloat, dt: Double) {
         let idx = Int(arc4random_uniform(UInt32(_stopAnimations.count)))
         
-        _stopAnimations[idx](dir: dir, dtheta: dtheta, dt: dt)
+        _stopAnimations[idx](dir, dtheta, dt)
         
         if _animated {
             startIdleTimer()
@@ -88,21 +88,21 @@ class Blob: SKSpriteNode {
     }
     
     func animIdleBlink() {
-        let anim = SKAction.animateWithTextures([
+        let anim = SKAction.animate(with: [
             sprites.root_blink(),
             sprites.root_root(),
             sprites.root_blink(),
             sprites.root_root()
         ], timePerFrame: 0.08)
-        runAction(anim)
+        run(anim)
     }
     
     func animIdleSpit() {
-        let anim = SKAction.animateWithTextures(sprites.spit_spit_(), timePerFrame: 0.08)
-        runAction(anim)
+        let anim = SKAction.animate(with: sprites.spit_spit_(), timePerFrame: 0.08)
+        run(anim)
     }
     
-    func animStopSpin(dir dir: Direction, dtheta: CGFloat, dt: Double) {
+    func animStopSpin(dir: Direction, dtheta: CGFloat, dt: Double) {
         
         resetAngle = zRotation
         resetPos = position
@@ -110,12 +110,12 @@ class Blob: SKSpriteNode {
         var textures = sprites.spin_eyes_spin_eyes_()
         
         if dtheta > 0 {
-            textures = textures.reverse()
+            textures = textures.reversed()
         }
         textures.append(sprites.root_root())
         
-        let anim = SKAction.animateWithTextures(textures, timePerFrame: 0.015)
-        runAction(anim)
+        let anim = SKAction.animate(with: textures, timePerFrame: 0.015)
+        run(anim)
         
         let margin: CGFloat = 0.22
         
@@ -133,18 +133,18 @@ class Blob: SKSpriteNode {
         let angle = dtheta * margin * 2
         let duration = dt * Double(margin) * 2
         
-        runAction(SKAction.sequence([
-            SKAction.rotateByAngle(angle, duration: duration),
-            SKAction.rotateByAngle(-angle, duration: duration * 4)
+        run(SKAction.sequence([
+            SKAction.rotate(byAngle: angle, duration: duration),
+            SKAction.rotate(byAngle: -angle, duration: duration * 4)
         ]))
         
-        runAction(SKAction.sequence([
-            SKAction.moveByX(x, y: y, duration: duration),
-            SKAction.moveByX(-x, y: -y, duration: duration * 4)
+        run(SKAction.sequence([
+            SKAction.moveBy(x: x, y: y, duration: duration),
+            SKAction.moveBy(x: -x, y: -y, duration: duration * 4)
         ]))
     }
     
-    func animStopSplat(dir dir: Direction, dtheta: CGFloat, dt: Double) {
+    func animStopSplat(dir: Direction, dtheta: CGFloat, dt: Double) {
     
         resetAngle = zRotation
         resetPos = position
@@ -171,14 +171,14 @@ class Blob: SKSpriteNode {
         
         zRotation -= angle
         
-        runAction(SKAction.rotateByAngle(angle, duration: duration))
+        run(SKAction.rotate(byAngle: angle, duration: duration))
         
-        runAction(SKAction.sequence([
-            SKAction.moveByX(x, y: y, duration: duration),
-            SKAction.animateWithTextures(sprites.splat_splat_(), timePerFrame: 0.015),
+        run(SKAction.sequence([
+            SKAction.moveBy(x: x, y: y, duration: duration),
+            SKAction.animate(with: sprites.splat_splat_(), timePerFrame: 0.015),
             SKAction.setTexture(sprites.root_root()),
-            SKAction.rotateToAngle(resetAngle, duration: 0),
-            SKAction.moveByX(-x, y: -y, duration: 0)
+            SKAction.rotate(toAngle: resetAngle, duration: 0),
+            SKAction.moveBy(x: -x, y: -y, duration: 0)
         ]))
     }
 }

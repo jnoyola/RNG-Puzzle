@@ -16,14 +16,14 @@ class StarLabel: SKNode {
     var _starLabel: SKLabelNode? = nil
     
     var _size: CGFloat = 0
-    var _anchor: NSTextAlignment = .Center
+    var _anchor: NSTextAlignment = .center
 
     var _minX: CGFloat = 0
     var _maxX: CGFloat = 0
     var _minY: CGFloat = 0
     var _maxY: CGFloat = 0
     
-    init(text: String, color: SKColor, starText: String? = nil, anchor: NSTextAlignment = .Center) {
+    init(text: String, color: SKColor, starText: String? = nil, anchor: NSTextAlignment = .center) {
         super.init()
         
         _anchor = anchor
@@ -33,13 +33,13 @@ class StarLabel: SKNode {
         _label = SKLabelNode(fontNamed: Constants.FONT)
         _label.text = text
         _label.fontColor = color
-        _label.horizontalAlignmentMode = .Center
+        _label.horizontalAlignmentMode = .center
         
         if starText != nil {
             _starLabel = SKLabelNode(fontNamed: Constants.FONT)
             _starLabel!.text = starText!
-            _starLabel!.fontColor = SKColor.blackColor()
-            _starLabel!.horizontalAlignmentMode = .Center
+            _starLabel!.fontColor = SKColor.black
+            _starLabel!.horizontalAlignmentMode = .center
             _starLabel!.zPosition = 1
             addChild(_starLabel!)
         }
@@ -54,18 +54,18 @@ class StarLabel: SKNode {
     
     func disable() {
         _star.fade()
-        _label.fontColor = SKColor.darkGrayColor()
+        _label.fontColor = SKColor.darkGray
     }
     
     func animate() {
-        let path = NSBundle.mainBundle().pathForResource("Sparks", ofType: "sks")
-        let particle = NSKeyedUnarchiver.unarchiveObjectWithFile(path!) as! SKEmitterNode
+        let path = Bundle.main.path(forResource: "Sparks", ofType: "sks")
+        let particle = NSKeyedUnarchiver.unarchiveObject(withFile: path!) as! SKEmitterNode
         particle.zPosition = 200
             
         self.addChild(particle)
     }
     
-    func isPointInBounds(p: CGPoint) -> Bool {
+    func isPointInBounds(_ p: CGPoint) -> Bool {
         return p.x > position.x + _minX
             && p.x < position.x + _maxX
             && p.y > position.y + _minY - _size / 2
@@ -76,12 +76,12 @@ class StarLabel: SKNode {
         return _label.text!
     }
     
-    func setText(text: String) {
+    func setText(_ text: String) {
         _label.text = text
         refreshLayout()
     }
     
-    func setSize(size: CGFloat) {
+    func setSize(_ size: CGFloat) {
         _size = size
         
         _label.fontSize = _size
@@ -97,11 +97,11 @@ class StarLabel: SKNode {
         let pad = _size * 0.1
         
         switch _anchor {
-        case .Center:
+        case .center:
             _star.position = CGPoint(x: -(pad + _label.frame.size.width) / 2 - _size * 0.2, y: _size * 0.47)
             _label.position = CGPoint(x: (pad + starSize) / 2 - _size * 0.2, y: 0)
             _starLabel?.position = CGPoint(x: _star.position.x, y: _size * 0.15)
-        case .Left:
+        case .left:
             _star.position = CGPoint(x: -pad - starSize / 2, y: _size * 0.47)
             _label.position = CGPoint(x: _label.frame.size.width / 2, y: 0)
             _starLabel?.position = CGPoint(x: _star.position.x, y: _size * 0.15)

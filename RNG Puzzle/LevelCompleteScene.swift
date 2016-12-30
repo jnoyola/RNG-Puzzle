@@ -45,29 +45,29 @@ class LevelCompleteScene: SKScene {
         super.init(coder: aDecoder)
     }
     
-    override func didMoveToView(view: SKView) {
-        backgroundColor = SKColor.blackColor()
+    override func didMove(to view: SKView) {
+        backgroundColor = SKColor.black
         
         // Copy Level ID
-        _copyLabel = addLabel("Copy Level ID", color: SKColor.grayColor())
+        _copyLabel = addLabel("Copy Level ID", color: SKColor.gray)
         
         // Quit
-        _quitLabel = addLabel("Quit", color: SKColor.whiteColor())
+        _quitLabel = addLabel("Quit", color: SKColor.white)
         
         // Continue
-        _continueLabel = addLabel("Continue", color: SKColor.whiteColor())
+        _continueLabel = addLabel("Continue", color: SKColor.white)
         
         // Duration
         let durationStr = String(format:"%d:%02d", abs(_duration) / 60, abs(_duration) % 60)
-        _durationLabel = addLabel(durationStr, color: SKColor.whiteColor())
+        _durationLabel = addLabel(durationStr, color: SKColor.white)
         
         // Stars
-        _starDisplay = StarDisplay(scene: self, oldScore: _oldScore, newScore: Storage.loadScore(_level._level))
+        _starDisplay = StarDisplay(scene: self, oldScore: _oldScore, newScore: Storage.loadScore(level: _level._level))
         addChild(_starDisplay)
         
         // Star Label
         let oldNumStars = Storage.loadStars() - _newScore + _oldScore
-        _starLabel = StarLabel(text: "\(oldNumStars)", color: SKColor.whiteColor(), anchor: .Left)
+        _starLabel = StarLabel(text: "\(oldNumStars)", color: SKColor.white, anchor: .left)
         addChild(_starLabel)
         
         // Social
@@ -79,7 +79,7 @@ class LevelCompleteScene: SKScene {
         refreshLayout()
     }
     
-    func addLabel(text: String, color: SKColor) -> SKLabelNode {
+    func addLabel(_ text: String, color: SKColor) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: Constants.FONT)
         label.text = text
         label.fontColor = color
@@ -88,19 +88,18 @@ class LevelCompleteScene: SKScene {
     }
     
     func fireStars() {
-        let p = convertPoint(_starLabel._star.position, fromNode: _starLabel)
+        let p = convert(_starLabel._star.position, from: _starLabel)
         _starDisplay.explodeTo(p, completion: { (numStars: Int) -> Void in
             for i in 0 ..< numStars {
-                let delay = Int64(0.05 * Double(NSEC_PER_SEC) * Double(i))
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay), dispatch_get_main_queue(), {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05 * Double(i)) {
                     let num = Int(self._starLabel.getText())
                     self._starLabel.setText(String(num! + 1))
-                })
+                }
             }
         })
     }
     
-    override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         if !_achievementPopups.isEmpty {
             _achievementPopups.removeFirst().close()
             if _achievementPopups.isEmpty {
@@ -110,14 +109,14 @@ class LevelCompleteScene: SKScene {
         }
     
         let touch = touches.first!
-        let p = touch.locationInNode(self)
+        let p = touch.location(in: self)
         
         let w = size.width
         let h = size.height
         
         if p.x > w * 0.25 && p.x < w * 0.75 && p.y > h * 0.55 && p.y < h * 0.79 {
             // Copy Level ID
-            UIPasteboard.generalPasteboard().string = _level.getCode()
+            UIPasteboard.general.string = _level.getCode()
             _copyLabel.text = "Level ID Copied"
         } else if isPointInBounds(p, node: _quitLabel) {
             // Quit
@@ -130,7 +129,7 @@ class LevelCompleteScene: SKScene {
         }
     }
     
-    func isPointInBounds(p: CGPoint, node: SKNode) -> Bool {
+    func isPointInBounds(_ p: CGPoint, node: SKNode) -> Bool {
         let x1 = node.frame.minX - 30
         let x2 = node.frame.maxX + 30
         let y1 = node.frame.minY - 30
@@ -172,7 +171,7 @@ class LevelCompleteScene: SKScene {
         if _level is CustomLevel {
             titleText = "Custom\n" + titleText
         }
-        _titleLabel = SKMultilineLabel(text: titleText, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: h * 0.85), fontName: Constants.FONT, fontSize: s * Constants.TITLE_SCALE, fontColor: Constants.TITLE_COLOR, spacing: 1.5, alignment: .Center, shouldShowBorder: false)
+        _titleLabel = SKMultilineLabel(text: titleText, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: h * 0.85), fontName: Constants.FONT, fontSize: s * Constants.TITLE_SCALE, fontColor: Constants.TITLE_COLOR, spacing: 1.5, alignment: .center, shouldShowBorder: false)
         addChild(_titleLabel)
         
         _copyLabel.fontSize = s * 0.04
@@ -190,8 +189,8 @@ class LevelCompleteScene: SKScene {
         _starDisplay.position = CGPoint(x: w * 0.5, y: h * 0.3)
         _starDisplay.setSize(s * 0.2)
         
-        _muteShareDisplay.position = CGPointZero
-        _muteShareDisplay.refreshLayout(size)
+        _muteShareDisplay.position = CGPoint.zero
+        _muteShareDisplay.refreshLayout(size: size)
         
         _starLabel.setSize(s * Constants.TEXT_SCALE)
         _starLabel.position = CGPoint(x: s * Constants.ICON_SCALE * 1.2, y: h - s * Constants.ICON_SCALE)
@@ -199,12 +198,12 @@ class LevelCompleteScene: SKScene {
         if _levelLabel != nil {
             _levelLabel.removeFromParent()
         }
-        _levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * 0.08, color: SKColor.whiteColor())
+        _levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * 0.08, color: SKColor.white)
         _levelLabel.position = CGPoint(x: w * 0.5, y: h * 0.67)
         self.addChild(_levelLabel)
         
         for popup in _achievementPopups {
-            popup.refreshLayout(size)
+            popup.refreshLayout(size: size)
         }
         
         if _achievementPopups.isEmpty {
@@ -212,7 +211,7 @@ class LevelCompleteScene: SKScene {
         }
     }
     
-    override func didChangeSize(oldSize: CGSize) {
+    override func didChangeSize(_ oldSize: CGSize) {
         refreshLayout()
     }
 }

@@ -24,12 +24,12 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
     var _vx: CGFloat = 0
     let _vLimit: CGFloat = 15
     
-    var _holdTimer: NSTimer? = nil
+    var _holdTimer: Timer? = nil
     var _justHeld = false
     var _grayOut: SKShapeNode! = nil
 
-    override func didMoveToView(view: SKView) {
-        backgroundColor = SKColor.blackColor()
+    override func didMove(to view: SKView) {
+        backgroundColor = SKColor.black
         
         let maxLevel = Storage.loadMaxLevel()
         
@@ -37,25 +37,25 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
         _titleLabel = addLabel("Select Level", color: Constants.TITLE_COLOR)
         
         // Back
-        _backLabel = addLabel("Back", color: SKColor.whiteColor())
+        _backLabel = addLabel("Back", color: SKColor.white)
         
         // Play
-        _playLabel = addLabel("Play", color: SKColor.whiteColor())
+        _playLabel = addLabel("Play", color: SKColor.white)
         
         // Text Input
         _textInput = UITextField.init()
-        _textInput!.backgroundColor = UIColor.whiteColor()
-        _textInput!.textAlignment = .Center
-        _textInput!.contentVerticalAlignment = .Bottom
-        _textInput!.keyboardType = .DecimalPad
-        _textInput!.autocorrectionType = .No
+        _textInput!.backgroundColor = UIColor.white
+        _textInput!.textAlignment = .center
+        _textInput!.contentVerticalAlignment = .bottom
+        _textInput!.keyboardType = .decimalPad
+        _textInput!.autocorrectionType = .no
         _textInput!.placeholder = "Level"
         _textInput!.text = String(maxLevel)
         _textInput!.delegate = self
         view.addSubview(self._textInput!)
         
         // Planetarium
-        createPlanetarium(maxLevel)
+        createPlanetarium(maxLevel: maxLevel)
         
         // Star Label
         createStarLabel()
@@ -63,10 +63,10 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
         // Gray Out (for planet samples)
         _grayOut = SKShapeNode()
         _grayOut.lineWidth = 0
-        _grayOut.fillColor = SKColor.blackColor()
+        _grayOut.fillColor = SKColor.black
         _grayOut.alpha = 0.8
         _grayOut.zPosition = 99
-        _grayOut.hidden = true
+        _grayOut.isHidden = true
         addChild(_grayOut)
         
         _panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePan))
@@ -82,15 +82,15 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
     }
     
     func createStarLabel() {
-        _starLabel = StarLabel(text: "\(Storage.loadStars())", color: SKColor.whiteColor(), anchor: .Left)
+        _starLabel = StarLabel(text: "\(Storage.loadStars())", color: SKColor.white, anchor: .left)
         addChild(_starLabel!)
     }
     
     func refresh() {
-        _planetarium.refreshPlanets(size)
+        _planetarium.refreshPlanets(size: size)
     }
     
-    override func willMoveFromView(view: SKView) {
+    override func willMove(from view: SKView) {
         _prevUpdateTime = nil
         
         _textInput?.removeFromSuperview()
@@ -98,7 +98,7 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
         view.removeGestureRecognizer(_panRecognizer)
     }
     
-    func addLabel(text: String, color: SKColor) -> SKLabelNode {
+    func addLabel(_ text: String, color: SKColor) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: Constants.FONT)
         label.text = text
         label.fontColor = color
@@ -106,23 +106,23 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
         return label
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         _textInput?.resignFirstResponder()
         _planetarium.hideSample()
-        _grayOut.hidden = true
-        _textInput?.backgroundColor = UIColor.whiteColor()
+        _grayOut.isHidden = true
+        _textInput?.backgroundColor = UIColor.white
         
-        let p = touches.first!.locationInNode(self)
+        let p = touches.first!.location(in: self)
         if p.y < _planetarium.position.y * 2 {
             _vx = 0
             _planetarium.hideMarkers(false, speed: 0)
         }
         
         _holdTimer?.invalidate()
-        _holdTimer = NSTimer.scheduledTimerWithTimeInterval(0.5, target: self, selector: #selector(completeHold), userInfo: NSValue(CGPoint: p), repeats: false)
+        _holdTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(completeHold), userInfo: NSValue(cgPoint: p), repeats: false)
     }
     
-    override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         cancelHold()
         if _justHeld {
             _justHeld = false
@@ -130,7 +130,7 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
         }
     
         let touch = touches.first!
-        let p = touch.locationInNode(self)
+        let p = touch.location(in: self)
         let w = size.width
         let h = size.height
         if p.y > h * 0.56 && p.y < h * 0.76 {
@@ -141,7 +141,7 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
             }
         } else if p.y < _planetarium!.position.y * 2 && !_isPanning {
             let levelNum = _planetarium.tap(p)
-            if levelNum != nil && levelNum <= getMaxAllowedLevel() {
+            if levelNum != nil && levelNum! <= getMaxAllowedLevel() {
                 if levelNum! > 0 {
                     _textInput?.text = String(levelNum!)
                 }
@@ -155,13 +155,13 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
         _holdTimer = nil
     }
     
-    func completeHold(timer: NSTimer) {
-        let p = (timer.userInfo as! NSValue).CGPointValue()
+    func completeHold(timer: Timer) {
+        let p = (timer.userInfo as! NSValue).cgPointValue
         _holdTimer = nil
         _justHeld = true
         if _planetarium.hold(p) {
-            _grayOut.hidden = false
-            _textInput?.backgroundColor = UIColor.darkGrayColor()
+            _grayOut.isHidden = false
+            _textInput?.backgroundColor = UIColor.darkGray
         }
     }
     
@@ -170,22 +170,22 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
     }
     
     func play() {
-        let level = LevelParser.parse(_textInput!.text!, allowGenerated: true, allowCustom: true)
+        let level = LevelParser.parse(code: _textInput!.text!, allowGenerated: true, allowCustom: true)
         if (level != nil) {
             let generationScene = LevelGenerationScene(size: size, level: level!)
             AppDelegate.pushViewController(SKViewController(scene: generationScene), animated: true, offset: 1)
         }
     }
     
-    func textField(textField: UITextField, shouldChangeCharactersInRange range: NSRange, replacementString string: String) -> Bool {
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
 //        for c in string.characters {
 //            if (c < "0" || c > "9") && c != "." {
 //                return false
 //            }
 //        }
         
-        let newString = (textField.text! as NSString).stringByReplacingCharactersInRange(range, withString: string)
-        let tokens = newString.componentsSeparatedByString(".")
+        let newString = (textField.text! as NSString).replacingCharacters(in: range, with: string)
+        let tokens = newString.components(separatedBy: ".")
         let levelNum = (tokens[0] as NSString).integerValue
         let levelMax = getMaxAllowedLevel()
         if levelNum > levelMax {
@@ -204,27 +204,27 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
     func handlePan(sender: UIPanGestureRecognizer) {
         cancelHold()
         if _justHeld {
-            if sender.state == .Ended {
+            if sender.state == .ended {
                 _justHeld = false
             }
             return
         }
     
         _vx = 0
-        let translation = sender.translationInView(sender.view)
-        _planetarium.translate(translation.x)
+        let translation = sender.translation(in: sender.view)
+        let _ = _planetarium.translate(dx: translation.x)
         
-        if sender.state == .Began {
+        if sender.state == .began {
             _isPanning = true
-        } else if sender.state == .Ended {
+        } else if sender.state == .ended {
             _isPanning = false
-            _vx = sender.velocityInView(sender.view).x
+            _vx = sender.velocity(in: sender.view).x
         }
         
-        sender.setTranslation(CGPointZero, inView: self.view)
+        sender.setTranslation(CGPoint.zero, in: self.view)
     }
     
-    override func update(currentTime: NSTimeInterval) {
+    override func update(_ currentTime: TimeInterval) {
         var delta = currentTime
         if _prevUpdateTime != nil {
             delta -= _prevUpdateTime!
@@ -232,7 +232,7 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
             
             var speed: CGFloat = 0
             if abs(_vx) > 0.1 {
-                speed = abs(_planetarium.translate(CGFloat(delta) * _vx))
+                speed = abs(_planetarium.translate(dx: CGFloat(delta) * _vx))
             } else {
                 _vx = 0
             }
@@ -272,16 +272,16 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
         _textInput?.frame = CGRect(x: inputX, y: inputY, width: inputWidth, height: inputHeight)
         _textInput?.font = UIFont(name: Constants.FONT, size: s * Constants.TEXT_SCALE)
         
-        _planetarium.refreshLayout(size)
+        _planetarium.refreshLayout(size: size)
         _planetarium.position.y = h * 0.32
         
         _starLabel?.setSize(s * Constants.TEXT_SCALE)
         _starLabel?.position = CGPoint(x: s * Constants.ICON_SCALE * 1.2, y: h - s * Constants.ICON_SCALE)
         
-        _grayOut.path = CGPathCreateWithRect(frame, nil)
+        _grayOut.path = CGPath(rect: frame, transform: nil)
     }
     
-    override func didChangeSize(oldSize: CGSize) {
+    override func didChangeSize(_ oldSize: CGSize) {
         refreshLayout()
     }
 }
