@@ -39,18 +39,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, /*GADRewardBasedVideoAdDe
         // AppLovin
         ALSdk.initializeSdk()
         ALIncentivizedInterstitialAd.preloadAndNotify(nil)
+        request.register(GADMExtrasAppLovin())
         
         // Chartboost
         Chartboost.start(withAppId: "570e0b5904b01631082c6632", appSignature: "820bc446b84f166002daab63ceb3ad18ef5ca1df", delegate: self)
         request.register(GADMChartboostExtras())
         
-        // Unity Ads
-//        UnityAds.sharedInstance().startWithGameId("1058583")
-//        UnityAds.sharedInstance().setZone("rewardedVideo") // may need to use this zone elsewhere for Google AdMob
-        UnityAds.initialize("1058583", delegate: nil)
-        
         // Vungle
         VungleSDK.shared().start(withAppId: "570e047bb5378a7608000049")
+        request.register(VungleAdNetworkExtras())
         
         //GADRewardBasedVideoAd.sharedInstance().delegate = self
         GADRewardBasedVideoAd.sharedInstance().load(request, withAdUnitID: "ca-app-pub-7708975293508353/5034943423")

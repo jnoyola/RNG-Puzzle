@@ -52,11 +52,11 @@ class SKViewController: UIViewController, ALAdDisplayDelegate, Refreshable {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     self._presentingAd = false
                 }
-            } else if ALIncentivizedInterstitialAd.isReadyForDisplay() {
+            } /*else if ALIncentivizedInterstitialAd.isReadyForDisplay() {
                 _presentingAd = true
                 ALIncentivizedInterstitialAd.shared().adDisplayDelegate = self
                 ALIncentivizedInterstitialAd.showAndNotify(nil)
-            }
+            }*/
         }
     }
     

@@ -9,15 +9,13 @@
 #ifndef Bridging_Header_h
 #define Bridging_Header_h
 
-#import "ALSdk.h"
+#import <AppLovinSDK/AppLovinSDK.h>
 #import "GADMAdapterAppLovinRewardBasedVideoAd.h"
-#import "ALIncentivizedInterstitialAd.h"
 
 #import <Chartboost/Chartboost.h>
 #import "GADMChartboostExtras.h"
 
-#import <UnityAds/UnityAds.h>
-
 #import <VungleSDK/VungleSDK.h>
+#import "VungleAdNetworkExtras.h"
 
 #endif /* Bridging_Header_h */
