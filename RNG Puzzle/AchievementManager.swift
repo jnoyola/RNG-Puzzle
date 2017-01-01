@@ -72,7 +72,7 @@ class AchievementManager: NSObject {
         return achievement
     }
 
-    static func recordLevelCompleted(level: LevelProtocol, duration: Int, numTimerExpirations: Int, didEnterVoid: Bool) -> [GKAchievement] {
+    static func recordLevelCompleted(level: LevelProtocol, duration: Int, numTimerExpirations: Int, numVoidDeaths: Int) -> [GKAchievement] {
         var achievements = [GKAchievement]()
         
         if level is Level {
@@ -80,11 +80,12 @@ class AchievementManager: NSObject {
             // Check the max level before we save this score
             let maxLevel = Storage.loadMaxLevel()
         
+            let numViolations = numTimerExpirations + numVoidDeaths
             var score = 1
-            if numTimerExpirations == 1 || (numTimerExpirations == 0 && didEnterVoid) {
-                score = 2
-            } else if numTimerExpirations == 0 && !didEnterVoid {
+            if numViolations == 0 {
                 score = 3
+            } else if numViolations == 1 {
+                score = 2
             }
             Storage.saveScore(score, forLevel: level._level)
             
@@ -117,7 +118,7 @@ class AchievementManager: NSObject {
                 }
             }
             
-            if !didEnterVoid {
+            if numVoidDeaths == 0 {
                 let voidAvoider = Storage.incProperty("voidAvoider")
                 
                 if voidAvoider <= 10 {

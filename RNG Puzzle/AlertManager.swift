@@ -55,7 +55,7 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
                 getTopViewController().present(vcFacebook!, animated: true, completion: nil)
             }
         } else {
-            alert("You are not logged in to Facebook.")
+            alert("Please log into Facebook in the device Settings.")
         }
     }
     
@@ -82,7 +82,7 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
             }
         }
         else {
-            alert("You are not logged in to Twitter.")
+            alert("Please log into Twitter in the device Settings.")
         }
     }
     

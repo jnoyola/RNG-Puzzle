@@ -92,6 +92,7 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
     
     func refresh() {
         _planetarium.refreshPlanets(size: size)
+        _starLabel?.setText("\(Storage.loadStars())")
     }
     
     override func willMove(from view: SKView) {

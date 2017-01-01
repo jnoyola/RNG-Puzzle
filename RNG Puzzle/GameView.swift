@@ -35,7 +35,7 @@ class GameView: SKNode {
     var _hintPath: SKShapeNode? = nil
     var _correctIdx = 0
     
-    var _didEnterVoid = false
+    var _numVoidDeaths = 0
 
     init(level: LevelProtocol, parent: SKScene, winCallback: (() -> Void)?) {
         super.init()
@@ -247,7 +247,12 @@ class GameView: SKNode {
             Storage.addStars(-1)
             if let playScene = _parent as? PlayScene {
                 playScene.updateStarLabel()
+                playScene._starLabel.animate()
             }
+        }
+        
+        if let playScene = _parent as? PlayScene {
+            playScene.resetTimer()
         }
     
         _ball.reset(hard: true)
@@ -362,7 +367,7 @@ class GameView: SKNode {
             win()
             return
         } else if _nextPiece.contains(.Void) {
-            _didEnterVoid = true
+            _numVoidDeaths += 1
             resetBall(shouldKill: true, shouldCharge: true)
             return
         } else if _nextPiece.contains(.Teleporter) {

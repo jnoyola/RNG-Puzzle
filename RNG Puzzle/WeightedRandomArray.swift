@@ -7,13 +7,16 @@
 //
 
 import Foundation
+import GameKit
 
 class WeightedRandomArray: NSObject {
     var _array: [PieceType]! = nil
     var _totalWeight: UInt32 = 0
+    var _rng: GKRandomSource! = nil
     
-    init(array: [PieceType]) {
+    init(array: [PieceType], rng: GKRandomSource) {
         super.init()
+        _rng = rng
         _array = array
         for piece in array {
             _totalWeight += getWeight(piece: piece)
@@ -21,7 +24,7 @@ class WeightedRandomArray: NSObject {
     }
     
     func popRandom() -> PieceType {
-        let r = arc4random_uniform(UInt32(_totalWeight))
+        let r = UInt32(_rng.nextInt(upperBound: Int(_totalWeight)))
         var iPiece = 0
         var cumWeight: UInt32 = 0
         while true {

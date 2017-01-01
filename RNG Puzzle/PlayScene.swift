@@ -25,6 +25,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     var _prevUpdateTime: CFTimeInterval? = nil
     var _timerActive = false
     var _numTimerExpirations = 0
+    var _totalDuration = 0.0
     
     var _starEmitter: SKEmitterNode! = nil
     
@@ -317,12 +318,12 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         if _prevUpdateTime != nil {
             delta -= _prevUpdateTime!
             _timerCount -= delta
+            _totalDuration += delta
             
             if _timerCount <= 0 {
+                // resetBall will call resetTimer
                 _gameView.resetBall(shouldKill: true, shouldCharge: true)
                 _numTimerExpirations += 1
-                _timerCount = Double(_timerTotal)
-                _prevTick = _timerTotal + 1
             }
         }
         
@@ -336,6 +337,11 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         }
         
         _prevUpdateTime = currentTime
+    }
+    
+    func resetTimer() {
+        _timerCount = Double(_timerTotal)
+        _prevTick = _timerTotal + 1
     }
     
     func updateStarLabel() {
@@ -354,19 +360,17 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     }
     
     func complete() {
-        let duration = (_numTimerExpirations * _timerTotal) + (_timerTotal - Int(ceil(_timerCount)))
-        
         // Get old score before saving achievements to show which stars have already been earned
         let oldScore = Storage.loadScore(level: _level._level)
     
         // Record achievements and advance saved level counter
-        let achievements = AchievementManager.recordLevelCompleted(level: _level, duration: duration, numTimerExpirations: _numTimerExpirations, didEnterVoid: _gameView._didEnterVoid)
+        let achievements = AchievementManager.recordLevelCompleted(level: _level, duration: Int(_totalDuration), numTimerExpirations: _numTimerExpirations, numVoidDeaths: _gameView._numVoidDeaths)
         
         // Record stars earned
         let newScore = Storage.loadScore(level: _level._level)
         Storage.addStars(newScore - oldScore)
     
-        let levelCompleteScene = LevelCompleteScene(size: size, level: _level, timerCount: Int(ceil(_timerCount)), duration: duration, achievements: achievements, oldScore: oldScore, newScore: newScore)
+        let levelCompleteScene = LevelCompleteScene(size: size, level: _level, timerCount: Int(ceil(_timerCount)), duration: Int(_totalDuration), achievements: achievements, oldScore: oldScore, newScore: newScore)
         levelCompleteScene.scaleMode = scaleMode
         AppDelegate.pushViewController(SKViewController(scene: levelCompleteScene), animated: true, offset: 0)
     }

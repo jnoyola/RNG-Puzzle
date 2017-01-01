@@ -89,6 +89,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, /*GADRewardBasedVideoAdDe
         }
         controllers.append(viewController)
         
+//        let transition = CATransition()
+//        transition.type = kCATransitionFade
+//        nav?.view.layer.add(transition, forKey: kCATransition)
+        
         nav?.setViewControllers(controllers, animated: animated)
     }
     

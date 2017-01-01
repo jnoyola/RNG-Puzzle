@@ -85,6 +85,8 @@ class CreationScene: PlayScene {
     
     override func update(_ currentTime: TimeInterval) {}
     
+    override func resetTimer() {}
+    
     override func refreshHUD() {
         (_marginRight, _marginBottom) = _pieceBank.refreshLayout(size: size)
         refreshSizeButtons()

@@ -269,7 +269,7 @@ class Level: NSObject, LevelProtocol {
                             return true
                         }
                     } else {
-                        let weightedArray = WeightedRandomArray(array: getPiecesFromDir(dir))
+                        let weightedArray = WeightedRandomArray(array: getPiecesFromDir(dir), rng: _rng)
                         while weightedArray.count() > 0 {
                             // Pick random piece from those remaining
                             let piece = weightedArray.popRandom()
