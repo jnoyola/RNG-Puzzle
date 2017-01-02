@@ -66,7 +66,10 @@ class LevelCompleteScene: SKScene {
         addChild(_starDisplay)
         
         // Star Label
-        let oldNumStars = Storage.loadStars() - _newScore + _oldScore
+        var oldNumStars = Storage.loadStars()
+        if _newScore > _oldScore {
+            oldNumStars += -_newScore + _oldScore
+        }
         _starLabel = StarLabel(text: "\(oldNumStars)", color: SKColor.white, anchor: .left)
         addChild(_starLabel)
         

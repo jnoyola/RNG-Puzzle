@@ -241,6 +241,14 @@ class GameView: SKNode {
             particle.zPosition = 15
             particle.setScale(0.1)
             self.addChild(particle)
+            
+//            let star = Star(type: .Glowing, scene: _parent)
+//            star.position = _ball.position
+//            star.zPosition = 15
+//            star.setScale(0.001)
+//            self.addChild(star)
+//            star.explodeTo(dest: CGPoint(x: CGFloat(_ballX) + 0.5, y: CGFloat(_ballY) + 0.5))
+            
         }
         
         if shouldCharge && !(_parent is InstructionsScene) {

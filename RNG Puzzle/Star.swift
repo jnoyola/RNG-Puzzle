@@ -45,6 +45,49 @@ class Star: SKNode {
         _star.size = CGSize(width: _size, height: _size)
     }
     
+    func explode() {
+        _star.isHidden = true
+    
+        for i in 0...4 {
+            let angle = CGFloat(i) * 2 * CGFloat(M_PI) / 5
+        
+            let shard = SKSpriteNode(imageNamed: "shard")
+            shard.size = CGSize(width: _size, height: _size)
+            shard.zPosition = 10000
+            shard.zRotation = angle
+            if _scene != nil {
+                shard.position = _scene!.convert(self.position, from: self.parent!)
+                _scene!.addChild(shard)
+            } else {
+                shard.position = CGPoint.zero
+                addChild(shard)
+            }
+            
+            // Note that angle 0 points up
+            let dx = -sin(angle) * _size * _explosionScale
+            let dy = cos(angle) * _size * _explosionScale
+            let actionExplode = SKAction.moveBy(x: dx, y: dy, duration: 0.04)
+            
+            let actionWait = SKAction.wait(forDuration: 0.25)
+            
+            let duration = 0.1 + Double(arc4random_uniform(5)) * 0.05
+            
+            let newAngle = angle < CGFloat(M_PI) ? CGFloat(M_PI) / 2 : -CGFloat(M_PI) / 2
+            let actionRotate = SKAction.rotate(toAngle: newAngle, duration: duration, shortestUnitArc: true)
+            //actionRotate.timingMode = .easeIn
+            
+            let actionTarget = SKAction.moveBy(x: 0, y: -2 * _star.size.height, duration: duration)
+            //actionTarget.timingMode = .easeIn
+            
+            shard.run(SKAction.sequence([actionExplode, actionWait, SKAction.group([actionRotate, actionTarget])]), completion: {
+                shard.removeFromParent()
+                if i == 0 {
+                    self._star.isHidden = false
+                }
+            })
+        }
+    }
+    
     func explodeTo(dest: CGPoint, isEmblemFilled: Bool = true, completion: (() -> Void)? = nil) {
     
         if isEmblemFilled {

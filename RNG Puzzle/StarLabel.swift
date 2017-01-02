@@ -58,11 +58,13 @@ class StarLabel: SKNode {
     }
     
     func animate() {
-        let path = Bundle.main.path(forResource: "Sparks", ofType: "sks")
-        let particle = NSKeyedUnarchiver.unarchiveObject(withFile: path!) as! SKEmitterNode
-        particle.zPosition = 200
-            
-        self.addChild(particle)
+//        let path = Bundle.main.path(forResource: "Sparks", ofType: "sks")
+//        let particle = NSKeyedUnarchiver.unarchiveObject(withFile: path!) as! SKEmitterNode
+//        particle.zPosition = 200
+//            
+//        self.addChild(particle)
+
+        _star.explode()
     }
     
     func isPointInBounds(_ p: CGPoint) -> Bool {

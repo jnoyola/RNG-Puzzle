@@ -72,22 +72,26 @@ class AchievementManager: NSObject {
         return achievement
     }
 
-    static func recordLevelCompleted(level: LevelProtocol, duration: Int, numTimerExpirations: Int, numVoidDeaths: Int) -> [GKAchievement] {
+    static func recordLevelCompleted(level: LevelProtocol, duration: Int, numTimerExpirations: Int, numVoidDeaths: Int) -> (score: Int, achievements: [GKAchievement]) {
         var achievements = [GKAchievement]()
+        
+        let numViolations = numTimerExpirations + numVoidDeaths
+        var score = 1
+        if numViolations == 0 {
+            score = 3
+        } else if numViolations == 1 {
+            score = 2
+        }
         
         if level is Level {
         
             // Check the max level before we save this score
             let maxLevel = Storage.loadMaxLevel()
-        
-            let numViolations = numTimerExpirations + numVoidDeaths
-            var score = 1
-            if numViolations == 0 {
-                score = 3
-            } else if numViolations == 1 {
-                score = 2
+            
+            let oldScore = Storage.loadScore(level: level._level)
+            if score > oldScore {
+                Storage.saveScore(score, forLevel: level._level)
             }
-            Storage.saveScore(score, forLevel: level._level)
             
             if level._level == maxLevel {
                 if level._level <= 25 {
@@ -149,7 +153,7 @@ class AchievementManager: NSObject {
             }
         }
         
-        return achievements
+        return (score, achievements)
     }
     
     static func recordWormholeTravel() {

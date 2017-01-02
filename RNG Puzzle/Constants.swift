@@ -20,7 +20,7 @@ public class Constants {
     static func colorForLevel(_ level: Int) -> UIColor {
         let h = CGFloat((level + 35) % 50) / 50
         let s = min(1, 0.3 + 0.7 * CGFloat(level) / 200)
-        let v = min(1, 0.5 + 0.5 * CGFloat(level) / 200)
+        let v = min(1, 0.25 + 0.75 * CGFloat(level) / 150)
         return UIColor(hue: h, saturation: s, brightness: v, alpha: 1)
     }
 }

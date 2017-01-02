@@ -364,11 +364,12 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         let oldScore = Storage.loadScore(level: _level._level)
     
         // Record achievements and advance saved level counter
-        let achievements = AchievementManager.recordLevelCompleted(level: _level, duration: Int(_totalDuration), numTimerExpirations: _numTimerExpirations, numVoidDeaths: _gameView._numVoidDeaths)
+        let (newScore, achievements) = AchievementManager.recordLevelCompleted(level: _level, duration: Int(_totalDuration), numTimerExpirations: _numTimerExpirations, numVoidDeaths: _gameView._numVoidDeaths)
         
         // Record stars earned
-        let newScore = Storage.loadScore(level: _level._level)
-        Storage.addStars(newScore - oldScore)
+        if newScore > oldScore {
+            Storage.addStars(newScore - oldScore)
+        }
     
         let levelCompleteScene = LevelCompleteScene(size: size, level: _level, timerCount: Int(ceil(_timerCount)), duration: Int(_totalDuration), achievements: achievements, oldScore: oldScore, newScore: newScore)
         levelCompleteScene.scaleMode = scaleMode
