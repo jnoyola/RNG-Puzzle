@@ -818,28 +818,30 @@ class Level: NSObject, LevelProtocol {
     init(instruction: Int) {
         super.init()
     
+        // Set the difficulty just for the background color
+        _level = 45
         _width = 8
         _height = 3
         _grid = [PieceType](repeating: .None, count: _width * _height)
         
         switch (instruction) {
-        case 1:
+        case 0:
             _startX = 1
             _startY = 1
             setPiece(x: 6, y: 1, type: .Target)
+        case 1:
+            _startX = 1
+            _startY = 1
         case 2:
             _startX = 1
             _startY = 1
         case 3:
-            _startX = 1
-            _startY = 1
-        case 4:
             _startX = 4
             _startY = 2
             setPiece(x: 7, y: 2, type: .Block)
             setPiece(x: 6, y: 0, type: .Corner2)
             setPiece(x: 2, y: 0, type: .Corner3)
-        case 5:
+        case 4:
             _startX = 1
             _startY = 2
             setPiece(x: 5, y: 2, type: .Teleporter)
@@ -847,11 +849,11 @@ class Level: NSObject, LevelProtocol {
             setPiece(x: 2, y: 1, type: .Teleporter)
             _teleporters.append((2,1))
             break;
-        case 6:
+        case 5:
             _startX = 1
             _startY = 1
             setPiece(x: 6, y: 1, type: .Target)
-        case 7:
+        case 6:
             _startX = 1
             _startY = 1
             setPiece(x: 3, y: 1, type: .Corner1)
@@ -875,15 +877,11 @@ class Level: NSObject, LevelProtocol {
                         PointRecord(x: 4, y: 1, dir: .Right),
                         PointRecord(x: 4, y: 0, dir: .Down),
                         PointRecord(x: 7, y: 0, dir: .Down)]
+        case 7:
+            _startX = 1
+            _startY = 1
+            setPiece(x: 6, y: 1, type: .Target)
         case 8:
-            _startX = 1
-            _startY = 1
-            setPiece(x: 6, y: 1, type: .Target)
-        case 9:
-            _startX = 1
-            _startY = 1
-            setPiece(x: 6, y: 1, type: .Target)
-        case 10:
             _startX = 1
             _startY = 1
             setPiece(x: 3, y: 1, type: .Corner1)
@@ -897,16 +895,19 @@ class Level: NSObject, LevelProtocol {
             setPiece(x: 7, y: 2, type: .Teleporter)
             _teleporters.append((7,2))
             setPiece(x: 7, y: 0, type: .Target)
-        case 11:
+        case 9:
             _startX = 1
             _startY = 1
             setPiece(x: 4, y: 1, type: .Corner3)
             setPiece(x: 4, y: 0, type: .Corner1)
             setPiece(x: 7, y: 0, type: .Target)
-        case 12:
+        case 10:
+            // This is a hack to make the background black
+            _level = -50
             _startX = 100
             _startY = 100
-        case 13:
+        case 11:
+            _level = -50
             _startX = 100
             _startY = 100
         default: break

@@ -28,7 +28,7 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
         if MFMessageComposeViewController.canSendText()
         {
             let vcMessages = MFMessageComposeViewController()
-            vcMessages.body="Check out AI Puzzle in the App Store!\nhttps://itunes.apple.com/us/app/id1134843213"
+            vcMessages.body="Check out Astro Maze in the App Store!\nhttps://itunes.apple.com/us/app/id1134843213"
             
 //            controller.addAttachmentData(UIImageJPEGRepresentation(UIImage(named: "images.jpg")!, 1)!, typeIdentifier: "image/jpg", filename: "images.jpg")
 
@@ -65,7 +65,7 @@ class AlertManager: NSObject, MFMessageComposeViewControllerDelegate {
             let vcTwitter = SLComposeViewController(forServiceType: SLServiceTypeTwitter)
      
             if vcTwitter != nil {
-                let text = "Check out AI Puzzle in the App Store!\nhttps://itunes.apple.com/us/app/id1096009046 #AIPuzzle"
+                let text = "Check out Astro Maze in the App Store!\nhttps://itunes.apple.com/us/app/id1096009046 #AIPuzzle"
                 vcTwitter!.setInitialText(text)
          
     //            // Set the note text as the default post message.

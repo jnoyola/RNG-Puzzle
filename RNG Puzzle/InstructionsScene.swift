@@ -11,19 +11,46 @@ import SpriteKit
 
 class InstructionsScene: SKScene {
 
+    class Instruction {
+        var _title: String! = nil
+        var _desc: String! = nil
+        var _levelIdSubtext: String? = nil
+        var _action: ((InstructionsScene) -> () -> ())? = nil
+        
+        init(_ title: String, _ desc: String, levelIdSubtext: String? = nil, action: ((InstructionsScene) -> () -> ())? = nil) {
+            _title = title
+            _desc = desc
+            _levelIdSubtext = levelIdSubtext
+            _action = action
+        }
+    }
+    
     var _gameView: GameView? = nil
     var _finger1: Finger! = nil
     var _finger2: Finger! = nil
     var _pauseLabel: SKLabelNode! = nil
-    var _curStep = 1
-    let _maxStep = 13
+    var _curStep = 0
+    var _instructions = [
+        Instruction("Goal", "Help Astro find his way home through the galaxy"),
+        Instruction("Moving", "Swipe to move when he's at rest", action: startSwipeRight),
+        Instruction("The Void", "Don't go off the edge into the void", action: startSwipeRight),
+        Instruction("Walls", "Astro will continue moving until he hits a wall", action: startSwipeCombo),
+        Instruction("Wormholes", "Purple wormholes teleport him to a new location", action: startSwipeRight),
+        Instruction("Timer", "Don't let time run out"),
+        Instruction("Hints", "Use hints if you get stuck"),
+        Instruction("View", "Use two fingers to zoom and pan", action: startPinchPan),
+        Instruction("Puzzles", "Millions of unique puzzles are randomly generated"),
+        Instruction("Creation", "You can also create your own puzzles to share with friends"),
+        Instruction("Level ID", "An ID for each level shows the difficulty and variation", levelIdSubtext: "Copy Level ID"),
+        Instruction("Sharing", "Share these codes with friends to challenge them to the same level!", levelIdSubtext: "Level ID Copied"),
+    ]
     
     let dx: CGFloat = 50
     
     override func didMove(to view: SKView) {
         backgroundColor = SKColor.black
         
-        setStep(1)
+        setStep(_curStep)
     }
     
     func addLabel(_ text: String, color: SKColor, fontSize: CGFloat, x: CGFloat, y: CGFloat, z: CGFloat = 0, hidden: Bool = false) -> SKLabelNode {
@@ -44,7 +71,7 @@ class InstructionsScene: SKScene {
     }
 
     func setStep(_ step: Int) {
-        if step == 0 || step > _maxStep {
+        if step < 0 || step >= _instructions.count {
             AppDelegate.popViewController(animated: true)
             return
         }
@@ -83,66 +110,12 @@ class InstructionsScene: SKScene {
     }
     
     func setStepElements(_ step: Int) {
-        var title: String! = nil
-        var descText: String! = nil
-        var copyText: String? = nil
-        var timed = false
-        var paused = false
-        var showLevelID = false
-        switch (step) {
-        case 1:
-            title = "Goal"
-            descText = "Help Astro find his way home through the galaxy"
-        case 2:
-            title = "Moving";
-            descText = "Swipe to move when he's at rest"
-        case 3:
-            title = "The Void"
-            descText = "Don't go off the edge into the void"
-        case 4:
-            title = "Blocks";
-            descText = "Astro will keep moving until he hits a wall"
-        case 5:
-            title = "Wormholes"
-            descText = "Purple wormholes teleport him to a new location"
-        case 6:
-            title = "Timer"
-            descText = "Don't let time run out"
-            timed = true
-        case 7:
-            title = "Hints"
-            descText = "Use hints if you get stuck"
-        case 8:
-            title = "Pausing"
-            descText = "Tap to pause the game"
-            paused = true
-            break;
-        case 9:
-            title = "Zoom & Pan"
-            descText = "Use two fingers to zoom and pan"
-            break;
-        case 10:
-            title = "Puzzles"
-            descText = "Millions of unique puzzles are randomly generated"
-            break;
-        case 11:
-            title = "Creation"
-            descText = "You can also create your own puzzles to share with friends"
-            break;
-        case 12:
-            title = "Level ID"
-            descText = "An ID for each level shows the difficulty and seed"
-            copyText = "Copy Level ID"
-            showLevelID = true
-        case 13:
-            title = "Sharing"
-            descText = "Share these codes with friends to challenge them to the same level!"
-            copyText = "Level ID Copied"
-            showLevelID = true
-        default:
-            break
-        }
-        let titleText = "\(_curStep) of \(_maxStep)\n\(title)"
+        let instruction = _instructions[step]
+        let title = instruction._title
+        let descText = instruction._desc
+        let copyText = instruction._levelIdSubtext
+        
+        let titleText = "\(_curStep + 1) of \(_instructions.count)\n\(title!)"
         
         let w = size.width
         let h = size.height
@@ -158,40 +131,36 @@ class InstructionsScene: SKScene {
         // > button
         _ = addLabel(">", color: SKColor.white, fontSize: s * 0.1, x: w * 0.898, y: h * 0.5 - s * 0.04)
         
-        // Paused
-        if paused {
-            _pauseLabel = addLabel("Paused", color: SKColor.white, fontSize: s * Constants.TEXT_SCALE, x: w * 0.5, y: h * 0.5 - s * Constants.TEXT_SCALE * 0.4, z: 20, hidden: true)
-        } else if timed {
+        // Timer
+        if title == "Timer" {
             _pauseLabel = addLabel("0:30", color: SKColor.white, fontSize: s * Constants.TEXT_SCALE, x: w * 0.5, y: h * 0.5 - s * Constants.TEXT_SCALE * 0.4, z: 20)
         }
 
         // Copy Label
         if copyText != nil {
             _ = addLabel(copyText!, color: SKColor.gray, fontSize: s * 0.04, x: w * 0.5, y: h * 0.49 - s * 0.05, z: 20)
-        }
-        
-        // Description
-        let descLabel = SKMultilineLabel(text: descText, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: (h - _gameView!.getHeight()) / 4), fontName: Constants.FONT, fontSize: s * Constants.TEXT_SCALE * 0.75, fontColor: SKColor.white, spacing: 1.5, alignment: .center, shouldShowBorder: false)
-        addChild(descLabel)
-        
-        // Level ID
-        if showLevelID {
-            let codeLabel = LevelLabel(level: 21, seed: "3194", size: s * 0.08, color: SKColor.white)
+            
+            // Level ID
+            let codeLabel = LevelLabel(level: 11, seed: "9999", size: s * 0.08, color: SKColor.white)
             codeLabel.position = CGPoint(x: w * 0.5, y: h * 0.49)
             codeLabel.zPosition = 20
             addChild(codeLabel)
         }
+        
+        // Description
+        let descLabel = SKMultilineLabel(text: descText!, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: (h - _gameView!.getHeight()) / 4), fontName: Constants.FONT, fontSize: s * Constants.TEXT_SCALE * 0.75, fontColor: SKColor.white, spacing: 1.5, alignment: .center, shouldShowBorder: false)
+        addChild(descLabel)
     }
     
     func setStepGame(_ step: Int) {
         let level = Level(instruction: step)
-        if step == 11 {
+        if _instructions[step]._title == "Creation" {
             _gameView = CreationView(level: level, parent: self, winCallback: nil)
             (_gameView as! CreationView)._selectedPoint = (x: 4, y: 1)
             (_gameView as! CreationView).markSelected()
         } else {
             _gameView = GameView(level: level, parent: self, winCallback: nil)
-            if step == 7 {
+            if _instructions[step]._title == "Hints" {
                 _gameView!.hint()
                 _gameView!.hint()
             }
@@ -202,22 +171,7 @@ class InstructionsScene: SKScene {
     }
     
     func performActionsForStep(_ step: Int) {
-        switch (step) {
-        case 2:
-            startSwipeRight()
-        case 3:
-            startSwipeRight()
-        case 4:
-            startSwipeCombo()
-        case 5: 
-            startSwipeRight()
-        case 8:
-            startTap()
-        case 9:
-            startPinchPan()
-        default:
-            break
-        }
+        _instructions[step]._action?(self)()
     }
     
     func startSwipeRight() {
