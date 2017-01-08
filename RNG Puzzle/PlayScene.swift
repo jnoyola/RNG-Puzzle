@@ -186,7 +186,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     
     func doPause() {
         let pauseScene = PauseScene(size: size, level: _level, playScene: self, timerCount: Int(ceil(_timerCount)))
-        pauseScene.scaleMode = scaleMode
+        pauseScene.scaleMode = .resizeFill
         view?.presentScene(pauseScene)
     }
     
@@ -364,7 +364,6 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         }
     
         let levelCompleteScene = LevelCompleteScene(size: size, level: _level, timerCount: Int(ceil(_timerCount)), duration: Int(_totalDuration), achievements: achievements, oldScore: oldScore, newScore: newScore)
-        levelCompleteScene.scaleMode = scaleMode
         AppDelegate.pushViewController(SKViewController(scene: levelCompleteScene), animated: true, offset: 0)
     }
     

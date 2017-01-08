@@ -119,7 +119,6 @@ class MyPuzzlesController: UITableViewController, Refreshable {
         if level != nil {
             DispatchQueue.main.async {
                 let playScene = PlayScene(size: self.view.bounds.size, level: level!)
-                playScene.scaleMode = .resizeFill
                 AppDelegate.pushViewController(SKViewController(scene: playScene), animated: true, offset: 1)
             }
         }
@@ -142,7 +141,6 @@ class MyPuzzlesController: UITableViewController, Refreshable {
                         DispatchQueue.main.async {
                             let creationScene = CreationScene(size: UIScreen.main.bounds.size, level: level!)
                             creationScene._editIndex = indexPath.row
-                            creationScene.scaleMode = .resizeFill
                             AppDelegate.pushViewController(SKViewController(scene: creationScene), animated: true, offset: 1)
                         }
                     }

@@ -20,6 +20,7 @@ class SKViewController: UIViewController, ALAdDisplayDelegate, Refreshable {
     init(scene: SKScene) {
         super.init(nibName: nil, bundle: nil)
         _scene = scene
+        _scene.scaleMode = .resizeFill
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -39,7 +40,6 @@ class SKViewController: UIViewController, ALAdDisplayDelegate, Refreshable {
     
         let skView = view as! SKView
         skView.ignoresSiblingOrder = true
-        _scene.scaleMode = .resizeFill
         skView.presentScene(_scene)
         
         

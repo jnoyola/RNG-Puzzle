@@ -24,8 +24,8 @@ class MainViewController: UIViewController, Refreshable {
     
         let skView = view as! SKView
         _scene = IntroScene(size: view.bounds.size)
-        skView.ignoresSiblingOrder = true
         _scene.scaleMode = .resizeFill
+        skView.ignoresSiblingOrder = true
         skView.presentScene(_scene)
     }
     

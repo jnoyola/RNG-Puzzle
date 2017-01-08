@@ -59,7 +59,6 @@ class LevelGenerationScene: SKScene {
             
             DispatchQueue.main.async {
                 let playScene = PlayScene(size: self.size, level: self._level)
-                playScene.scaleMode = self.scaleMode
                 AppDelegate.pushViewController(SKViewController(scene: playScene), animated: true, offset: 0)
             }
         }
