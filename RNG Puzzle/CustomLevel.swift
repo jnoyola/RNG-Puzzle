@@ -21,7 +21,7 @@ class CustomLevel: NSObject, LevelProtocol {
     var _startY = -1
     var _targetX = -1
     var _targetY = -1
-    var _grid: [[PieceType]]! = nil
+    var _grid: [[PieceType]?]! = nil
     var _teleporters: [Point?]! = nil
     
     var _correct: [PointRecord?]? = nil
@@ -37,11 +37,11 @@ class CustomLevel: NSObject, LevelProtocol {
     }
     
     @inline(__always) func getPiece(x: Int, y: Int) -> PieceType {
-        return _grid[y][x]
+        return _grid[y]![x]
     }
     
     @inline(__always) func setPiece(x: Int, y: Int, type: PieceType) {
-        _grid[y][x] = type
+        _grid[y]![x] = type
     }
     
     func getPieceSafely(point: Point) -> PieceType {
@@ -94,7 +94,7 @@ class CustomLevel: NSObject, LevelProtocol {
     func createNew() {
         _width = CustomLevel.getWidthForLevel(_level)
         _height = _width
-        _grid = [[PieceType]!](repeating: nil, count: _height)
+        _grid = [[PieceType]?](repeating: nil, count: _height)
         for j in 0...(_height - 1) {
             _grid[j] = [PieceType](repeating: .None, count: _width)
         }
@@ -407,7 +407,7 @@ class CustomLevel: NSObject, LevelProtocol {
     
     func incLeft() {
         for j in 0...(_height - 1) {
-            _grid[j].insert(.None, at: 0)
+            _grid[j]!.insert(.None, at: 0)
         }
         changeOrigin(dx: 1)
         _width += 1
@@ -421,7 +421,7 @@ class CustomLevel: NSObject, LevelProtocol {
             checkRemovedPiece(x: 0, y: j)
         }
         for j in 0...(_height - 1) {
-            _grid[j].removeFirst()
+            _grid[j]!.removeFirst()
         }
         changeOrigin(dx: -1)
         _width -= 1
@@ -430,7 +430,7 @@ class CustomLevel: NSObject, LevelProtocol {
     
     func incRight() {
         for j in 0...(_height - 1) {
-            _grid[j].append(.None)
+            _grid[j]!.append(.None)
         }
         _width += 1
         updateLevel()
@@ -442,7 +442,7 @@ class CustomLevel: NSObject, LevelProtocol {
             checkRemovedPiece(x: _width - 1, y: j)
         }
         for j in 0...(_height - 1) {
-            _grid[j].removeLast()
+            _grid[j]!.removeLast()
         }
         _width -= 1
         updateLevel()

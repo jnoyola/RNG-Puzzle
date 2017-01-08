@@ -28,6 +28,7 @@ class PlanetDisplay: SKNode {
     var _scale: CGFloat = 1
     var _showStars = true
     var _showLevels = true
+    var _showTaunt = true
 
     var _planet: Planet! = nil
     var _rad: CGFloat = 0
@@ -46,6 +47,7 @@ class PlanetDisplay: SKNode {
         _baseLevel = baseLevel
         _showStars = showStars
         _showLevels = showLevels
+        _showTaunt = showTaunt
         _scale = 0.2 + CGFloat(baseLevel % 7) * 0.03
         
         _planet = Planet(baseLevel: baseLevel)
@@ -55,9 +57,7 @@ class PlanetDisplay: SKNode {
             addLevelMarkers()
         }
         
-        if showTaunt && Storage.loadScore(level: _baseLevel + 1) >= 0 {
-            addTaunt()
-        }
+        maybeAddTaunt()
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -104,18 +104,20 @@ class PlanetDisplay: SKNode {
         _levelLabels[i].fontColor = score >= 0 ? UIColor.white : UIColor.darkGray
     }
     
-    func addTaunt() {
-        _tauntLabel = SKLabelNode(fontNamed: Constants.FONT)
-        _tauntLabel!.text = _taunts[_baseLevel / 10]
-        _tauntLabel!.fontColor = UIColor.white
-        addChild(_tauntLabel!)
+    func maybeAddTaunt() {
+        if _showTaunt && Storage.loadScore(level: _baseLevel + 1) >= 0 {
+            _tauntLabel = SKLabelNode(fontNamed: Constants.FONT)
+            _tauntLabel!.text = _taunts[_baseLevel / 10]
+            _tauntLabel!.fontColor = UIColor.white
+            addChild(_tauntLabel!)
+        }
     }
     
     func refresh(size: CGSize) {
         refreshLevelMarkers()
         
         if _tauntLabel == nil {
-            addTaunt()
+            maybeAddTaunt()
         }
         
         refreshLayout(size: size)
