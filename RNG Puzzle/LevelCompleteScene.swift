@@ -39,9 +39,14 @@ class LevelCompleteScene: SKScene {
         _level = level
         _timerCount = timerCount
         _duration = duration
-        _oldScore = oldScore
         _newScore = newScore
         _achievements = achievements
+        
+        if level is CustomLevel {
+            _oldScore = newScore
+        } else {
+            _oldScore = oldScore
+        }
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -67,7 +72,7 @@ class LevelCompleteScene: SKScene {
         _durationLabel = addLabel("0:00", color: SKColor.white)
         
         // Stars
-        _starDisplay = StarDisplay(scene: self, oldScore: _oldScore, newScore: Storage.loadScore(level: _level._level))
+        _starDisplay = StarDisplay(scene: self, oldScore: _oldScore, newScore: _newScore)
         addChild(_starDisplay)
         
         // Star Label
@@ -221,7 +226,7 @@ class LevelCompleteScene: SKScene {
         if _level is CustomLevel {
             titleText = "Custom\n" + titleText
         }
-        _titleLabel = SKMultilineLabel(text: titleText, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: h * 0.85), fontName: Constants.FONT, fontSize: s * Constants.TITLE_SCALE, fontColor: Constants.TITLE_COLOR, spacing: 1.5, alignment: .center, shouldShowBorder: false)
+        _titleLabel = SKMultilineLabel(text: titleText, labelWidth: w * 0.9, pos: CGPoint(x: w * 0.5, y: h * 0.85), fontName: Constants.FONT, fontSize: s * Constants.TITLE_SCALE, fontColor: Constants.TITLE_COLOR, spacing: 1.1, alignment: .center, shouldShowBorder: false)
         addChild(_titleLabel)
         
         _copyLabel.fontSize = s * 0.04

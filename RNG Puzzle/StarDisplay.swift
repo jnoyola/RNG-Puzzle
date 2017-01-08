@@ -37,10 +37,12 @@ class StarDisplay: SKNode {
     
     func createStar(_ idx: Int) -> Star {
         var star: Star! = nil
-        if idx <= _oldScore {
-            star = Star(type: .Filled, scene: _scene)
-        } else if idx <= _newScore {
-            star = Star(type: .Glowing, scene: _scene)
+        if idx <= _newScore {
+            if idx <= _oldScore {
+                star = Star(type: .Filled, scene: _scene)
+            } else {
+                star = Star(type: .Glowing, scene: _scene)
+            }
         } else {
             star = Star(type: .Empty, scene: _scene)
         }

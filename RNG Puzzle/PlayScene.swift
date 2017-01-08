@@ -29,8 +29,6 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
     
     var _starEmitter: SKEmitterNode! = nil
     
-    var _foregroundNotification: NSObjectProtocol! = nil
-    
     var _tapRecognizer: UITapGestureRecognizer! = nil
     var _swipeUpRecognizer: UISwipeGestureRecognizer! = nil
     var _swipeDownRecognizer: UISwipeGestureRecognizer! = nil
@@ -67,10 +65,6 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         super.init(coder: aDecoder)
     }
     
-    deinit {
-        NotificationCenter.default.removeObserver(_foregroundNotification)
-    }
-    
     func createGameView() {
         _gameView = GameView(level: _level, parent: self, winCallback: complete)
         addChild(_gameView)
@@ -89,8 +83,6 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         
         refreshStars()
         self.addChild(_starEmitter)
-        
-        _foregroundNotification = NotificationCenter.default.addObserver(forName: NSNotification.Name.UIApplicationDidEnterBackground, object: nil, queue: nil, using: { Void in self.doPause() })
     }
     
     func createHUD() {
@@ -367,7 +359,7 @@ class PlayScene: SKScene, UIGestureRecognizerDelegate {
         let (newScore, achievements) = AchievementManager.recordLevelCompleted(level: _level, duration: Int(_totalDuration), numTimerExpirations: _numTimerExpirations, numVoidDeaths: _gameView._numVoidDeaths)
         
         // Record stars earned
-        if newScore > oldScore {
+        if newScore > oldScore && _level is Level {
             Storage.addStars(newScore - oldScore)
         }
     
