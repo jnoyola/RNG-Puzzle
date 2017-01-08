@@ -11,6 +11,10 @@ import Foundation
 class Level: NSObject, LevelProtocol {
 
     typealias Point = (x: Int, y: Int)
+    
+    enum LevelError: Error {
+        case timeout
+    }
 
     var _level = 1
     var _seed = UInt32(UInt64(Date.timeIntervalSinceReferenceDate * 10000) % 10000)
@@ -26,6 +30,8 @@ class Level: NSObject, LevelProtocol {
     var _stops = [PointRecord]()
     
     var _correct: [PointRecord?]? = nil
+    
+    var _generationStartTime: Date! = nil
     
     @inline(__always) func getCode() -> String {
         return "\(_level).\(getSeedString())"
@@ -125,56 +131,56 @@ class Level: NSObject, LevelProtocol {
         let numPathPieces = getNumPathPieces()
         _correct = [PointRecord?](repeating: nil, count: numPathPieces + 1)
     
-        startWithNumPathPieces(numPathPieces)
-        
-        if _level > 1 {
-            createDeadEnds()
+        do {
+            _generationStartTime = Date()
+            try startWithNumPathPieces(numPathPieces)
+            
+            if _level > 1 {
+                try createDeadEnds()
+            }
+            
+            // Always do this last, because it doesn't add unplanned stops
+            if _level > 2 {
+                addUselessBlocks(2 * _level)
+            }
+            
+            if debug {
+                return debugCheck()
+            }
+            return true
+        } catch {
+            _seed += 40000
+            return generate(debug: debug)
         }
-        
-        // Always do this last, because it doesn't add unplanned stops
-        if _level > 2 {
-            addUselessBlocks(2 * _level)
-        }
-        
-        if debug {
-            return debugCheck()
-        }
-        return true
     }
     
     func getTrueSeed() -> UInt32 {
         // TODO: RETEST ALL LEVELS
         // Random bug causing multiple solutions or infinite loop when creating dead ends
-//        if (_level == 39 && _seed == 2489)
-//        || (_level == 39 && _seed == 7970)
-//        || (_level == 42 && _seed == 6193)
-//        || (_level == 44 && _seed == 7654)
-//        || (_level == 45 && _seed == 1206)
-//        || (_level == 45 && _seed == 3388)
-//        || (_level == 46 && _seed == 110)
-//        || (_level == 48 && _seed == 7533)
-//        || (_level == 52 && _seed == 4661)
-//        || (_level == 53 && _seed == 3284)
-//        || (_level == 54 && _seed == 9632)
-//        || (_level == 56 && _seed == 6371)
-//        || (_level == 58 && _seed == 9443) {
+//        if (_level == 17 && _seed == 820) {
 //            return 40000 + _seed
 //        }
         
         // If every 4 levels have the same width,
         // we need to give them different seeds
-        return UInt32(_level % 4) * 10000 + (_seed % 10000)
+        return UInt32(_level % 4) * 10000 + _seed
     }
     
     func initRng() {
         _rng = PseudoRNG(seed: getTrueSeed())
     }
     
+    func checkForTimeout() throws {
+        if Date().timeIntervalSince(_generationStartTime) > 0.5 {
+            throw LevelError.timeout
+        }
+    }
+    
     func getNumPathPieces() -> Int {
         return 1 + (_level - 1) / 3
     }
     
-    func startWithNumPathPieces(_ num: Int) {
+    func startWithNumPathPieces(_ num: Int) throws {
         while true {
             _grid = [PieceType](repeating: .None, count: _width * _height)
             _startX = _rng.next(max: _width)
@@ -182,13 +188,15 @@ class Level: NSObject, LevelProtocol {
             addStop(x: _startX, y: _startY)
             
             var dirs = PieceType.getNextDirections(.Still)
-            if nextWithNumPathPieces(num, x: _startX, y: _startY, dirs: &dirs, isTruePath: true) {
+            if try nextWithNumPathPieces(num, x: _startX, y: _startY, dirs: &dirs, isTruePath: true) {
                 break
             }
         }
     }
     
-    func nextWithNumPathPieces(_ num: Int, x: Int, y: Int, dirs: inout [Direction], isTruePath: Bool) -> Bool {
+    func nextWithNumPathPieces(_ num: Int, x: Int, y: Int, dirs: inout [Direction], isTruePath: Bool) throws -> Bool {
+        try checkForTimeout()
+    
         if num == 0 && !isTruePath {
         
             // Finish projecting the dead end forward to make sure we didn't create a shortcut
@@ -385,37 +393,43 @@ class Level: NSObject, LevelProtocol {
                             }
                             
                             // Move on to the next iteration
-                            if !piece.contains(.Teleporter) && !alreadyFailed && nextWithNumPathPieces(num - 1, x: offset.x, y: offset.y, dirs: &nextDirs, isTruePath: isTruePath) {
-                                
-                                // Allow dead ends to continue from a Corner's dead end
-                                if !isTruePath && nextDirs.count == 1 {
-                                    let nextDir = nextDirs[0]
-                                    nextPiecePos = getAdjPosFrom(x: offset.x, y: offset.y, dir: nextDir)
-                                    if nextPiecePos.x >= 0 && nextPiecePos.y >= 0 && nextPiecePos.x < _width && nextPiecePos.y < _height {
-                                        addDirectedStop(x: nextPiecePos.x, y: nextPiecePos.y, dir: nextDir)
+                            if !alreadyFailed {
+                                if piece.contains(.Teleporter) {
+                                    if try nextWithNumPathPieces(num - 1, x: teleporterExit.x, y: teleporterExit.y, dirs: &nextDirs, isTruePath: isTruePath) {
+                                    
+                                        // Allow dead ends to continue from a Teleporter's dead end
+                                        if !isTruePath {
+                                            addDirectedStop(x: teleporterExit.x, y: teleporterExit.y, dir: nextDirs[0])
+                                        }
+                                        
+                                        return true
+                                    }
+                                } else {
+                                    if try nextWithNumPathPieces(num - 1, x: offset.x, y: offset.y, dirs: &nextDirs, isTruePath: isTruePath) {
+                                        
+                                        // Allow dead ends to continue from a Corner's dead end
+                                        if !isTruePath && nextDirs.count == 1 {
+                                            let nextDir = nextDirs[0]
+                                            nextPiecePos = getAdjPosFrom(x: offset.x, y: offset.y, dir: nextDir)
+                                            if nextPiecePos.x >= 0 && nextPiecePos.y >= 0 && nextPiecePos.x < _width && nextPiecePos.y < _height {
+                                                addDirectedStop(x: nextPiecePos.x, y: nextPiecePos.y, dir: nextDir)
+                                            }
+                                        }
+                                        
+                                        return true
                                     }
                                 }
-                                
-                                return true
-                            } else if piece.contains(.Teleporter) && !alreadyFailed && nextWithNumPathPieces(num - 1, x: teleporterExit.x, y: teleporterExit.y, dirs: &nextDirs, isTruePath: isTruePath) {
-                                
-                                // Allow dead ends to continue from a Teleporter's dead end
-                                if !isTruePath {
-                                    addDirectedStop(x: teleporterExit.x, y: teleporterExit.y, dir: nextDirs[0])
-                                }
-                                
-                                return true
-                            } else {
+                            }
                             
-                                setPiece(x: offset.x, y: offset.y, type: .None)
+                            // If this iteration had already failed, or the next iteration just failed
+                            setPiece(x: offset.x, y: offset.y, type: .None)
                                 
-                                if piece.contains(.Teleporter) {
-                                    setPiece(x: teleporterExit.x, y: teleporterExit.y, type: .None)
-                                    _teleporters.removeLast()
-                                    _teleporters.removeLast()
-                                } else if placedNextPiece {
-                                    setPiece(x: nextPiecePos.x, y: nextPiecePos.y, type: .None)
-                                }
+                            if piece.contains(.Teleporter) {
+                                setPiece(x: teleporterExit.x, y: teleporterExit.y, type: .None)
+                                _teleporters.removeLast()
+                                _teleporters.removeLast()
+                            } else if placedNextPiece {
+                                setPiece(x: nextPiecePos.x, y: nextPiecePos.y, type: .None)
                             }
                         }
                     }
@@ -768,7 +782,7 @@ class Level: NSObject, LevelProtocol {
     
 // -----------------------------------------------------------------------
 
-    func createDeadEnds() {
+    func createDeadEnds() throws {
         var numDeadEnds = 0
         while !_stops.isEmpty {
             let stop = _stops.popLast()!
@@ -782,7 +796,7 @@ class Level: NSObject, LevelProtocol {
             for dir in dirs {
                 let point = getAdjPosFrom(x: stop.x, y: stop.y, dir: dir)
                 if getPieceSafely(point: point) == .None {
-                    if createDeadEnd(point: point, dir: dir) {
+                    if try createDeadEnd(point: point, dir: dir) {
                         numDeadEnds += 1
                         break
                     }
@@ -791,9 +805,9 @@ class Level: NSObject, LevelProtocol {
         }
     }
     
-    func createDeadEnd(point: Point, dir: Direction) -> Bool {
+    func createDeadEnd(point: Point, dir: Direction) throws -> Bool {
         var dirs = [Direction](repeating: dir, count: 1)
-        if nextWithNumPathPieces(1, x: point.x, y: point.y, dirs: &dirs, isTruePath: false) {
+        if try nextWithNumPathPieces(1, x: point.x, y: point.y, dirs: &dirs, isTruePath: false) {
             addPiece(x: point.x, y: point.y, type: .Used)
             return true
         }
