@@ -87,9 +87,7 @@ class CustomLevel: NSObject, LevelProtocol {
         }
     }
     
-    func generate(debug: Bool) -> Bool {
-        return true
-    }
+    func generate() {}
     
     func createNew() {
         _width = CustomLevel.getWidthForLevel(_level)

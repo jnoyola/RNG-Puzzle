@@ -14,10 +14,12 @@ class Level: NSObject, LevelProtocol {
     
     enum LevelError: Error {
         case timeout
+        case multipleSolutions
     }
 
     var _level = 1
     var _seed = UInt32(UInt64(Date.timeIntervalSinceReferenceDate * 10000) % 10000)
+    var _displaySeed: UInt32 = 0
     var _isRandom = true
     var _rng: PseudoRNG! = nil
     
@@ -38,7 +40,7 @@ class Level: NSObject, LevelProtocol {
     }
     
     @inline(__always) func getSeedString() -> String {
-        return "\(_seed)"
+        return "\(_displaySeed)"
     }
     
     @inline(__always) func getPiece(x: Int, y: Int) -> PieceType {
@@ -120,9 +122,10 @@ class Level: NSObject, LevelProtocol {
             _seed = UInt32((seed! as NSString).integerValue)
             _isRandom = false
         }
+        _displaySeed = _seed
     }
     
-    func generate(debug: Bool) -> Bool {
+    func generate() {
         initRng()
 
         _width = Level.getWidthForLevel(_level)
@@ -144,23 +147,20 @@ class Level: NSObject, LevelProtocol {
                 addUselessBlocks(2 * _level)
             }
             
-            if debug {
-                return debugCheck()
+            // There are some possible paths caused by placing a piece that
+            // creates a shortcut by connecting unplanned stops using two of
+            // the piece's walls. Fixing these would require too much extra
+            // time and memory to duplicate the generation state for each iteration.
+            if getNumSolutions() != 1 {
+                throw LevelError.multipleSolutions
             }
-            return true
         } catch {
             _seed += 40000
-            return generate(debug: debug)
+            generate()
         }
     }
     
     func getTrueSeed() -> UInt32 {
-        // TODO: RETEST ALL LEVELS
-        // Random bug causing multiple solutions or infinite loop when creating dead ends
-//        if (_level == 17 && _seed == 820) {
-//            return 40000 + _seed
-//        }
-        
         // If every 4 levels have the same width,
         // we need to give them different seeds
         return UInt32(_level % 4) * 10000 + _seed

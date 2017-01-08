@@ -16,7 +16,7 @@ class GameSample: SKNode {
         super.init()
         
         let level = Level(level: levelNum, seed: nil)
-        let _ = level.generate(debug: false)
+        level.generate()
         _gameView = GameView(level: level, parent: parentScene, winCallback: {})
         _gameView.setScale(0.5)
         _gameView.position = CGPoint(x: -_gameView.getWidth() / 2, y: -_gameView.getHeight() / 2)

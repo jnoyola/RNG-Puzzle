@@ -18,7 +18,7 @@ protocol LevelProtocol {
     func getCode() -> String
     func getSeedString() -> String
     
-    func generate(debug: Bool) -> Bool
+    func generate()
     
     func getPiece(x: Int, y: Int) -> PieceType
     func getPieceSafely(point: (x: Int, y: Int)) -> PieceType
