@@ -12,6 +12,10 @@ import SpriteKit
 class LevelGenerationScene: SKScene {
 
     var _level: LevelProtocol! = nil
+    
+    var _titleLabel: SKLabelNode! = nil
+    var _levelLabel: LevelLabel! = nil
+    var _starDisplay: StarDisplay! = nil
 
     init(size: CGSize, level: LevelProtocol) {
         super.init(size: size)
@@ -25,12 +29,18 @@ class LevelGenerationScene: SKScene {
     override func didMove(to view: SKView) {
         backgroundColor = SKColor.black
         
+        _titleLabel = addLabel("Generating...", color: Constants.TITLE_COLOR)
+        
+        let score = Storage.loadScore(level: _level._level)
+        _starDisplay = StarDisplay(scene: self, oldScore: score, newScore: score)
+        addChild(_starDisplay)
+        
         refreshLayout()
         
         DispatchQueue.global(qos: .default).async {
             NSLog("Generating: \(self._level.getCode())")
             let _ = self._level.generate(debug: true)
-            usleep(500000)
+            usleep(750000)
         
             // DEBUG CODE
 //            var badLevels = [Level]()
@@ -55,13 +65,12 @@ class LevelGenerationScene: SKScene {
         }
     }
     
-    func addLabel(_ text: String, size: CGFloat, color: SKColor, y: CGFloat) {
+    func addLabel(_ text: String, color: SKColor) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: Constants.FONT)
         label.text = text
-        label.fontSize = size
         label.fontColor = color
-        label.position = CGPoint(x: self.size.width * 0.5, y: self.size.height * y)
         self.addChild(label)
+        return label
     }
     
     func refreshLayout() {
@@ -69,19 +78,25 @@ class LevelGenerationScene: SKScene {
             return
         }
     
-        removeAllChildren()
-    
         let w = size.width
         let h = size.height
         let s = min(w, h)
         
         // Title
-        addLabel("Generating...", size: s * Constants.TITLE_SCALE, color: Constants.TITLE_COLOR, y: 0.85)
+        _titleLabel.fontSize = s * Constants.TITLE_SCALE
+        _titleLabel.position = CGPoint(x: w * 0.5, y: h * 0.85)
         
         // Level
-        let levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * Constants.TEXT_SCALE, color: SKColor.white)
-        levelLabel.position = CGPoint(x: w * 0.5, y: h * 0.67)
-        addChild(levelLabel)
+        if _levelLabel != nil {
+            _levelLabel.removeFromParent()
+        }
+        _levelLabel = LevelLabel(level: _level._level, seed:_level.getSeedString(), size: s * Constants.TEXT_SCALE, color: SKColor.white)
+        _levelLabel.position = CGPoint(x: w * 0.5, y: h * 0.67)
+        addChild(_levelLabel)
+        
+        // Stars
+        _starDisplay.position = CGPoint(x: w * 0.5, y: h * 0.36 - s * 0.21)
+        _starDisplay.setSize(s * 0.2)
     }
     
     override func didChangeSize(_ oldSize: CGSize) {

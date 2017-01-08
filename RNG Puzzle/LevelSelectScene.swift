@@ -156,10 +156,11 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
         } else if p.y < _planetarium!.position.y * 2 && !_isPanning {
             let levelNum = _planetarium.tap(p)
             if levelNum != nil && levelNum! <= getMaxAllowedLevel() {
+                _planetarium.selectLevel(levelNum!)
                 if levelNum! > 0 {
                     _textInput?.text = String(levelNum!)
+                    play()
                 }
-                _planetarium.selectLevel(levelNum!)
             }
         }
     }

@@ -114,7 +114,7 @@ class LevelCompleteScene: SKScene {
             animationStep = 0.01
         }
     
-        DispatchQueue.main.asyncAfter(deadline: .now() + animationStep) {
+        DispatchQueue.global(qos: .default).asyncAfter(deadline: .now() + animationStep) {
             let nextAnimationTime = animationTime + animationStep
             var counter = Int(Double(self._duration) * nextAnimationTime / animationDuration)
             if counter >= self._duration {
@@ -124,7 +124,9 @@ class LevelCompleteScene: SKScene {
                 self.countTimer(animationTime: nextAnimationTime)
             }
             let str = String(format:"%d:%02d", abs(counter) / 60, abs(counter) % 60)
-            self._durationLabel.text = str
+            DispatchQueue.main.async {
+                self._durationLabel.text = str
+            }
         }
     }
     

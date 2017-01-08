@@ -67,7 +67,7 @@ class StarDisplay: SKNode {
         
         if _oldScore < _newScore {
             for i in self._oldScore ..< self._newScore {
-                let delay = 0.5 + 0.15 * Double(i - self._oldScore)
+                let delay = 0.15 + 0.15 * Double(i - self._oldScore)
                 DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                     AudioServicesPlaySystemSound(1306)
                     if i == self._oldScore {
