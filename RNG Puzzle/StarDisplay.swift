@@ -7,6 +7,7 @@
 //
 
 import SpriteKit
+import AVFoundation
 
 class StarDisplay: SKNode {
 
@@ -63,8 +64,10 @@ class StarDisplay: SKNode {
         _hasFired = true
         
         if _oldScore < _newScore {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                for i in self._oldScore ..< self._newScore {
+            for i in self._oldScore ..< self._newScore {
+                let delay = 0.5 + 0.15 * Double(i - self._oldScore)
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                    AudioServicesPlaySystemSound(1306)
                     if i == self._oldScore {
                         self._stars[i].explodeTo(dest: dest, completion: {
                             completion(self._newScore - self._oldScore)

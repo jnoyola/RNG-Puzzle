@@ -29,19 +29,20 @@ class LevelGenerationScene: SKScene {
         
         DispatchQueue.global(qos: .default).async {
             NSLog("Generating: \(self._level.getCode())")
-            let _ = self._level.generate(debug: false)
+            let _ = self._level.generate(debug: true)
             usleep(500000)
         
-//             DEBUG CODE
-//            for l in 1...50 {
+            // DEBUG CODE
+//            var badLevels = [Level]()
+//            for l in 1...100 {
+//                NSLog("Level \(l)")
 //                for i in 0...9999 {
-//                    let level = Level()
-//                    level._level = l
+//                    let level = Level(level: l, seed: nil)
 //                    level._seed = UInt32(i)
-//                    NSLog("Generating: \(level._level).\(level._seed)")
-//                    if !level.generate(true) {
-//                        _level = level
-//                        break
+//                    //NSLog("Generating: \(level._level).\(level._seed)")
+//                    if !level.generate(debug: true) {
+//                        badLevels.append(level)
+//                        NSLog("Bad: \(level._level).\(level._seed) =================")
 //                    }
 //                }
 //            }

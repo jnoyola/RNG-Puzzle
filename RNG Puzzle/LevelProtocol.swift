@@ -31,12 +31,12 @@ extension LevelProtocol {
     typealias Point = (x: Int, y: Int)
     
     static func getWidthForLevel(_ level: Int) -> Int {
-        return 4 + level / 3
+        return 4 + level / 4
     }
     
     static func getLevelRangeForWidth(_ width: Int) -> (min: Int, max: Int) {
-        let min = (width - 4) * 3
-        let max = min + 2
+        let min = (width - 4) * 4
+        let max = min + 3
         return (min: min, max: max)
     }
     

@@ -6,7 +6,7 @@
 //  Copyright © 2016 iNoyola. All rights reserved.
 //
 
-class PointRecord: Hashable {
+class PointRecord: Equatable, Hashable {
     var x: Int
     var y: Int
     var dir: Direction = .Still
@@ -20,6 +20,12 @@ class PointRecord: Hashable {
         self.x = x
         self.y = y
         self.dir = dir
+    }
+    
+    func remove(from arr: inout [PointRecord]) {
+        if let idx = arr.index(of: self) {
+            arr.remove(at: idx)
+        }
     }
     
     var hashValue: Int {

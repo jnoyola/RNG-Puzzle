@@ -22,7 +22,8 @@ class LevelCompleteScene: SKScene {
     var _titleLabel: SKMultilineLabel! = nil
     var _copyLabel: SKLabelNode! = nil
     var _quitLabel: SKLabelNode! = nil
-    var _continueLabel: SKLabelNode! = nil
+    var _retryLabel: SKLabelNode! = nil
+    var _nextLabel: SKLabelNode! = nil
     var _levelLabel: LevelLabel! = nil
     var _durationLabel: SKLabelNode! = nil
     var _starLabel: StarLabel! = nil
@@ -30,6 +31,8 @@ class LevelCompleteScene: SKScene {
     var _muteShareDisplay: MuteShareDisplay! = nil
     
     var _achievementPopups: [AchievementPopup]! = nil
+    
+    var _hasAnimated = false
 
     init(size: CGSize, level: LevelProtocol, timerCount: Int, duration: Int, achievements: [GKAchievement], oldScore: Int, newScore: Int) {
         super.init(size: size)
@@ -54,12 +57,14 @@ class LevelCompleteScene: SKScene {
         // Quit
         _quitLabel = addLabel("Quit", color: SKColor.white)
         
-        // Continue
-        _continueLabel = addLabel("Continue", color: SKColor.white)
+        // Retry
+        _retryLabel = addLabel("Retry", color: SKColor.white)
+        
+        // Next
+        _nextLabel = addLabel("Next", color: SKColor.white)
         
         // Duration
-        let durationStr = String(format:"%d:%02d", abs(_duration) / 60, abs(_duration) % 60)
-        _durationLabel = addLabel(durationStr, color: SKColor.white)
+        _durationLabel = addLabel("0:00", color: SKColor.white)
         
         // Stars
         _starDisplay = StarDisplay(scene: self, oldScore: _oldScore, newScore: Storage.loadScore(level: _level._level))
@@ -90,11 +95,39 @@ class LevelCompleteScene: SKScene {
         return label
     }
     
+    func animate() {
+        if !_hasAnimated {
+            _hasAnimated = true
+            countTimer()
+        }
+    }
+    
+    func countTimer(animationTime: Double = 0) {
+        let animationDuration = 0.5
+        var animationStep = animationDuration / Double(_duration)
+        if animationStep < 0.01 {
+            animationStep = 0.01
+        }
+    
+        DispatchQueue.main.asyncAfter(deadline: .now() + animationStep) {
+            let nextAnimationTime = animationTime + animationStep
+            var counter = Int(Double(self._duration) * nextAnimationTime / animationDuration)
+            if counter >= self._duration {
+                counter = self._duration
+                self.fireStars()
+            } else {
+                self.countTimer(animationTime: nextAnimationTime)
+            }
+            let str = String(format:"%d:%02d", abs(counter) / 60, abs(counter) % 60)
+            self._durationLabel.text = str
+        }
+    }
+    
     func fireStars() {
         let p = convert(_starLabel._star.position, from: _starLabel)
         _starDisplay.explodeTo(p, completion: { (numStars: Int) -> Void in
             for i in 0 ..< numStars {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05 * Double(i)) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15 * Double(i)) {
                     let num = Int(self._starLabel.getText())
                     self._starLabel.setText(String(num! + 1))
                 }
@@ -106,7 +139,7 @@ class LevelCompleteScene: SKScene {
         if !_achievementPopups.isEmpty {
             _achievementPopups.removeFirst().close()
             if _achievementPopups.isEmpty {
-                fireStars()
+                animate()
             }
             return
         }
@@ -124,9 +157,12 @@ class LevelCompleteScene: SKScene {
         } else if isPointInBounds(p, node: _quitLabel) {
             // Quit
             AppDelegate.popViewController(animated: true)
-        } else if isPointInBounds(p, node: _continueLabel) {
-            // Continue
-            continuePressed()
+        } else if isPointInBounds(p, node: _retryLabel) {
+            // Retry
+            retryPressed()
+        } else if isPointInBounds(p, node: _nextLabel) {
+            // Next
+            nextPressed()
         } else {
             _muteShareDisplay.tap(p)
         }
@@ -143,7 +179,18 @@ class LevelCompleteScene: SKScene {
         return false
     }
     
-    func continuePressed() {
+    func retryPressed() {
+        if _level is CustomLevel {
+            let nextScene = PlayScene(size: size, level: _level)
+            AppDelegate.pushViewController(SKViewController(scene: nextScene), animated: true, offset: 0)
+        } else {
+            let nextLevel = Level(level: _level._level, seed: nil)
+            let nextScene = LevelGenerationScene(size: size, level: nextLevel)
+            AppDelegate.pushViewController(SKViewController(scene: nextScene), animated: true, offset: 0)
+        }
+    }
+    
+    func nextPressed() {
         if _level is CustomLevel {
             AppDelegate.popViewController(animated: true)
         } else {
@@ -183,13 +230,16 @@ class LevelCompleteScene: SKScene {
         _quitLabel.fontSize = s * Constants.TEXT_SCALE
         _quitLabel.position = CGPoint(x: w * 0.15, y: h * 0.47)
         
-        _continueLabel.fontSize = s * Constants.TEXT_SCALE
-        _continueLabel.position = CGPoint(x: w * 0.85, y: h * 0.47)
+        _retryLabel.fontSize = s * Constants.TEXT_SCALE
+        _retryLabel.position = CGPoint(x: w * 0.5, y: h * 0.47)
+        
+        _nextLabel.fontSize = s * Constants.TEXT_SCALE
+        _nextLabel.position = CGPoint(x: w * 0.85, y: h * 0.47)
         
         _durationLabel.fontSize = s * Constants.TEXT_SCALE
-        _durationLabel.position = CGPoint(x: w * 0.5, y: h * 0.47)
+        _durationLabel.position = CGPoint(x: w * 0.5, y: h * 0.36 - s * 0.06)
         
-        _starDisplay.position = CGPoint(x: w * 0.5, y: h * 0.3)
+        _starDisplay.position = CGPoint(x: w * 0.5, y: h * 0.36 - s * 0.21)
         _starDisplay.setSize(s * 0.2)
         
         _muteShareDisplay.position = CGPoint.zero
@@ -210,7 +260,7 @@ class LevelCompleteScene: SKScene {
         }
         
         if _achievementPopups.isEmpty {
-            fireStars()
+            animate()
         }
     }
     

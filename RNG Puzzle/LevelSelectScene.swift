@@ -203,11 +203,12 @@ class LevelSelectScene: SKScene, UITextFieldDelegate, UIGestureRecognizerDelegat
         let tokens = newString.components(separatedBy: ".")
         let levelNum = (tokens[0] as NSString).integerValue
         let levelMax = getMaxAllowedLevel()
-        if levelNum > levelMax {
-            textField.text = String(levelMax)
-            _planetarium.selectLevel(levelMax)
-            return false
-        }
+        // TODO: CHANGE BACK
+//        if levelNum > levelMax {
+//            textField.text = String(levelMax)
+//            _planetarium.selectLevel(levelMax)
+//            return false
+//        }
         _planetarium.selectLevel(levelNum)
         return true
     }

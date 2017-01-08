@@ -19,7 +19,7 @@ class Trail: CAShapeLayer {
         
         path = hermiteWithPoints(choosePoints(size: size)).cgPath
         fillColor = UIColor.clear.cgColor
-        strokeColor = UIColor.black.cgColor
+        strokeColor = UIColor.yellow.cgColor
         lineWidth = _lineWidth
         
         animate()

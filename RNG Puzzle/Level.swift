@@ -7,16 +7,15 @@
 //
 
 import Foundation
-import GameKit
 
 class Level: NSObject, LevelProtocol {
 
     typealias Point = (x: Int, y: Int)
 
     var _level = 1
-    var _seed = UInt32(time(nil)) % 10000
+    var _seed = UInt32(UInt64(Date.timeIntervalSinceReferenceDate * 10000) % 10000)
     var _isRandom = true
-    var _rng: GKRandomSource! = nil
+    var _rng: PseudoRNG! = nil
     
     var _width = 0
     var _height = 0
@@ -24,13 +23,12 @@ class Level: NSObject, LevelProtocol {
     var _startY = 0
     var _grid: [PieceType]! = nil
     var _teleporters: [Point] = []
-    var _stops = Set<PointRecord>()
+    var _stops = [PointRecord]()
     
     var _correct: [PointRecord?]? = nil
     
-    
     @inline(__always) func getCode() -> String {
-        return "\(_level).\(_seed)"
+        return "\(_level).\(getSeedString())"
     }
     
     @inline(__always) func getSeedString() -> String {
@@ -43,7 +41,7 @@ class Level: NSObject, LevelProtocol {
     
     @inline(__always) func setPiece(x: Int, y: Int, type: PieceType) {
         if !type.contains(.Stop) && getPiece(x: x, y: y).contains(.Stop) {
-            _stops.remove(PointRecord(x: x, y: y))
+            PointRecord(x: x, y: y).remove(from: &_stops)
         }
         _grid[y * _width + x] = type
     }
@@ -58,14 +56,14 @@ class Level: NSObject, LevelProtocol {
         var piece = getPiece(x: x, y: y)
         piece.insert(.Stop)
         setPiece(x: x, y: y, type: piece)
-        _stops.insert(PointRecord(x: x, y: y))
+        _stops.append(PointRecord(x: x, y: y))
     }
     
     @inline(__always) func addDirectedStop(x: Int, y: Int, dir: Direction) {
         var piece = getPiece(x: x, y: y)
         piece.insert(.Stop)
         setPiece(x: x, y: y, type: piece)
-        _stops.insert(PointRecord(x: x, y: y, dir: dir))
+        _stops.append(PointRecord(x: x, y: y, dir: dir))
     }
     
     func setUsed(point: Point) {
@@ -129,10 +127,14 @@ class Level: NSObject, LevelProtocol {
     
         startWithNumPathPieces(numPathPieces)
         
-        createDeadEnds()
+        if _level > 1 {
+            createDeadEnds()
+        }
         
         // Always do this last, because it doesn't add unplanned stops
-        addUselessBlocks(2 * _level)
+        if _level > 2 {
+            addUselessBlocks(2 * _level)
+        }
         
         if debug {
             return debugCheck()
@@ -141,28 +143,31 @@ class Level: NSObject, LevelProtocol {
     }
     
     func getTrueSeed() -> UInt32 {
-        // Every third level actually has equal difficulty as the last,
-        // just with a different seed
-        var trueSeed = _seed % 10000
-        if (_level + 1) % 3 == 0 {
-            trueSeed = UInt32.max - _seed
-        }
-        
         // TODO: RETEST ALL LEVELS
-        // Random bug causing infinite loop when creating dead ends
-        if _level == 36 && trueSeed == 6190 {
-            // trueSeed = 10000
-        }
-        return trueSeed
+        // Random bug causing multiple solutions or infinite loop when creating dead ends
+//        if (_level == 39 && _seed == 2489)
+//        || (_level == 39 && _seed == 7970)
+//        || (_level == 42 && _seed == 6193)
+//        || (_level == 44 && _seed == 7654)
+//        || (_level == 45 && _seed == 1206)
+//        || (_level == 45 && _seed == 3388)
+//        || (_level == 46 && _seed == 110)
+//        || (_level == 48 && _seed == 7533)
+//        || (_level == 52 && _seed == 4661)
+//        || (_level == 53 && _seed == 3284)
+//        || (_level == 54 && _seed == 9632)
+//        || (_level == 56 && _seed == 6371)
+//        || (_level == 58 && _seed == 9443) {
+//            return 40000 + _seed
+//        }
+        
+        // If every 4 levels have the same width,
+        // we need to give them different seeds
+        return UInt32(_level % 4) * 10000 + (_seed % 10000)
     }
     
     func initRng() {
-        let s = getTrueSeed()
-        let a = UInt8(truncatingBitPattern: s)
-        let b = UInt8(truncatingBitPattern: s >> 8)
-        let c = UInt8(truncatingBitPattern: s >> 16)
-        let d = UInt8(truncatingBitPattern: s >> 24)
-        _rng = GKARC4RandomSource(seed: Data(bytes:[a, b, c, d]))
+        _rng = PseudoRNG(seed: getTrueSeed())
     }
     
     func getNumPathPieces() -> Int {
@@ -172,8 +177,8 @@ class Level: NSObject, LevelProtocol {
     func startWithNumPathPieces(_ num: Int) {
         while true {
             _grid = [PieceType](repeating: .None, count: _width * _height)
-            _startX = _rng.nextInt(upperBound: _width)
-            _startY = _rng.nextInt(upperBound: _height)
+            _startX = _rng.next(max: _width)
+            _startY = _rng.next(max: _height)
             addStop(x: _startX, y: _startY)
             
             var dirs = PieceType.getNextDirections(.Still)
@@ -223,7 +228,7 @@ class Level: NSObject, LevelProtocol {
     
         while dirs.count > 0 {
             // Pick random direction from those remaining
-            let iDir = _rng.nextInt(upperBound: dirs.count)
+            let iDir = _rng.next(max: dirs.count)
             let dir = dirs[iDir]
             
             // Get offsets
@@ -236,7 +241,7 @@ class Level: NSObject, LevelProtocol {
                 var offsetIndices = [Int](0...(offsets.count - 1))
                 while offsetIndices.count > 0 {
                     // Pick random offset from those remaining
-                    let iOffsetIndex = _rng.nextInt(upperBound: offsetIndices.count)
+                    let iOffsetIndex = _rng.next(max: offsetIndices.count)
                     let iOffset = offsetIndices[iOffsetIndex]
                     let offset = offsets[iOffset]
             
@@ -334,8 +339,8 @@ class Level: NSObject, LevelProtocol {
                                 // Make 10 attempts at finding a valid exit location
                                 // The exit point must be an empty space with at least one open adjacent space
                                 for _ in 0...9 {
-                                    let x = _rng.nextInt(upperBound: _width)
-                                    let y = _rng.nextInt(upperBound: _height)
+                                    let x = _rng.next(max: _width)
+                                    let y = _rng.next(max: _height)
                                     // Make sure we're not putting the exit at the same location as the entrance
                                     // We haven't marked the grid yet, so isValidTeleporterExit can't catch this
                                     if x == offset.x && y == offset.y {
@@ -465,28 +470,35 @@ class Level: NSObject, LevelProtocol {
     }
     
     func getPiecesFromDir(_ dir: Direction) -> [PieceType] {
-        
+    
         // Half the time, only allow Blocks
-        if _rng.nextInt(upperBound: 2) == 0 {
+        if _level > 5 && _rng.next(max: 2) == 0 {
             return [PieceType](repeating: .Block, count: 1)
         }
         
-        var pieces = [PieceType](repeating: .Block, count: 4)
-        pieces[1] = .Teleporter
+        let numOptions = _level <= 2 ? 2 : _level <= 10 ? 3 : 4
+        var pieces = [PieceType](repeating: .Block, count: numOptions)
+        
         switch dir {
             case .Left:
-                pieces[2] = .Corner4
-                pieces[3] = .Corner1
+                pieces[0] = .Corner4
+                pieces[1] = .Corner1
             case .Down:
-                pieces[2] = .Corner1
-                pieces[3] = .Corner2
+                pieces[0] = .Corner1
+                pieces[1] = .Corner2
             case .Right:
-                pieces[2] = .Corner2
-                pieces[3] = .Corner3
+                pieces[0] = .Corner2
+                pieces[1] = .Corner3
             case .Up:
-                pieces[2] = .Corner3
-                pieces[3] = .Corner4
+                pieces[0] = .Corner3
+                pieces[1] = .Corner4
             default: break
+        }
+        if _level > 2 {
+            pieces[2] = .Block
+        }
+        if _level > 10 {
+            pieces[3] = .Teleporter
         }
         return pieces
     }
@@ -759,16 +771,16 @@ class Level: NSObject, LevelProtocol {
     func createDeadEnds() {
         var numDeadEnds = 0
         while !_stops.isEmpty {
-            let stop = _stops.popFirst()
+            let stop = _stops.popLast()!
             
             var dirs: [Direction]!
-            if stop!.dir == .Still {
+            if stop.dir == .Still {
                 dirs = PieceType.getNextDirections(.Still)
             } else {
-                dirs = [Direction](repeating: stop!.dir, count: 1)
+                dirs = [Direction](repeating: stop.dir, count: 1)
             }
             for dir in dirs {
-                let point = getAdjPosFrom(x: stop!.x, y: stop!.y, dir: dir)
+                let point = getAdjPosFrom(x: stop.x, y: stop.y, dir: dir)
                 if getPieceSafely(point: point) == .None {
                     if createDeadEnd(point: point, dir: dir) {
                         numDeadEnds += 1
@@ -792,7 +804,7 @@ class Level: NSObject, LevelProtocol {
         for x in 0..._width-1 {
             for y in 0..._height-1 {
             
-                if getPiece(x: x, y: y) != .None || _rng.nextInt(upperBound: 8) == 0 {
+                if getPiece(x: x, y: y) != .None || _rng.next(max: 8) == 0 {
                     continue
                 }
                 
